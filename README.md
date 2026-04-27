@@ -9,6 +9,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 - `extensions/` — pi TypeScript extensions
   - `git-ai.ts`
   - `subagent-handoff.ts`
+  - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
   - `ask`
   - `git-ai-search`
@@ -47,6 +48,8 @@ cd ~/pi-agent
 ./scripts/install-local-links.sh
 ```
 
+When this repo is already installed with `pi install`, the link installer intentionally removes repo-owned global extension/skill symlinks and lets pi package discovery load those resources. This avoids duplicate skill or command conflicts. To force a mode explicitly, use `./scripts/install-local-links.sh --no-package-resources` after `pi install`, or `./scripts/install-local-links.sh --package-resources` when you are not using `pi install` and want direct global symlinks.
+
 ## Local install while developing
 
 From this checkout:
@@ -55,7 +58,18 @@ From this checkout:
 pi install "$(pwd)"
 ```
 
-During this migration, the original global locations were symlinked to this repo, so local pi continues to load these resources without adding the local package to settings.
+If you install this checkout as a local package, run the link script for the non-package resources:
+
+```bash
+pi install "$(pwd)"
+./scripts/install-local-links.sh
+```
+
+If you do not want to use `pi install` locally, direct global symlinks still work:
+
+```bash
+./scripts/install-local-links.sh --package-resources
+```
 
 ## git-ai extension
 

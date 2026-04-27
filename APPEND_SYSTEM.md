@@ -51,3 +51,7 @@ Relevant global resources:
 - `~/.pi/agent/SUBAGENTS_ASYNC_PLAYBOOK.md`
 - global chains: `async-scout`, `async-implement-review`
 - global commands: `/subattach`, `/subattach-latest`, `/subback`
+
+## Portable pi extension habit
+
+When creating or modifying pi extensions, keep them in this `pi-agent` repo's `extensions/` directory and run `scripts/install-local-links.sh` so local global discovery points at the portable repo copy.
