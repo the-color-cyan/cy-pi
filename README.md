@@ -1,6 +1,6 @@
 # pi-agent
 
-Portable pi agent resources for Cyan.
+Portable pi agent resources for cyan.
 
 This repo is a pi package for resources pi can load directly, plus a small link installer for pi resources that are not part of pi package discovery yet.
 
