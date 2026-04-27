@@ -1,0 +1,39 @@
+{
+  "name": "pi-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portable pi agent resources for Cyan.",
+  "keywords": [
+    "pi-package"
+  ],
+  "type": "module",
+  "files": [
+    "AGENTS.md",
+    "APPEND_SYSTEM.md",
+    "SUBAGENTS_ASYNC_PLAYBOOK.md",
+    "agents",
+    "extensions",
+    "prompts",
+    "scripts",
+    "settings.example.json",
+    "skills",
+    "themes"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ],
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ],
+    "themes": [
+      "./themes"
+    ]
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  }
+}

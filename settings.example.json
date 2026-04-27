@@ -1,0 +1,28 @@
+{
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
+  "defaultThinkingLevel": "xhigh",
+  "packages": [
+    "git:github.com:YOUR_USER/pi-agent@v0.1.0",
+    "npm:@zenobius/pi-rose-pine",
+    "npm:pi-subagents",
+    "npm:pi-web-access",
+    "npm:pi-move-session"
+  ],
+  "theme": "rose-pine",
+  "subagents": {
+    "asyncByDefault": true,
+    "forceTopLevelAsync": false,
+    "defaultSessionDir": "~/.pi/agent/sessions/subagent",
+    "parallel": {
+      "maxTasks": 8,
+      "concurrency": 4
+    },
+    "agentOverrides": {
+      "worker": {
+        "model": "k2p6"
+      }
+    }
+  },
+  "hideThinkingBlock": false
+}
