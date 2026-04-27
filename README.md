@@ -29,7 +29,7 @@ Not included: `auth.json`, sessions, run history, caches, or API keys.
 After you create a remote, install the pi package with a pinned ref:
 
 ```bash
-pi install git:github.com:YOUR_USER/pi-agent@v0.1.0
+pi install git:github.com/YOUR_USER/pi-agent@v0.1.0
 ```
 
 That loads the package resources declared in `package.json`:
