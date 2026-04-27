@@ -1,0 +1,30 @@
+APPEND_SYSTEM.md
+  f4f1052bb19f784c 54-57
+scripts/install-local-links.sh
+  f4f1052bb19f784c 6-43,73-77,79-173
+AGENTS.md
+  f4f1052bb19f784c 8
+README.md
+  f4f1052bb19f784c 12,51-52,61-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8079c04780860d9ed7eb0f6f0702f2e7987a3986",
+  "prompts": {
+    "f4f1052bb19f784c": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dcf89-0f53-71a4-b1a4-5bcb8db0d27f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 236,
+      "total_deletions": 14,
+      "accepted_lines": 232,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/927ef14a1ce74e98538379f59f95ef6e1722e63c1ffbee5bb1ee1375add28209"
+    }
+  }
+}
