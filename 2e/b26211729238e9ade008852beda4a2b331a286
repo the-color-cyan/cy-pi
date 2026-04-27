@@ -1,0 +1,24 @@
+package.json
+  95f650063bbff9a9 10-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "2eb26211729238e9ade008852beda4a2b331a286",
+  "prompts": {
+    "95f650063bbff9a9": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dccf1-cc7a-7400-b8f4-3e9acf8e5989",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 12,
+      "total_deletions": 0,
+      "accepted_lines": 12,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/ccc697076a6bdd28ae742ca49f434891812f57f822d84e828e873052767e2950"
+    }
+  }
+}
