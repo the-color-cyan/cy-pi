@@ -213,7 +213,7 @@ async function launchLazygit(gitContext: GitContext, message: string, copied: bo
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("commit-message", {
-		description: "Generate a git commit message, copy it, and open lazygit when available"
+		description: "Generate a git commit message, copy it, and open lazygit when available",
 		handler: async (args, ctx) => {
 			const options = parseCommandOptions(args);
 			await ctx.waitForIdle();
