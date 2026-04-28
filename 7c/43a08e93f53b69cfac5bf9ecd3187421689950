@@ -1,0 +1,24 @@
+extensions/branch.ts
+  446657c4798f4fcc 2,138,142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "7c43a08e93f53b69cfac5bf9ecd3187421689950",
+  "prompts": {
+    "446657c4798f4fcc": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd5f4-0aaf-7226-a30f-3b30c3fbe143",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/d8f3a4e5ef60e0fb7bacb0afbad4c1f5d943d624468f5aaafa4092779a00880c"
+    }
+  }
+}
