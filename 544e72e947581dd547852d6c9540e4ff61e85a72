@@ -1,0 +1,27 @@
+package.json
+  a79673b25038a1ba 38-47
+tsconfig.json
+  a79673b25038a1ba 1-12
+extensions/think.ts
+  a79673b25038a1ba 71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "544e72e947581dd547852d6c9540e4ff61e85a72",
+  "prompts": {
+    "a79673b25038a1ba": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd48d-74c2-7222-a718-8a4713d19f17",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 2,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
