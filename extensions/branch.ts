@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { fuzzyFilter } from "@mariozechner/pi-tui";
 
 let activeCwd = process.cwd();
 
@@ -134,12 +135,11 @@ export default function (pi: ExtensionAPI) {
 				return null;
 			}
 
-			const normalized = prefix.trim();
+			const query = prefix.trim();
 			const items = [...catalog.localBranches, ...catalog.remoteBranches]
 				.filter((branch, index, arr) => arr.indexOf(branch) === index)
 				.map((branch) => ({ value: branch, label: branch }));
-			if (!normalized) return items;
-			return items.filter((item) => item.value.startsWith(normalized));
+			return query ? fuzzyFilter(items, query, (item) => item.value) : items;
 		},
 		handler: async (args, ctx) => {
 			await ctx.waitForIdle();
