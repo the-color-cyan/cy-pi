@@ -1,0 +1,53 @@
+scripts/install-local-links.sh
+  a6205e17fd96bfe7 100-101
+  f059f5bc3edca6e4 184
+README.md
+  f059f5bc3edca6e4 10-11,27,77-91
+  a6205e17fd96bfe7 1,36,49-50
+APPEND_SYSTEM.md
+  a6205e17fd96bfe7 57
+settings.example.json
+  a6205e17fd96bfe7 6
+extensions/commit-message.ts
+  f059f5bc3edca6e4 1-287
+extensions/cd.ts
+  f059f5bc3edca6e4 1-167
+commit-message-prompt.md
+  f059f5bc3edca6e4 1-8
+package.json
+  a6205e17fd96bfe7 2
+  f059f5bc3edca6e4 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "0c5d2584407303f8bc5fc880716770f3afa15ba3",
+  "prompts": {
+    "a6205e17fd96bfe7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd268-29e1-765d-8a9b-d8059e3a2b7b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "exe.dev user",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 9,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "f059f5bc3edca6e4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd27c-7da3-73cb-88b0-c141f3f68097",
+        "model": "gpt-5.5"
+      },
+      "human_author": "exe.dev user",
+      "messages": [],
+      "total_additions": 537,
+      "total_deletions": 54,
+      "accepted_lines": 482,
+      "overriden_lines": 0
+    }
+  }
+}
