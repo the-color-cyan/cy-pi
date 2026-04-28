@@ -19,7 +19,10 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `prompt-analysis`
 - `prompts/` — prompt templates (currently empty)
 - `themes/` — custom themes (currently empty)
-- `agents/` — pi-subagents chain definitions
+- `agents/` — pi-subagents custom agents and chain definitions
+  - `arm.md` — deep implementation agent for complex multi-area tasks
+  - `hand.md` — balanced implementation agent for typical coding tasks
+  - `finger.md` — ultra-light implementation agent for tiny, local changes
   - `async-scout.chain.md`
   - `async-implement-review.chain.md`
 - `APPEND_SYSTEM.md` — global system-prompt append content
@@ -44,7 +47,7 @@ That loads the package resources declared in `package.json`:
 - prompts
 - themes
 
-If you also want the global `APPEND_SYSTEM.md` and pi-subagents chains from this repo, clone it and run the link installer:
+If you also want the global `APPEND_SYSTEM.md` and pi-subagents agents/chains from this repo, clone it and run the link installer:
 
 ```bash
 git clone git@github.com:YOUR_USER/cy-pi.git ~/cy-pi
@@ -137,4 +140,4 @@ pi install git:github.com/YOUR_USER/cy-pi@v0.1.0
 
 ## Notes
 
-Pi packages currently auto-discover extensions, skills, prompt templates, and themes. The `agents/` chain files and top-level `APPEND_SYSTEM.md` are kept here for portability, but need to be linked or copied into the standard pi locations by `scripts/install-local-links.sh`.
+Pi packages currently auto-discover extensions, skills, prompt templates, and themes. The `agents/` custom agent/chain files and top-level `APPEND_SYSTEM.md` are kept here for portability, but need to be linked or copied into the standard pi locations by `scripts/install-local-links.sh`.
