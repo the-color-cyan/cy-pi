@@ -1,0 +1,24 @@
+extensions/branch.ts
+  cec51af416a5a3ae 1-248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "78e482131eb624cb9b3a7b28498384a28f4e228d",
+  "prompts": {
+    "cec51af416a5a3ae": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd5f4-9b07-7738-8513-9ef56a371050",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 262,
+      "total_deletions": 14,
+      "accepted_lines": 248,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/b196f54862f3aace79e53eb7abb683b09f6767a0f0b65a7929e3ced396138d10"
+    }
+  }
+}
