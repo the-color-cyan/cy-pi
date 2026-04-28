@@ -54,4 +54,4 @@ Relevant global resources:
 
 ## Portable pi extension habit
 
-When creating or modifying pi extensions, keep them in this `pi-agent` repo's `extensions/` directory and run `scripts/install-local-links.sh` so local global discovery points at the portable repo copy.
+When creating or modifying pi extensions, keep them in this `cy-pi` repo's `extensions/` directory and run `scripts/install-local-links.sh` so local global discovery points at the portable repo copy.

@@ -1,4 +1,4 @@
-# pi-agent
+# cy-pi
 
 Portable pi agent resources for cyan.
 
@@ -7,6 +7,8 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 ## Contents
 
 - `extensions/` — pi TypeScript extensions
+  - `cd.ts` — adds `/cd <path>` to migrate the active session to a new working directory
+  - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
   - `git-ai.ts`
   - `subagent-handoff.ts`
   - `think.ts` — adds `/think <level>` for quick thinking-level changes
@@ -22,6 +24,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 - `APPEND_SYSTEM.md` — global system-prompt append content
 - `SUBAGENTS_ASYNC_PLAYBOOK.md` — async subagent reference used by the global instructions
 - `settings.example.json` — portable example settings, with secrets/runtime state removed
+- `commit-message-prompt.md` — default global prompt for `/commit-message`
 
 Not included: `auth.json`, sessions, run history, caches, or API keys.
 
@@ -30,7 +33,7 @@ Not included: `auth.json`, sessions, run history, caches, or API keys.
 After you create a remote, install the pi package with a pinned ref:
 
 ```bash
-pi install git:github.com/YOUR_USER/pi-agent@v0.1.0
+pi install git:github.com/YOUR_USER/cy-pi@v0.1.0
 ```
 
 That loads the package resources declared in `package.json`:
@@ -43,8 +46,8 @@ That loads the package resources declared in `package.json`:
 If you also want the global `APPEND_SYSTEM.md` and pi-subagents chains from this repo, clone it and run the link installer:
 
 ```bash
-git clone git@github.com:YOUR_USER/pi-agent.git ~/pi-agent
-cd ~/pi-agent
+git clone git@github.com:YOUR_USER/cy-pi.git ~/cy-pi
+cd ~/cy-pi
 ./scripts/install-local-links.sh
 ```
 
@@ -70,6 +73,22 @@ If you do not want to use `pi install` locally, direct global symlinks still wor
 ```bash
 ./scripts/install-local-links.sh --package-resources
 ```
+
+## commit-message extension
+
+`/commit-message` uses the active pi model to generate a commit message from staged changes. If nothing is staged, it falls back to the working tree diff. The generated message is copied to the clipboard and lazygit is launched in the repo when available.
+
+The generated message is installed as a temporary `git commit.template` for that lazygit process, so lazygit's commit-with-editor action (`C` by default) opens an editor prefilled with it. For lazygit's inline commit box (`c`), paste from the clipboard. If lazygit is unavailable or pi is not running with an interactive TUI, the command falls back to the clipboard/display flow.
+
+Use `/commit-message --clipboard-only` (aliases: `--clipboard`, `--no-lazygit`, `--no-lg`) to skip lazygit and only copy/show the generated message.
+
+Prompt lookup order:
+
+1. Repo override: `<git-root>/.pi/commit-message-prompt.md`
+2. Global prompt: `~/.pi/agent/commit-message-prompt.md`
+3. Built-in fallback prompt inside the extension
+
+This repo's `commit-message-prompt.md` can be linked to the global location with `./scripts/install-local-links.sh`.
 
 ## git-ai extension
 

@@ -97,8 +97,8 @@ repo_appears_installed_package() {
     fi
     # Git/npm installs resolve to pi's package cache rather than this checkout.
     # The installed directory normally keeps the package.json name as the final
-    # path segment, so treat an installed pi-agent package as equivalent.
-    if printf '%s\n' "$package_list" | grep -E -q '(^|/)pi-agent($|[[:space:]])'; then
+    # path segment, so treat an installed cy-pi package as equivalent.
+    if printf '%s\n' "$package_list" | grep -E -q '(^|/)cy-pi($|[[:space:]])'; then
       return 0
     fi
   fi
@@ -181,5 +181,6 @@ done
 # Global prompt/context files.
 link_one "$repo_root/APPEND_SYSTEM.md" "$HOME/.pi/agent/APPEND_SYSTEM.md"
 link_one "$repo_root/SUBAGENTS_ASYNC_PLAYBOOK.md" "$HOME/.pi/agent/SUBAGENTS_ASYNC_PLAYBOOK.md"
+link_one "$repo_root/commit-message-prompt.md" "$HOME/.pi/agent/commit-message-prompt.md"
 
 echo "Done. Run /reload in pi or restart pi to pick up changes."

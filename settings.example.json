@@ -3,7 +3,7 @@
   "defaultModel": "gpt-5.5",
   "defaultThinkingLevel": "xhigh",
   "packages": [
-    "git:github.com:YOUR_USER/pi-agent@v0.1.0",
+    "git:github.com:YOUR_USER/cy-pi@v0.1.0",
     "npm:@zenobius/pi-rose-pine",
     "npm:pi-subagents",
     "npm:pi-web-access",

@@ -1,5 +1,5 @@
 {
-  "name": "pi-agent",
+  "name": "cy-pi",
   "version": "0.1.0",
   "private": true,
   "description": "Portable pi agent resources for Cyan.",
@@ -11,6 +11,7 @@
     "AGENTS.md",
     "APPEND_SYSTEM.md",
     "SUBAGENTS_ASYNC_PLAYBOOK.md",
+    "commit-message-prompt.md",
     "agents",
     "extensions",
     "prompts",
