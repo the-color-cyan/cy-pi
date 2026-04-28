@@ -1,0 +1,25 @@
+extensions/sh.ts
+  811c0775398c010f 5,8,17,67,87,104,107,113,116
+README.md
+  811c0775398c010f 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8e96d9cea319e93775b95836454698c583196f96",
+  "prompts": {
+    "811c0775398c010f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd463-948b-728a-9c62-9c5c370a71cb",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 148,
+      "total_deletions": 148,
+      "accepted_lines": 139,
+      "overriden_lines": 0
+    }
+  }
+}
