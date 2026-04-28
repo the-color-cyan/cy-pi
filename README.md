@@ -23,7 +23,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `async-implement-review.chain.md`
 - `APPEND_SYSTEM.md` — global system-prompt append content
 - `SUBAGENTS_ASYNC_PLAYBOOK.md` — async subagent reference used by the global instructions
-- `settings.example.json` — portable example settings, with secrets/runtime state removed
+- `settings.example.json` — portable example settings, including non-custom package sources, with secrets/runtime state removed
 - `commit-message-prompt.md` — default global prompt for `/commit-message`
 
 Not included: `auth.json`, sessions, run history, caches, or API keys.
@@ -102,7 +102,7 @@ when set. Otherwise it uses `~/.git-ai/bin/git-ai` if present, then falls back t
 
 Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
-## Settings
+## Settings and package sync
 
 Use `settings.example.json` as a starting point only. Copy relevant parts into:
 
@@ -116,7 +116,23 @@ or project-local:
 .pi/settings.json
 ```
 
-Replace the placeholder package source with your actual remote, preferably pinned to a tag.
+The `packages` list tracks non-custom pi packages to install alongside this repo's custom resources:
+
+- `npm:@zenobius/pi-rose-pine`
+- `npm:pi-subagents`
+- `npm:pi-web-access`
+
+To install those packages into the local global pi install, run:
+
+```bash
+./scripts/install-packages.sh
+```
+
+Install this repo itself separately with your actual remote, preferably pinned to a tag:
+
+```bash
+pi install git:github.com/YOUR_USER/cy-pi@v0.1.0
+```
 
 ## Notes
 
