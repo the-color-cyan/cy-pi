@@ -68,7 +68,7 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			ctx.ui.notify(`Thinking level set to ${actual}.`, "success");
+			ctx.ui.notify(`Thinking level set to ${actual}.`, "info");
 		},
 	});
 }
