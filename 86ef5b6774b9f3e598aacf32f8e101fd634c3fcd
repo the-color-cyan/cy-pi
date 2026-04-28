@@ -1,0 +1,30 @@
+agents/finger.md
+  5be18b6b03541823 1-30
+README.md
+  5be18b6b03541823 22-25,50,143
+agents/arm.md
+  5be18b6b03541823 1-36
+agents/hand.md
+  5be18b6b03541823 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "86ef5b6774b9f3e598aacf32f8e101fd634c3fcd",
+  "prompts": {
+    "5be18b6b03541823": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd4b6-c705-7447-b6ea-850493ede4ad",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 107,
+      "total_deletions": 3,
+      "accepted_lines": 107,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/687552b2734eda572d391aaaf747e7c91e9d842fdd5b675a592a2045e8ddc955"
+    }
+  }
+}
