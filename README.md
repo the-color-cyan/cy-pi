@@ -8,6 +8,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 
 - `extensions/` — pi TypeScript extensions
   - `cd.ts` — adds `/cd <path>` to migrate the active session to a new working directory
+  - `cmd.ts` — adds `/cmd <command>` to run a shell command in pi's current working directory
   - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
   - `git-ai.ts`
   - `subagent-handoff.ts`
