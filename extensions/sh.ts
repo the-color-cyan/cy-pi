@@ -2,10 +2,10 @@ import { homedir } from "node:os";
 import { Box, Text } from "@mariozechner/pi-tui";
 import { createBashToolDefinition, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
-const CUSTOM_TYPE = "cmd-result";
+const CUSTOM_TYPE = "sh-result";
 const PREVIEW_LINES = 24;
 
-type CmdResultDetails = {
+type ShResultDetails = {
 	command: string;
 	cwd: string;
 	ok: boolean;
@@ -14,7 +14,7 @@ type CmdResultDetails = {
 };
 
 function usage(cwd: string): string {
-	return `Current directory: ${displayPath(cwd)}\nUsage: /cmd <command>`;
+	return `Current directory: ${displayPath(cwd)}\nUsage: /sh <command>`;
 }
 
 function displayPath(path: string): string {
@@ -64,7 +64,7 @@ function formatDuration(ms: number): string {
 
 export default function (pi: ExtensionAPI) {
 	pi.registerMessageRenderer(CUSTOM_TYPE, (message, { expanded }, theme) => {
-		const details = message.details as CmdResultDetails | undefined;
+		const details = message.details as ShResultDetails | undefined;
 		const command = details?.command ?? "";
 		const cwd = details?.cwd ?? "";
 		const ok = details?.ok ?? true;
@@ -84,7 +84,7 @@ export default function (pi: ExtensionAPI) {
 		return box;
 	});
 
-	pi.registerCommand("cmd", {
+	pi.registerCommand("sh", {
 		description: "Run a shell command in pi's current working directory",
 		handler: async (args, ctx) => {
 			const command = args.trim();
@@ -101,19 +101,19 @@ export default function (pi: ExtensionAPI) {
 			let ok = true;
 			let output = "";
 
-			ctx.ui.setStatus("cmd", `$ ${displayCommand(command)}`);
+			ctx.ui.setStatus("sh", `$ ${displayCommand(command)}`);
 			try {
 				const bash = createBashToolDefinition(ctx.cwd);
-				const result = await bash.execute(`cmd-${startedAt}`, { command }, undefined, undefined, ctx);
+				const result = await bash.execute(`sh-${startedAt}`, { command }, undefined, undefined, ctx);
 				output = textFromContent(result.content);
 			} catch (error) {
 				ok = false;
 				output = error instanceof Error ? error.message : String(error);
 			} finally {
-				ctx.ui.setStatus("cmd", undefined);
+				ctx.ui.setStatus("sh", undefined);
 			}
 
-			const details: CmdResultDetails = {
+			const details: ShResultDetails = {
 				command,
 				cwd: ctx.cwd,
 				ok,
