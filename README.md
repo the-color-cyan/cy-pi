@@ -56,11 +56,15 @@ cd ~/cy-pi
 ./scripts/install-local-links.sh
 ```
 
-When this repo is already installed with `pi install`, the link installer intentionally removes repo-owned global extension/skill symlinks and lets pi package discovery load those resources. This avoids duplicate skill or command conflicts. To force a mode explicitly, use `./scripts/install-local-links.sh --no-package-resources` after `pi install`, or `./scripts/install-local-links.sh --package-resources` when you are not using `pi install` and want direct global symlinks.
+When this repo is already installed with `pi install`, the link installer intentionally removes repo-owned global extension/skill symlinks and lets pi package discovery load those resources. This avoids duplicate skill or command conflicts.
 
-If you temporarily force extension/skill symlinks for testing with `--package-resources`, remove them when testing is done:
+For local development, prefer `./scripts/use-local-package.sh`, which replaces the installed package entry with a local path to this checkout and links only non-package resources.
+
+If you temporarily force extension/skill symlinks for testing (conflict-prone), use `--force-package-resources`, then remove them afterward:
 
 ```bash
+./scripts/install-local-links.sh --force-package-resources
+# ... test ...
 ./scripts/install-local-links.sh --no-package-resources
 ```
 
@@ -68,24 +72,21 @@ Then run `/reload` in pi or restart pi. Leaving both package-loaded resources an
 
 ## Local install while developing
 
-From this checkout:
+The recommended way to develop this repo locally is to point pi settings at this checkout as a local package, so pi loads extensions/skills directly without symlinks. Then link the non-package resources (agents, global prompts):
 
 ```bash
-pi install "$(pwd)"
+./scripts/use-local-package.sh
 ```
 
-If you install this checkout as a local package, run the link script for the non-package resources:
+This updates `~/.pi/agent/settings.json` to use this checkout as a package and runs `./scripts/install-local-links.sh --no-package-resources` for the rest. Run `/reload` in pi or restart pi to pick up changes.
+
+If you temporarily need direct global symlinks for testing (conflict-prone), use:
 
 ```bash
-pi install "$(pwd)"
-./scripts/install-local-links.sh
+./scripts/install-local-links.sh --force-package-resources
 ```
 
-If you do not want to use `pi install` locally, direct global symlinks still work:
-
-```bash
-./scripts/install-local-links.sh --package-resources
-```
+Remember to clean them up afterward with `./scripts/install-local-links.sh --no-package-resources`.
 
 ## commit-message extension
 

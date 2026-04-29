@@ -4,10 +4,11 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 timestamp="$(date +%Y%m%d%H%M%S)"
 package_resource_mode="auto"
+force_package_resources="no"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/install-local-links.sh [--package-resources|--no-package-resources]
+Usage: scripts/install-local-links.sh [--package-resources|--force-package-resources|--no-package-resources]
 
 By default, package resources (extensions, skills, prompts, themes) are linked only
 when this checkout does not appear to be installed as a pi package. If it is
@@ -15,8 +16,11 @@ installed via `pi install`, those repo-owned links are removed to avoid duplicat
 resource/skill conflicts. Non-package resources are always linked.
 
 Options:
-  --package-resources     Force linking extensions/skills for direct local discovery
-  --no-package-resources  Remove repo-owned extension/skill links; use pi package loading
+  --package-resources       Link extensions/skills for direct local discovery.
+                            Refused if a cy-pi package is already installed to avoid conflicts.
+                            For normal local dev, prefer scripts/use-local-package.sh instead.
+  --force-package-resources Force linking even if cy-pi is already installed (conflict-prone).
+  --no-package-resources    Remove repo-owned extension/skill links; use pi package loading.
   -h, --help              Show this help
 EOF
 }
@@ -25,6 +29,9 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --package-resources)
       package_resource_mode="yes"
+      ;;
+    --force-package-resources)
+      force_package_resources="yes"
       ;;
     --no-package-resources)
       package_resource_mode="no"
@@ -136,7 +143,15 @@ PY
 }
 
 link_package_resources="yes"
-if [ "$package_resource_mode" = "yes" ]; then
+if [ "$force_package_resources" = "yes" ]; then
+  link_package_resources="yes"
+elif [ "$package_resource_mode" = "yes" ]; then
+  if repo_appears_installed_package; then
+    echo "error: This repo appears installed as a pi package, so --package-resources would cause duplicate conflicts." >&2
+    echo "       Use scripts/use-local-package.sh for local development (loads this checkout as a local pi package)." >&2
+    echo "       Or pass --force-package-resources to override (conflict-prone)." >&2
+    exit 1
+  fi
   link_package_resources="yes"
 elif [ "$package_resource_mode" = "no" ]; then
   link_package_resources="no"
