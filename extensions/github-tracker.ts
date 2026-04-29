@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
@@ -6,11 +7,13 @@ import { Type } from "typebox";
 
 const CONFIG_VERSION = 1;
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "github-tracker.json");
+const RUNS_DIR = join(homedir(), ".pi", "agent", "github-tracker-runs");
 const STAGES = ["backlog", "planned", "in-progress", "review", "blocked", "done"] as const;
 const STAGE_LABELS = STAGES.map((stage) => `stage:${stage}`);
 
 type Stage = (typeof STAGES)[number];
-type RepoConfig = { enabled: boolean; activeIssue?: number };
+type WorkerRun = { issue: number; pid: number; startedAt: string; runDir: string; logPath: string; sessionDir: string };
+type RepoConfig = { enabled: boolean; activeIssue?: number; lastRun?: WorkerRun };
 type Config = { version: 1; repos: Record<string, RepoConfig> };
 type CommandResult = { ok: boolean; text: string; details?: unknown };
 
@@ -166,6 +169,26 @@ function clearActiveIssue(root: string) {
 	saveConfig(config);
 }
 
+function setLastRun(root: string, run: WorkerRun) {
+	const config = loadConfig();
+	config.repos[root] = { ...(config.repos[root] ?? { enabled: false }), lastRun: run };
+	saveConfig(config);
+}
+
+function isProcessAlive(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function truncateForPrompt(text: string, maxChars = 24_000): string {
+	if (text.length <= maxChars) return text;
+	return `${text.slice(0, maxChars)}\n\n... truncated ${text.length - maxChars} characters ...`;
+}
+
 async function workflowAction(pi: ExtensionAPI, ctx: ExtensionContext, action: GithubWorkflowParams["action"]): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
@@ -288,6 +311,97 @@ async function closeIssue(pi: ExtensionAPI, root: string, number?: number): Prom
 	return { ok: true, text: result.stdout.trim() || `Closed issue #${number}.` };
 }
 
+function buildWorkerPrompt(issueNumber: number, issueText: string, extraInstructions?: string): string {
+	return [
+		`Autonomously work on GitHub issue #${issueNumber} in this repository.`,
+		"",
+		"Workflow:",
+		"1. Treat the issue below as the source of truth and inspect the repo as needed.",
+		"2. Keep changes focused on this issue.",
+		"3. Run relevant validation commands.",
+		"4. Comment on the issue with progress, blockers, and the validation result.",
+		"5. When the change is ready for human review, move the issue to stage:review with github_work review.",
+		"6. Do not close the issue unless the user explicitly requested closure.",
+		"7. Do not spawn another background worker from this worker.",
+		extraInstructions?.trim() ? `\nExtra user instructions:\n${extraInstructions.trim()}` : undefined,
+		"",
+		"Current issue snapshot:",
+		truncateForPrompt(issueText),
+	].filter((part): part is string => typeof part === "string").join("\n");
+}
+
+function spawnPiWorker(root: string, issueNumber: number, prompt: string): WorkerRun {
+	const startedAt = new Date().toISOString();
+	const safeRoot = root.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "repo";
+	const runDir = join(RUNS_DIR, `${safeRoot}-issue-${issueNumber}-${startedAt.replace(/[:.]/g, "-")}`);
+	const sessionDir = join(runDir, "sessions");
+	const logPath = join(runDir, "worker.log");
+	mkdirSync(sessionDir, { recursive: true });
+
+	const piBin = process.env.PI_BIN?.trim() || "pi";
+	const args = ["--session-dir", sessionDir, "-p", prompt];
+	const logFd = openSync(logPath, "a");
+	writeSync(logFd, [
+		`# GitHub tracker worker`,
+		`startedAt=${startedAt}`,
+		`cwd=${root}`,
+		`issue=#${issueNumber}`,
+		`command=${piBin} ${args.slice(0, 3).join(" ")} <prompt>`,
+		"",
+	].join("\n"));
+
+	try {
+		const child = spawn(piBin, args, {
+			cwd: root,
+			detached: true,
+			stdio: ["ignore", logFd, logFd],
+			env: { ...process.env, PI_GITHUB_TRACKER_WORKER: "1", PI_GITHUB_TRACKER_ISSUE: String(issueNumber) },
+		});
+		child.unref();
+		if (!child.pid) throw new Error("pi worker did not report a PID");
+		return { issue: issueNumber, pid: child.pid, startedAt, runDir, logPath, sessionDir };
+	} finally {
+		closeSync(logFd);
+	}
+}
+
+async function spawnWorkAction(pi: ExtensionAPI, ctx: ExtensionContext, number?: number, extraInstructions?: string): Promise<CommandResult> {
+	const root = await getRepoRoot(pi, ctx.cwd);
+	if (!root) return { ok: false, text: "Not inside a git repository." };
+
+	const repoConfig = getRepoConfig(root);
+	if (!repoConfig.enabled) return { ok: false, text: "GitHub tracking is disabled for this repo. Run /gh-track enable first." };
+
+	const issueNumber = number ?? getActiveIssue(root);
+	if (!issueNumber) return { ok: false, text: "Issue number is required, or start an active issue first with /gh-work start <number>." };
+
+	setActiveIssue(root, issueNumber);
+	const view = await viewIssue(pi, root, issueNumber);
+	if (!view.ok) return view;
+
+	const stage = await setIssueStage(pi, root, issueNumber, "in-progress");
+	if (!stage.ok) return stage;
+
+	const prompt = buildWorkerPrompt(issueNumber, view.text, extraInstructions);
+	try {
+		const run = spawnPiWorker(root, issueNumber, prompt);
+		setLastRun(root, run);
+		return {
+			ok: true,
+			text: [
+				`Spawned async pi worker for issue #${issueNumber}.`,
+				`PID: ${run.pid}`,
+				`Log: ${run.logPath}`,
+				`Session dir: ${run.sessionDir}`,
+				stage.text,
+			].join("\n"),
+			details: run,
+		};
+	} catch (error) {
+		return { ok: false, text: `Failed to spawn pi worker: ${error instanceof Error ? error.message : String(error)}` };
+	}
+}
+
 async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: GithubWorkParams): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
@@ -298,12 +412,15 @@ async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: Githu
 	switch (params.action) {
 		case "status": {
 			const ghRepo = await getGhRepo(pi, root);
+			const lastRun = repoConfig.lastRun;
 			const lines = [
 				`Repo: ${root}`,
 				`Tracking: ${repoConfig.enabled ? "enabled" : "disabled"}`,
 				`Active issue: ${activeIssue !== undefined ? `#${activeIssue}` : "none"}`,
 				ghRepo ? `GitHub repo: ${ghRepo}` : "GitHub repo: unavailable",
-			];
+				lastRun ? `Last worker: issue #${lastRun.issue}, pid ${lastRun.pid} (${isProcessAlive(lastRun.pid) ? "running" : "not running"})` : undefined,
+				lastRun ? `Last worker log: ${lastRun.logPath}` : undefined,
+			].filter((line): line is string => typeof line === "string");
 			return { ok: true, text: lines.join("\n") };
 		}
 
@@ -407,6 +524,7 @@ function helpText(): string {
 		"/gh-issue close <number>",
 		"/gh-work status",
 		"/gh-work start <number>",
+		"/gh-work do|run|spawn [number] [extra instructions]  # spawn async pi worker",
 		"/gh-work stop",
 		"/gh-work review",
 		"/gh-work done [--close]",
@@ -537,7 +655,7 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("gh-work", {
-		description: "Start, stop, review, or finish work on the active GitHub issue",
+		description: "Start, stop, spawn, review, or finish work on the active GitHub issue",
 		handler: async (args, ctx) => {
 			const [action = "status", ...rest] = splitArgs(args);
 			let result: CommandResult;
@@ -548,6 +666,15 @@ export default function (pi: ExtensionAPI) {
 				case "start":
 					result = await workAction(pi, ctx, { action: "start", number: Number(rest[0]) });
 					break;
+				case "do":
+				case "run":
+				case "spawn": {
+					const hasIssueNumber = /^\d+$/.test(rest[0] ?? "");
+					const number = hasIssueNumber ? Number(rest[0]) : undefined;
+					const extraInstructions = (hasIssueNumber ? rest.slice(1) : rest).join(" ");
+					result = await spawnWorkAction(pi, ctx, number, extraInstructions);
+					break;
+				}
 				case "stop":
 					result = await workAction(pi, ctx, { action: "stop" });
 					break;
