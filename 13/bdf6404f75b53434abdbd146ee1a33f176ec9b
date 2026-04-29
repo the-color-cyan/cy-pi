@@ -1,0 +1,23 @@
+extensions/subagent-handoff.ts
+  37409ee5848c4877 301-334,340-369,376-379,446-447,450-452,455
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "13bdf6404f75b53434abdbd146ee1a33f176ec9b",
+  "prompts": {
+    "37409ee5848c4877": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd796-b4b9-7470-bd5c-386520b08a72",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 74,
+      "total_deletions": 13,
+      "accepted_lines": 74,
+      "overriden_lines": 0
+    }
+  }
+}
