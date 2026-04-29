@@ -1,0 +1,23 @@
+extensions/github-tracker.ts
+  fe616f1a8d6531fa 1-375
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "8db301f9a077981f5aa58fbc8d55175338c4122f",
+  "prompts": {
+    "fe616f1a8d6531fa": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd4dd-c0bb-7228-a63e-0de105864fb4",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 375,
+      "overriden_lines": 0
+    }
+  }
+}
