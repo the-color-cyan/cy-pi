@@ -227,19 +227,19 @@ export default function (pi: ExtensionAPI) {
 			try {
 				if (kind === "local") {
 					await git(pi, ctx.cwd, ["switch", branch]);
-					ctx.ui.notify(`Switched to branch ${branch}.`, "success");
+					ctx.ui.notify(`Switched to branch ${branch}.`, "info");
 					return;
 				}
 
 				const localName = localFromRemote(branch);
 				if (catalog.localBranches.includes(localName)) {
 					await git(pi, ctx.cwd, ["switch", localName]);
-					ctx.ui.notify(`Switched to local branch ${localName}.`, "success");
+					ctx.ui.notify(`Switched to local branch ${localName}.`, "info");
 					return;
 				}
 
 				await git(pi, ctx.cwd, ["switch", "--track", "-c", localName, branch]);
-				ctx.ui.notify(`Created tracking branch ${localName} from ${branch}.`, "success");
+				ctx.ui.notify(`Created tracking branch ${localName} from ${branch}.`, "info");
 			} catch (error) {
 				ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
 			}
