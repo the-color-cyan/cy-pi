@@ -41,6 +41,39 @@ function loadAutoOpenMode(): AutoOpenMode {
 
 let autoOpenMode = loadAutoOpenMode();
 
+type SyncStrategy = "foreground" | "async-wait";
+
+function parseSyncStrategy(value: unknown): SyncStrategy {
+	if (value === "async-wait") return "async-wait";
+	return "foreground";
+}
+
+function loadSyncStrategy(): SyncStrategy {
+	const env = process.env.PI_SUBPANE_SYNC_STRATEGY;
+	if (env !== undefined) return parseSyncStrategy(env);
+	try {
+		const candidates = [
+			path.join(os.homedir(), ".pi", "agent", "settings.json"),
+			path.join(process.cwd(), ".pi", "settings.json"),
+		];
+		for (const candidate of candidates) {
+			if (!fs.existsSync(candidate)) continue;
+			const raw = fs.readFileSync(candidate, "utf-8");
+			const parsed = JSON.parse(raw) as Record<string, unknown>;
+			const subagentPane = parsed.subagentPane;
+			if (subagentPane && typeof subagentPane === "object") {
+				const syncStrategy = (subagentPane as Record<string, unknown>).syncStrategy;
+				if (syncStrategy !== undefined) return parseSyncStrategy(syncStrategy);
+			}
+		}
+	} catch {
+		// ignore config read errors
+	}
+	return "foreground";
+}
+
+let syncStrategy = loadSyncStrategy();
+
 type SubagentStatus = {
 	runId?: string;
 	state?: string;
@@ -91,6 +124,7 @@ const SUBPANE_ACTIONS: CompletionEntry[] = [
 	{ value: "smoke", description: "Alias for test" },
 	{ value: "off", description: "Alias for hide" },
 	{ value: "auto", description: "Configure auto-open: status, on, off, async, all" },
+	{ value: "sync", description: "Configure sync strategy: foreground, async-wait" },
 ];
 
 function uniqueExistingDirs(paths: string[]): string[] {
@@ -185,6 +219,48 @@ function readStatus(runDir: string): SubagentStatus | undefined {
 function resolveRunPath(runDir: string, maybePath: string | undefined): string | undefined {
 	if (!maybePath) return undefined;
 	return path.isAbsolute(maybePath) ? maybePath : path.join(runDir, maybePath);
+}
+
+function deriveResultPath(asyncDir: string, asyncId: string): string {
+	const runsDir = path.dirname(asyncDir);
+	const scopeDir = path.dirname(runsDir);
+	return path.join(scopeDir, "async-subagent-results", `${asyncId}.json`);
+}
+
+function buildFinalResult(payload: unknown, asyncId: string, asyncDir: string): { content: Array<{ type: "text"; text: string }>; details: Record<string, unknown>; isError?: boolean } {
+	const p = payload as {
+		success?: boolean;
+		state?: string;
+		summary?: string;
+		mode?: string;
+		results?: Array<{ agent?: string; output?: string; success?: boolean }>;
+		errorText?: string;
+	} | undefined;
+
+	if (p?.summary) {
+		const text = `## Subagent result\n\n${p.summary}`;
+		const results = (p.results ?? []).map((r) => ({
+			agent: r.agent ?? "subagent",
+			task: r.output ?? "",
+			exitCode: r.success === false ? 1 : 0,
+			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, turns: 0 },
+			messages: [],
+		}));
+		return {
+			content: [{ type: "text", text }],
+			details: { mode: p.mode ?? "single", results },
+			isError: p.success === false || p.state === "failed",
+		};
+	}
+
+	const logPath = path.join(asyncDir, `subagent-log-${asyncId}.md`);
+	const logTail = tailFileLines(logPath, 50).join("\n");
+	const text = logTail || `Async subagent ${asyncId} completed.`;
+	return {
+		content: [{ type: "text", text: `## Subagent result\n\n${text}` }],
+		details: { mode: p?.mode ?? "single", results: [] },
+		isError: p?.state === "failed" || p?.success === false,
+	};
 }
 
 function formatDuration(ms: number): string {
@@ -470,6 +546,12 @@ const AUTO_SUBCOMMANDS: CompletionEntry[] = [
 	{ value: "all", description: "Auto-open pane for all runs" },
 ];
 
+const SYNC_SUBCOMMANDS: CompletionEntry[] = [
+	{ value: "status", description: "Show current sync strategy" },
+	{ value: "foreground", description: "Keep sync subagents in foreground" },
+	{ value: "async-wait", description: "Launch sync subagents as async and wait" },
+];
+
 function completeSubpaneArgs(argumentPrefix: string): AutocompleteItem[] | null {
 	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
 	if (tokens.length === 0 || (tokens.length === 1 && !endsWithSpace)) {
@@ -486,6 +568,9 @@ function completeSubpaneArgs(argumentPrefix: string): AutocompleteItem[] | null 
 	}
 	if (action === "auto" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
 		return completionItems(AUTO_SUBCOMMANDS, current, "auto");
+	}
+	if (action === "sync" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
+		return completionItems(SYNC_SUBCOMMANDS, current, "sync");
 	}
 
 	return null;
@@ -559,6 +644,9 @@ export default function (pi: ExtensionAPI) {
 	let latestCtx: ExtensionContext | undefined;
 	const liveRuns = new Map<string, LiveRun>();
 	let shownRunId: string | undefined;
+	const asyncCompletions = new Map<string, unknown>();
+	const coercedToolCallIds = new Set<string>();
+	const coercedWaits = new Map<string, { resolve: (r: unknown) => void; reject: (e: unknown) => void }>();
 
 	const handleAsyncStarted = (payload: unknown) => {
 		if (autoOpenMode !== "async" && autoOpenMode !== "all") return;
@@ -570,6 +658,15 @@ export default function (pi: ExtensionAPI) {
 		showPane(latestCtx, runDir);
 	};
 	const unsubAsyncStarted = pi.events.on("subagent:async-started", handleAsyncStarted);
+
+	const unsubAsyncComplete = pi.events.on("subagent:async-complete", (payload: unknown) => {
+		const p = payload as { id?: string; runId?: string } | undefined;
+		const id = p?.runId ?? p?.id;
+		if (!id) return;
+		asyncCompletions.set(id, payload);
+		const wait = coercedWaits.get(id);
+		if (wait) wait.resolve(payload);
+	});
 
 	const hidePane = (): boolean => {
 		const state = paneState;
@@ -718,6 +815,97 @@ export default function (pi: ExtensionAPI) {
 		run.updatedAt = Date.now();
 	});
 
+	pi.on("tool_call", (event) => {
+		if (event.toolName !== "subagent") return;
+		if (syncStrategy !== "async-wait") return;
+		const input = event.input as Record<string, unknown> | undefined;
+		if (!input || typeof input !== "object") return;
+		if ("action" in input) return;
+		if (input.async === true) return;
+		const hasExec = Boolean(input.agent || input.chain || input.tasks);
+		if (!hasExec) return;
+		input.async = true;
+		input.clarify = false;
+		coercedToolCallIds.add(event.toolCallId);
+	});
+
+	pi.on("tool_result", async (event, ctx) => {
+		if (event.toolName !== "subagent") return;
+		if (syncStrategy !== "async-wait") return;
+		if (!coercedToolCallIds.has(event.toolCallId)) return;
+		const details = (event.details as { asyncId?: string; asyncDir?: string; mode?: string } | undefined);
+		const asyncId = details?.asyncId;
+		const asyncDir = details?.asyncDir;
+		if (!asyncId || !asyncDir) {
+			coercedToolCallIds.delete(event.toolCallId);
+			return;
+		}
+
+		const existing = asyncCompletions.get(asyncId);
+		if (existing) {
+			coercedToolCallIds.delete(event.toolCallId);
+			return buildFinalResult(existing, asyncId, asyncDir);
+		}
+
+		if (ctx.signal?.aborted) {
+			coercedToolCallIds.delete(event.toolCallId);
+			return undefined;
+		}
+
+		let resolveFn: (r: unknown) => void;
+		let rejectFn: (e: unknown) => void;
+		const abortSentinel = { aborted: true };
+		const promise = new Promise<unknown>((res, rej) => { resolveFn = res; rejectFn = rej; });
+		const abortListener = () => resolveFn(abortSentinel);
+		ctx.signal?.addEventListener("abort", abortListener, { once: true });
+		coercedWaits.set(asyncId, { resolve: resolveFn!, reject: rejectFn! });
+
+		const pollInterval = setInterval(() => {
+			if (!coercedWaits.has(asyncId)) { clearInterval(pollInterval); return; }
+			const status = readStatus(asyncDir);
+			if (status && (status.state === "complete" || status.state === "failed" || status.state === "paused")) {
+				clearInterval(pollInterval);
+				const resultPath = deriveResultPath(asyncDir, asyncId);
+				if (fs.existsSync(resultPath)) {
+					try {
+						const data = JSON.parse(fs.readFileSync(resultPath, "utf-8")) as unknown;
+						resolveFn(data);
+						return;
+					} catch {}
+				}
+				const logPath = path.join(asyncDir, `subagent-log-${asyncId}.md`);
+				const logTail = tailFileLines(logPath, 50).join("\n");
+				resolveFn({ summary: logTail || "Async run finished.", state: status.state, mode: details?.mode ?? "single", results: [] });
+			}
+		}, 500);
+
+		const timeout = setTimeout(() => {
+			if (coercedWaits.has(asyncId)) {
+				clearInterval(pollInterval);
+				coercedWaits.delete(asyncId);
+				rejectFn(new Error("Timeout waiting for async subagent completion."));
+			}
+		}, 30 * 60 * 1000);
+
+		try {
+			const payload = await promise;
+			if (payload === abortSentinel || ctx.signal?.aborted) return undefined;
+			return buildFinalResult(payload, asyncId, asyncDir);
+		} catch (error) {
+			if (ctx.signal?.aborted) return undefined;
+			return {
+				content: [{ type: "text", text: `Async subagent wait failed: ${error instanceof Error ? error.message : String(error)}` }],
+				isError: true,
+			};
+		} finally {
+			clearInterval(pollInterval);
+			clearTimeout(timeout);
+			ctx.signal?.removeEventListener("abort", abortListener);
+			coercedWaits.delete(asyncId);
+			coercedToolCallIds.delete(event.toolCallId);
+		}
+	});
+
 	async function handleSubpane(args: string, ctx: ExtensionContext) {
 		const [action = "latest", idOrPrefix] = args.trim() ? args.trim().split(/\s+/, 2) : ["latest", undefined];
 		if (["hide", "off"].includes(action)) {
@@ -755,6 +943,19 @@ export default function (pi: ExtensionAPI) {
 			}
 			return;
 		}
+		if (action === "sync") {
+			const sub = idOrPrefix?.toLowerCase();
+			if (sub === "async-wait") {
+				syncStrategy = "async-wait";
+				ctx.ui.notify("Sync strategy set to async-wait.", "info");
+			} else if (sub === "foreground") {
+				syncStrategy = "foreground";
+				ctx.ui.notify("Sync strategy set to foreground.", "info");
+			} else {
+				ctx.ui.notify(`Sync strategy is ${syncStrategy}.`, "info");
+			}
+			return;
+		}
 
 		const target = action === "latest" || action === "show" || action === "toggle"
 			? idOrPrefix
@@ -786,6 +987,7 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_shutdown", () => {
 		hidePane();
 		try { unsubAsyncStarted(); } catch { /* ignore */ }
+		try { unsubAsyncComplete(); } catch { /* ignore */ }
 	});
 
 	pi.registerCommand("subattach", {

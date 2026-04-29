@@ -135,7 +135,7 @@ When active, a small dashboard widget is rendered above the editor. All LLM-faci
 - `/subattach <id-or-prefix>` — switch into an async subagent run's session.
 - `/subattach-latest` — switch into the most recently updated async subagent run session.
 - `/subback` — return to the session active before `/subattach`.
-- `/subpane [latest|show <id>|<id>|hide|toggle|list|test|auto [on|off|async|all|status]]` — show a non-capturing top-right live pane for subagent runs.
+- `/subpane [latest|show <id>|<id>|hide|toggle|list|test|auto [on|off|async|all|status]|sync [foreground|async-wait|status]]` — show a non-capturing top-right live pane for subagent runs.
 - `/subagent-pane ...` — alias for `/subpane`.
 
 Use `/subpane test` to smoke-test the pane without launching a real subagent. It creates a simulated async run under the pi-subagents temp directory and updates it once per second until the pane is hidden. Smoke-test runs are labeled `smoke` in `/subpane list`; `/subpane latest` prefers real async runs over smoke-test runs.
@@ -147,6 +147,15 @@ Use `/subpane test` to smoke-test the pane without launching a real subagent. It
 - `/subpane auto off` — disable auto-open.
 
 To enable auto-open by default, add `"subagentPane": { "autoOpen": true }` (or `"all"`) to `~/.pi/agent/settings.json` (or set `PI_SUBPANE_AUTO_OPEN=true`/`all`). Use `"async"` or `PI_SUBPANE_AUTO_OPEN=async` for async-only. It is off by default.
+
+`/subpane sync` controls how foreground (sync) subagent tool calls behave:
+- `/subpane sync status` — show current strategy.
+- `/subpane sync foreground` — keep sync runs in foreground (default).
+- `/subpane sync async-wait` — launch sync runs as async and wait for completion.
+
+To set the default strategy, add `"subagentPane": { "syncStrategy": "foreground" }` to `~/.pi/agent/settings.json` (or set `PI_SUBPANE_SYNC_STRATEGY=foreground`/`async-wait`).
+
+For fully detached async by default without waiting, pi-subagents supports `asyncByDefault` and `forceTopLevelAsync` in `~/.pi/agent/extensions/subagent/config.json`.
 
 Tab completion is available for `/subpane`/`/subagent-pane` actions and run IDs, and `/subattach` completes async run IDs.
 

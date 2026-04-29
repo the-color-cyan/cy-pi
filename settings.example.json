@@ -23,7 +23,8 @@
     }
   },
   "subagentPane": {
-    "autoOpen": false
+    "autoOpen": false,
+    "syncStrategy": "foreground"
   },
   "hideThinkingBlock": false
 }
