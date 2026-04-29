@@ -58,6 +58,14 @@ cd ~/cy-pi
 
 When this repo is already installed with `pi install`, the link installer intentionally removes repo-owned global extension/skill symlinks and lets pi package discovery load those resources. This avoids duplicate skill or command conflicts. To force a mode explicitly, use `./scripts/install-local-links.sh --no-package-resources` after `pi install`, or `./scripts/install-local-links.sh --package-resources` when you are not using `pi install` and want direct global symlinks.
 
+If you temporarily force extension/skill symlinks for testing with `--package-resources`, remove them when testing is done:
+
+```bash
+./scripts/install-local-links.sh --no-package-resources
+```
+
+Then run `/reload` in pi or restart pi. Leaving both package-loaded resources and global symlinks active can create duplicate extension/skill conflicts.
+
 ## Local install while developing
 
 From this checkout:
