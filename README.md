@@ -138,6 +138,12 @@ When active, a small dashboard widget is rendered above the editor. All LLM-faci
 - `/subpane [latest|show <id>|<id>|hide|toggle|list|test|auto [on|off|async|all|status]|sync [foreground|async-wait|status]]` — show a non-capturing top-right live pane for subagent runs.
 - `/subagent-pane ...` — alias for `/subpane`.
 
+Hotkeys are registered for quick pane control:
+- `Ctrl+Alt+P` — toggle the pane (hide if visible, otherwise show latest run).
+- `Ctrl+Alt+H` — hide the pane.
+
+Customize or disable them with `"subagentPane": { "hotkeys": { "toggle": "ctrl+alt+p", "hide": "ctrl+alt+h", "show": false } }`; set any entry to `false`/`"off"` to disable it. The optional `show` hotkey opens the current foreground run when one is running, otherwise the latest async run.
+
 Use `/subpane test` to smoke-test the pane without launching a real subagent. It creates a simulated async run under the pi-subagents temp directory and updates it once per second until the pane is hidden. Smoke-test runs are labeled `smoke` in `/subpane list`; `/subpane latest` prefers real async runs over smoke-test runs.
 
 `/subpane auto` controls whether the pane automatically opens when a new subagent run starts:

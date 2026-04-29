@@ -2,8 +2,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
-import type { AutocompleteItem, Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
-import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import type { AutocompleteItem, Component, KeyId, OverlayHandle, TUI } from "@mariozechner/pi-tui";
+import { Key, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 
 let lastParentSessionFile: string | null = null;
 
@@ -73,6 +73,66 @@ function loadSyncStrategy(): SyncStrategy {
 }
 
 let syncStrategy = loadSyncStrategy();
+
+type SubpaneHotkeys = {
+	toggle: KeyId | false;
+	hide: KeyId | false;
+	show: KeyId | false;
+};
+
+const DEFAULT_SUBPANE_HOTKEYS: SubpaneHotkeys = {
+	toggle: Key.ctrlAlt("p"),
+	hide: Key.ctrlAlt("h"),
+	show: false,
+};
+
+function parseHotkey(value: unknown): KeyId | false | undefined {
+	if (value === false || value === null) return false;
+	if (typeof value !== "string") return undefined;
+	const trimmed = value.trim();
+	if (!trimmed) return false;
+	const lowered = trimmed.toLowerCase();
+	if (lowered === "off" || lowered === "false" || lowered === "none" || lowered === "disabled") return false;
+	return trimmed as KeyId;
+}
+
+function loadSubpaneHotkeys(): SubpaneHotkeys {
+	const hotkeys: SubpaneHotkeys = { ...DEFAULT_SUBPANE_HOTKEYS };
+	try {
+		const candidates = [
+			path.join(os.homedir(), ".pi", "agent", "settings.json"),
+			path.join(process.cwd(), ".pi", "settings.json"),
+		];
+		for (const candidate of candidates) {
+			if (!fs.existsSync(candidate)) continue;
+			const raw = fs.readFileSync(candidate, "utf-8");
+			const parsed = JSON.parse(raw) as Record<string, unknown>;
+			const subagentPane = parsed.subagentPane;
+			if (!subagentPane || typeof subagentPane !== "object") continue;
+			const configured = (subagentPane as Record<string, unknown>).hotkeys;
+			if (!configured || typeof configured !== "object") continue;
+			const record = configured as Record<string, unknown>;
+			for (const key of ["toggle", "hide", "show"] as const) {
+				const parsedHotkey = parseHotkey(record[key]);
+				if (parsedHotkey !== undefined) hotkeys[key] = parsedHotkey;
+			}
+		}
+	} catch {
+		// ignore config read errors
+	}
+	const envKeys: Array<[keyof SubpaneHotkeys, string | undefined]> = [
+		["toggle", process.env.PI_SUBPANE_TOGGLE_KEY],
+		["hide", process.env.PI_SUBPANE_HIDE_KEY],
+		["show", process.env.PI_SUBPANE_SHOW_KEY],
+	];
+	for (const [key, value] of envKeys) {
+		const parsedHotkey = parseHotkey(value);
+		if (parsedHotkey !== undefined) hotkeys[key] = parsedHotkey;
+	}
+	return hotkeys;
+}
+
+const subpaneHotkeys = loadSubpaneHotkeys();
 
 type SubagentStatus = {
 	runId?: string;
@@ -848,9 +908,17 @@ export default function (pi: ExtensionAPI) {
 		return true;
 	};
 
+	const latestRunningLiveRunId = (): string | undefined => {
+		let latest: LiveRun | undefined;
+		for (const run of liveRuns.values()) {
+			if (run.state !== "running") continue;
+			if (!latest || run.updatedAt > latest.updatedAt) latest = run;
+		}
+		return latest?.runId;
+	};
+
 	pi.on("tool_execution_start", (event, ctx) => {
 		if (event.toolName !== "subagent") return;
-		if (autoOpenMode !== "all") return;
 		const args = event.args as SubagentExecutionArgs | undefined;
 		if (!isSubagentExecutionArgs(args)) return;
 		const runId = event.toolCallId;
@@ -874,7 +942,7 @@ export default function (pi: ExtensionAPI) {
 		}
 		run.updatedAt = Date.now();
 		if (ctx.hasUI) latestCtx = ctx;
-		if (latestCtx?.hasUI && (shownRunId === run.runId || !shownRunId)) {
+		if (autoOpenMode === "all" && latestCtx?.hasUI && (shownRunId === run.runId || !shownRunId)) {
 			showForegroundPane(latestCtx, run.runId);
 		}
 	});
@@ -894,20 +962,18 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	const unsubSlashRequest = pi.events.on("subagent:slash:request", (payload: unknown) => {
-		if (autoOpenMode !== "all") return;
 		const request = payload as { requestId?: unknown; params?: unknown } | undefined;
 		if (typeof request?.requestId !== "string") return;
 		const args = request.params as SubagentExecutionArgs | undefined;
 		if (!isSubagentExecutionArgs(args)) return;
 		if (args.async === true) return;
 		liveRuns.set(request.requestId, createLiveRun(request.requestId, args));
-		if (latestCtx?.hasUI && (shownRunId === request.requestId || !shownRunId)) {
+		if (autoOpenMode === "all" && latestCtx?.hasUI && (shownRunId === request.requestId || !shownRunId)) {
 			showForegroundPane(latestCtx, request.requestId);
 		}
 	});
 
 	const unsubSlashUpdate = pi.events.on("subagent:slash:update", (payload: unknown) => {
-		if (autoOpenMode !== "all") return;
 		const update = payload as { requestId?: unknown; progress?: LiveRun["progress"]; currentTool?: string } | undefined;
 		if (typeof update?.requestId !== "string") return;
 		const run = liveRuns.get(update.requestId);
@@ -920,7 +986,7 @@ export default function (pi: ExtensionAPI) {
 			run.currentTool = update.currentTool;
 		}
 		run.updatedAt = Date.now();
-		if (latestCtx?.hasUI && (shownRunId === run.runId || !shownRunId)) {
+		if (autoOpenMode === "all" && latestCtx?.hasUI && (shownRunId === run.runId || !shownRunId)) {
 			showForegroundPane(latestCtx, run.runId);
 		}
 	});
@@ -1086,6 +1152,15 @@ export default function (pi: ExtensionAPI) {
 			: action;
 		let runDir: string | undefined;
 		if (!target) {
+			if (action !== "latest") {
+				const liveRunId = latestRunningLiveRunId();
+				if (liveRunId) {
+					const shown = showForegroundPane(ctx, liveRunId);
+					const hint = shown ? paneVisibilityHint() : undefined;
+					ctx.ui.notify(shown ? `Subagent pane shown for foreground run ${liveRunId.slice(0, 8)}.${hint ? ` ${hint}` : ""}` : "Subagent pane requires the interactive TUI.", hint ? "warning" : "info");
+					return;
+				}
+			}
 			runDir = findLatestRunDir();
 		} else {
 			const matches = findRunDirs(target);
@@ -1207,4 +1282,17 @@ export default function (pi: ExtensionAPI) {
 		getArgumentCompletions: completeSubpaneArgs,
 		handler: handleSubpane,
 	});
+
+	const registerSubpaneShortcut = (key: KeyId | false, description: string, action: string) => {
+		if (!key) return;
+		pi.registerShortcut(key, {
+			description,
+			handler: async (ctx) => {
+				await handleSubpane(action, ctx);
+			},
+		});
+	};
+	registerSubpaneShortcut(subpaneHotkeys.toggle, "Toggle subagent pane", "toggle");
+	registerSubpaneShortcut(subpaneHotkeys.hide, "Hide subagent pane", "hide");
+	registerSubpaneShortcut(subpaneHotkeys.show, "Show subagent pane", "show");
 }

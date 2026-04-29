@@ -24,7 +24,12 @@
   },
   "subagentPane": {
     "autoOpen": false,
-    "syncStrategy": "foreground"
+    "syncStrategy": "foreground",
+    "hotkeys": {
+      "toggle": "ctrl+alt+p",
+      "hide": "ctrl+alt+h",
+      "show": false
+    }
   },
   "hideThinkingBlock": false
 }
