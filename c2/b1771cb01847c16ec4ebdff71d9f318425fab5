@@ -1,0 +1,44 @@
+scripts/install-local-links.sh
+  fe616f1a8d6531fa 19-21,23
+  45af3a724687fb8d 7,11,22,33-35,146-154
+AGENTS.md
+  45af3a724687fb8d 8-10
+scripts/use-local-package.sh
+  45af3a724687fb8d 1-7,18,35,40-45,48-51,71-74,83-84,95-97,102-104,111-113,116
+  fe616f1a8d6531fa 8-17,19-34,36-39,46-47,52-70,75-82,85-94,98-101,105-110,114-115,117-121
+README.md
+  45af3a724687fb8d 59,61-63,66-67,75,78,81,83,86,89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c2b1771cb01847c16ec4ebdff71d9f318425fab5",
+  "prompts": {
+    "45af3a724687fb8d": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd70a-c966-7063-b03b-1adb688303a6",
+        "model": "k2p6"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 144,
+      "total_deletions": 18,
+      "accepted_lines": 66,
+      "overriden_lines": 0
+    },
+    "fe616f1a8d6531fa": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd4dd-c0bb-7228-a63e-0de105864fb4",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 90,
+      "total_deletions": 78,
+      "accepted_lines": 90,
+      "overriden_lines": 0
+    }
+  }
+}
