@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
+import { appendFileSync, closeSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
@@ -733,7 +733,7 @@ function helpText(): string {
 		"/gh-work start <number>",
 		"/gh-work view|inspect [number]",
 		"/gh-work do|run|spawn [number] [extra instructions]  # spawn isolated async pi worker",
-		"/gh-work pane [show|hide|toggle]",
+		"/gh-work pane [show|hide|toggle|test]",
 		"/gh-work stop",
 		"/gh-work review",
 		"/gh-work done [--close]",
@@ -757,6 +757,7 @@ export default function (pi: ExtensionAPI) {
 		handle?: OverlayHandle;
 		done?: () => void;
 		interval?: ReturnType<typeof setInterval>;
+		cleanup?: () => void;
 		component?: WorkerPane;
 	} | undefined;
 	let paneToken = 0;
@@ -766,13 +767,15 @@ export default function (pi: ExtensionAPI) {
 		if (!state) return false;
 		if (state.interval) clearInterval(state.interval);
 		state.interval = undefined;
+		state.cleanup?.();
+		state.cleanup = undefined;
 		state.handle?.hide();
 		state.done?.();
 		paneState = undefined;
 		return true;
 	};
 
-	const showWorkerPane = (ctx: ExtensionContext, run: WorkerRun): boolean => {
+	const showWorkerPane = (ctx: ExtensionContext, run: WorkerRun, cleanup?: () => void): boolean => {
 		if (!ctx.hasUI) return false;
 		hideWorkerPane();
 		const token = ++paneToken;
@@ -782,17 +785,17 @@ export default function (pi: ExtensionAPI) {
 				component.refresh();
 				tui.requestRender();
 			}, 1500);
-			paneState = { token, done, interval, component };
+			paneState = { token, done, interval, cleanup, component };
 			return component;
 		}, {
 			overlay: true,
 			overlayOptions: {
 				nonCapturing: true,
-				anchor: "bottom-right",
+				anchor: "top-right",
 				width: "42%",
 				minWidth: 52,
 				maxHeight: "45%",
-				margin: { right: 1, bottom: 1 },
+				margin: { top: 1, right: 1 },
 				visible: (termWidth, termHeight) => termWidth >= 100 && termHeight >= 24,
 			},
 			onHandle: (handle) => {
@@ -801,12 +804,54 @@ export default function (pi: ExtensionAPI) {
 		}).finally(() => {
 			if (paneState?.token !== token) return;
 			if (paneState.interval) clearInterval(paneState.interval);
+			paneState.cleanup?.();
 			paneState = undefined;
 		});
 		return true;
 	};
 
+	const showWorkerPaneTest = async (ctx: ExtensionContext): Promise<CommandResult> => {
+		if (!ctx.hasUI) return { ok: false, text: "Worker pane test requires the interactive TUI." };
+
+		const root = await getRepoRoot(pi, ctx.cwd);
+		const startedAt = new Date().toISOString();
+		const stamp = startedAt.replace(/[:.]/g, "-");
+		const runDir = join(RUNS_DIR, `pane-test-${stamp}`);
+		const sessionDir = join(runDir, "sessions");
+		const logPath = join(runDir, "worker.log");
+		mkdirSync(sessionDir, { recursive: true });
+		writeFileSync(logPath, [
+			"# GitHub tracker worker pane test",
+			`startedAt=${startedAt}`,
+			`cwd=${root ?? ctx.cwd}`,
+			"This is a simulated issue-agent log. No pi worker was spawned.",
+			"The pane should update every second and stay non-capturing.",
+			"",
+		].join("\n"), "utf8");
+
+		let tick = 0;
+		const logInterval = setInterval(() => {
+			tick += 1;
+			appendFileSync(logPath, `[${new Date().toISOString()}] simulated worker event ${tick}: ${tick % 2 === 0 ? "validating" : "editing"}\n`, "utf8");
+		}, 1000);
+
+		const run: WorkerRun = {
+			issue: getActiveIssue(root ?? "") ?? 0,
+			pid: process.pid,
+			startedAt,
+			runDir,
+			logPath,
+			sessionDir,
+			worktreePath: root ?? ctx.cwd,
+			branch: "pane-test-simulated",
+		};
+
+		showWorkerPane(ctx, run, () => clearInterval(logInterval));
+		return { ok: true, text: `Worker pane test started. Log: ${logPath}` };
+	};
+
 	const workerPaneAction = async (ctx: ExtensionContext, mode: string): Promise<CommandResult> => {
+		if (mode === "test" || mode === "smoke") return showWorkerPaneTest(ctx);
 		if (mode === "hide" || mode === "off") {
 			return { ok: true, text: hideWorkerPane() ? "Worker pane hidden." : "Worker pane was not visible." };
 		}
