@@ -10,12 +10,19 @@ const STAGES = ["backlog", "planned", "in-progress", "review", "blocked", "done"
 const STAGE_LABELS = STAGES.map((stage) => `stage:${stage}`);
 
 type Stage = (typeof STAGES)[number];
-type RepoConfig = { enabled: boolean };
+type RepoConfig = { enabled: boolean; activeIssue?: number };
 type Config = { version: 1; repos: Record<string, RepoConfig> };
 type CommandResult = { ok: boolean; text: string; details?: unknown };
 
 type GithubWorkflowParams = {
 	action: "status" | "enable" | "disable";
+};
+
+type GithubWorkParams = {
+	action: "status" | "start" | "stop" | "review" | "done" | "comment";
+	number?: number;
+	text?: string;
+	close?: boolean;
 };
 
 type GithubIssueParams = {
@@ -142,6 +149,23 @@ function setRepoEnabled(root: string, enabled: boolean) {
 	saveConfig(config);
 }
 
+function getActiveIssue(root: string): number | undefined {
+	return loadConfig().repos[root]?.activeIssue;
+}
+
+function setActiveIssue(root: string, number?: number) {
+	const config = loadConfig();
+	config.repos[root] = { ...(config.repos[root] ?? { enabled: false }), activeIssue: number };
+	saveConfig(config);
+}
+
+function clearActiveIssue(root: string) {
+	const config = loadConfig();
+	if (!config.repos[root]) return;
+	delete config.repos[root].activeIssue;
+	saveConfig(config);
+}
+
 async function workflowAction(pi: ExtensionAPI, ctx: ExtensionContext, action: GithubWorkflowParams["action"]): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
@@ -213,6 +237,69 @@ async function closeIssue(pi: ExtensionAPI, root: string, number?: number): Prom
 	return { ok: true, text: result.stdout.trim() || `Closed issue #${number}.` };
 }
 
+async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: GithubWorkParams): Promise<CommandResult> {
+	const root = await getRepoRoot(pi, ctx.cwd);
+	if (!root) return { ok: false, text: "Not inside a git repository." };
+
+	const repoConfig = getRepoConfig(root);
+	const activeIssue = getActiveIssue(root);
+
+	switch (params.action) {
+		case "status": {
+			const ghRepo = await getGhRepo(pi, root);
+			const lines = [
+				`Repo: ${root}`,
+				`Tracking: ${repoConfig.enabled ? "enabled" : "disabled"}`,
+				`Active issue: ${activeIssue !== undefined ? `#${activeIssue}` : "none"}`,
+				ghRepo ? `GitHub repo: ${ghRepo}` : "GitHub repo: unavailable",
+			];
+			return { ok: true, text: lines.join("\n") };
+		}
+
+		case "start": {
+			if (!repoConfig.enabled) return { ok: false, text: "GitHub tracking is disabled for this repo. Run /gh-track enable first." };
+			if (!params.number) return { ok: false, text: "Issue number is required for start." };
+			setActiveIssue(root, params.number);
+			const view = await viewIssue(pi, root, params.number);
+			const stage = await setIssueStage(pi, root, params.number, "in-progress");
+			return { ok: view.ok && stage.ok, text: [`Started work on issue #${params.number}.`, view.text, stage.text].join("\n") };
+		}
+
+		case "stop": {
+			if (activeIssue === undefined) return { ok: false, text: "No active issue to stop." };
+			clearActiveIssue(root);
+			return { ok: true, text: `Stopped work on issue #${activeIssue}.` };
+		}
+
+		case "review": {
+			if (activeIssue === undefined) return { ok: false, text: "No active issue. Use /gh-work start <number> first." };
+			const stage = await setIssueStage(pi, root, activeIssue, "review");
+			return { ok: stage.ok, text: stage.text };
+		}
+
+		case "done": {
+			if (activeIssue === undefined) return { ok: false, text: "No active issue. Use /gh-work start <number> first." };
+			const stage = await setIssueStage(pi, root, activeIssue, "done");
+			let closeText = "";
+			if (params.close) {
+				const close = await closeIssue(pi, root, activeIssue);
+				closeText = close.text;
+			}
+			clearActiveIssue(root);
+			return { ok: stage.ok, text: [stage.text, closeText, `Cleared active issue #${activeIssue}.`].filter(Boolean).join("\n") };
+		}
+
+		case "comment": {
+			if (activeIssue === undefined) return { ok: false, text: "No active issue. Use /gh-work start <number> first." };
+			if (!params.text?.trim()) return { ok: false, text: "Comment text is required." };
+			return commentIssue(pi, root, activeIssue, params.text.trim());
+		}
+
+		default:
+			return { ok: false, text: `Unknown work action: ${(params as { action: string }).action}` };
+	}
+}
+
 async function issueAction(pi: ExtensionAPI, ctx: ExtensionContext, params: GithubIssueParams): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
@@ -267,6 +354,12 @@ function helpText(): string {
 		"/gh-issue stage <number> <backlog|planned|in-progress|review|blocked|done>",
 		"/gh-issue comment <number> <text>",
 		"/gh-issue close <number>",
+		"/gh-work status",
+		"/gh-work start <number>",
+		"/gh-work stop",
+		"/gh-work review",
+		"/gh-work done [--close]",
+		"/gh-work comment <text>",
 		"/gh-labels init",
 	].join("\n");
 }
@@ -283,12 +376,17 @@ export default function (pi: ExtensionAPI) {
 		if (!root || !getRepoConfig(root).enabled) return;
 
 		const ghRepo = await getGhRepo(pi, root);
+		const activeIssue = getActiveIssue(root);
 		const ghStatus = ghRepo
 			? `GitHub repository detected: ${ghRepo}.`
 			: "GitHub CLI/repository is not currently available. Tell the user if issue tracking is needed and suggest `gh auth login` or checking the GitHub remote.";
 
+		const activePrompt = activeIssue !== undefined
+			? `Active issue: #${activeIssue}. When doing work, prefer updating this active issue (stage, comment) via the github_work or github_issue tools rather than creating a new one unless the user explicitly asks for a separate issue.`
+			: "No active issue is set. When starting substantial work, use github_issue to find or create a tracking issue, then set it active with github_work start <number>.";
+
 		return {
-			systemPrompt: `${event.systemPrompt}\n\nGitHub issue tracking workflow is enabled for this repository. ${ghStatus}\nWhen doing substantial repo work, use the github_issue tool or /gh-issue-equivalent workflow to: find or create a tracking issue, set it to stage:planned or stage:in-progress when work begins, comment with important decisions or blockers, move it to stage:review when changes are ready to validate, and move it to stage:done/close only after the user approves or the work is clearly complete. Keep trivial read-only questions out of GitHub unless the user asks to track them. If GitHub CLI/auth is unavailable, clearly mention that tracking could not be updated.`,
+			systemPrompt: `${event.systemPrompt}\n\nGitHub issue tracking workflow is enabled for this repository. ${ghStatus} ${activePrompt}\nWhen doing substantial repo work, use the github_issue tool or /gh-issue-equivalent workflow to: find or create a tracking issue, set it to stage:planned or stage:in-progress when work begins, comment with important decisions or blockers, move it to stage:review when changes are ready to validate, and move it to stage:done/close only after the user approves or the work is clearly complete. Keep trivial read-only questions out of GitHub unless the user asks to track them. If GitHub CLI/auth is unavailable, clearly mention that tracking could not be updated.`,
 		};
 	});
 
@@ -303,6 +401,28 @@ export default function (pi: ExtensionAPI) {
 		}),
 		async execute(_toolCallId, params: GithubWorkflowParams, _signal, _onUpdate, ctx) {
 			const result = await workflowAction(pi, ctx, params.action);
+			return { content: [{ type: "text", text: result.text }], details: result.details ?? result };
+		},
+	});
+
+	pi.registerTool({
+		name: "github_work",
+		label: "GitHub Work",
+		description: "Manage active GitHub issue workflow for the current repository. Actions: status, start, stop, review, done, comment.",
+		promptSnippet: "github_work: manage the active GitHub issue workflow (start/stop/review/done/comment)",
+		promptGuidelines: [
+			"Use github_work start <number> to set the active issue before beginning substantial work.",
+			"Use github_work review/done/comment to update the active issue as work progresses.",
+			"If there is no active issue, use github_issue first to find or create one.",
+		],
+		parameters: Type.Object({
+			action: Type.Union([Type.Literal("status"), Type.Literal("start"), Type.Literal("stop"), Type.Literal("review"), Type.Literal("done"), Type.Literal("comment")]),
+			number: Type.Optional(Type.Number({ description: "Issue number for start" })),
+			text: Type.Optional(Type.String({ description: "Comment text for comment" })),
+			close: Type.Optional(Type.Boolean({ description: "Close issue when marking done" })),
+		}),
+		async execute(_toolCallId, params: GithubWorkParams, _signal, _onUpdate, ctx) {
+			const result = await workAction(pi, ctx, params);
 			return { content: [{ type: "text", text: result.text }], details: result.details ?? result };
 		},
 	});
@@ -360,6 +480,43 @@ export default function (pi: ExtensionAPI) {
 				case "close": result = await issueAction(pi, ctx, { action: "close", number: Number(rest[0]) }); break;
 				case "help": result = { ok: true, text: helpText() }; break;
 				default: result = { ok: false, text: helpText() }; break;
+			}
+			notifyResult(ctx, result);
+		},
+	});
+
+	pi.registerCommand("gh-work", {
+		description: "Start, stop, review, or finish work on the active GitHub issue",
+		handler: async (args, ctx) => {
+			const [action = "status", ...rest] = splitArgs(args);
+			let result: CommandResult;
+			switch (action) {
+				case "status":
+					result = await workAction(pi, ctx, { action: "status" });
+					break;
+				case "start":
+					result = await workAction(pi, ctx, { action: "start", number: Number(rest[0]) });
+					break;
+				case "stop":
+					result = await workAction(pi, ctx, { action: "stop" });
+					break;
+				case "review":
+					result = await workAction(pi, ctx, { action: "review" });
+					break;
+				case "done": {
+					const shouldClose = rest.includes("--close");
+					result = await workAction(pi, ctx, { action: "done", close: shouldClose });
+					break;
+				}
+				case "comment":
+					result = await workAction(pi, ctx, { action: "comment", text: rest.join(" ") });
+					break;
+				case "help":
+					result = { ok: true, text: helpText() };
+					break;
+				default:
+					result = { ok: false, text: helpText() };
+					break;
 			}
 			notifyResult(ctx, result);
 		},
