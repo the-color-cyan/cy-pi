@@ -137,7 +137,7 @@ When active, a small dashboard widget is rendered above the editor. All LLM-faci
 - `/subpane [latest|show <id>|<id>|hide|toggle|list|test]` — show a non-capturing top-right live pane for async subagent runs.
 - `/subagent-pane ...` — alias for `/subpane`.
 
-Use `/subpane test` to smoke-test the pane without launching a real subagent. It creates a simulated async run under the pi-subagents temp directory and updates it once per second until the pane is hidden.
+Use `/subpane test` to smoke-test the pane without launching a real subagent. It creates a simulated async run under the pi-subagents temp directory and updates it once per second until the pane is hidden. Smoke-test runs are labeled `smoke` in `/subpane list`; `/subpane latest` prefers real async runs over smoke-test runs.
 
 ## git-ai extension
 

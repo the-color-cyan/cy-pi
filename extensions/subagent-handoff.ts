@@ -89,6 +89,10 @@ function findRunDirs(idOrPrefix: string): string[] {
 	return matches;
 }
 
+function isPaneTestRunDir(runDir: string): boolean {
+	return path.basename(runDir).startsWith("pane-test-");
+}
+
 function findAllRuns(): Array<{ dir: string; mtimeMs: number }> {
 	const allRuns: Array<{ dir: string; mtimeMs: number }> = [];
 	for (const root of getAsyncRoots()) {
@@ -109,7 +113,8 @@ function findAllRuns(): Array<{ dir: string; mtimeMs: number }> {
 }
 
 function findLatestRunDir(): string | undefined {
-	return findAllRuns()[0]?.dir;
+	const runs = findAllRuns();
+	return (runs.find(({ dir }) => !isPaneTestRunDir(dir)) ?? runs[0])?.dir;
 }
 
 function readRunSessionFile(runDir: string): string | undefined {
@@ -278,7 +283,8 @@ function listRunSummary(): string {
 		const status = readStatus(dir);
 		const id = status?.runId ?? path.basename(dir);
 		const agents = status?.steps?.map((step) => step.agent).filter(Boolean).join("+") || "subagent";
-		return `${id.slice(0, 12)}  ${status?.state ?? "unknown"}  ${agents}  ${shortenPath(status?.cwd ?? dir, 64)}`;
+		const kind = isPaneTestRunDir(dir) ? " smoke" : "";
+		return `${id.slice(0, 12)}  ${status?.state ?? "unknown"}${kind}  ${agents}  ${shortenPath(status?.cwd ?? dir, 64)}`;
 	}).join("\n");
 }
 
@@ -312,7 +318,32 @@ function createPaneTestRun(): { runDir: string; cleanup: () => void } {
 	};
 	write();
 	const interval = setInterval(write, 1000);
-	return { runDir, cleanup: () => clearInterval(interval) };
+	let cleaned = false;
+	const cleanup = () => {
+		if (cleaned) return;
+		cleaned = true;
+		clearInterval(interval);
+		try {
+			const now = Date.now();
+			const status = readStatus(runDir) ?? { runId };
+			fs.writeFileSync(path.join(runDir, "status.json"), JSON.stringify({
+				...status,
+				state: "complete",
+				endedAt: now,
+				lastUpdate: now,
+				lastActivityAt: status.lastActivityAt ?? now,
+				currentTool: undefined,
+				steps: status.steps?.map((step) => ({
+					...step,
+					status: step.status === "running" ? "complete" : step.status,
+					currentTool: undefined,
+				})),
+			}, null, 2) + "\n", "utf8");
+		} catch {
+			// Best-effort test cleanup only.
+		}
+	};
+	return { runDir, cleanup };
 }
 
 export default function (pi: ExtensionAPI) {
@@ -328,6 +359,16 @@ export default function (pi: ExtensionAPI) {
 		state.done?.();
 		paneState = undefined;
 		return true;
+	};
+
+	const paneVisibilityHint = (): string | undefined => {
+		const stdout = process.stdout as typeof process.stdout & { columns?: number; rows?: number };
+		const columns = stdout.columns;
+		const rows = stdout.rows;
+		if ((columns !== undefined && columns < 100) || (rows !== undefined && rows < 24)) {
+			return `Pane overlays are hidden below 100x24; current terminal is ${columns ?? "?"}x${rows ?? "?"}.`;
+		}
+		return undefined;
 	};
 
 	const showPane = (ctx: ExtensionContext, runDir: string, cleanup?: () => void): boolean => {
@@ -381,7 +422,9 @@ export default function (pi: ExtensionAPI) {
 		}
 		if (action === "test" || action === "smoke") {
 			const test = createPaneTestRun();
-			ctx.ui.notify(showPane(ctx, test.runDir, test.cleanup) ? `Subagent pane test started: ${test.runDir}` : "Subagent pane requires the interactive TUI.", "info");
+			const shown = showPane(ctx, test.runDir, test.cleanup);
+			const hint = shown ? paneVisibilityHint() : undefined;
+			ctx.ui.notify(shown ? `Subagent pane test started: ${test.runDir}${hint ? `. ${hint}` : ""}` : "Subagent pane requires the interactive TUI.", hint ? "warning" : "info");
 			return;
 		}
 
@@ -403,8 +446,14 @@ export default function (pi: ExtensionAPI) {
 			ctx.ui.notify(target ? `No async subagent run found for '${target}'.` : "No async subagent runs found.", "error");
 			return;
 		}
-		ctx.ui.notify(showPane(ctx, runDir) ? `Subagent pane shown for ${path.basename(runDir)}.` : "Subagent pane requires the interactive TUI.", "info");
+		const shown = showPane(ctx, runDir);
+		const hint = shown ? paneVisibilityHint() : undefined;
+		ctx.ui.notify(shown ? `Subagent pane shown for ${path.basename(runDir)}.${hint ? ` ${hint}` : ""}` : "Subagent pane requires the interactive TUI.", hint ? "warning" : "info");
 	}
+
+	pi.on("session_shutdown", () => {
+		hidePane();
+	});
 
 	pi.registerCommand("subattach", {
 		description: "Attach to a subagent run session by async run id/prefix",
