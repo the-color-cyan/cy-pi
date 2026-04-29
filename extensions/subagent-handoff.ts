@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
-import type { Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
+import type { AutocompleteItem, Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 
 let lastParentSessionFile: string | null = null;
@@ -40,6 +40,23 @@ type PaneState = {
 	interval?: ReturnType<typeof setInterval>;
 	cleanup?: () => void;
 };
+
+type CompletionEntry = {
+	value: string;
+	label?: string;
+	description?: string;
+};
+
+const SUBPANE_ACTIONS: CompletionEntry[] = [
+	{ value: "latest", description: "Show the latest real async subagent run" },
+	{ value: "show", description: "Show a specific async run by id/prefix" },
+	{ value: "hide", description: "Hide the pane" },
+	{ value: "toggle", description: "Toggle the pane, optionally for a run id" },
+	{ value: "list", description: "List recent async runs" },
+	{ value: "test", description: "Start a simulated pane smoke test" },
+	{ value: "smoke", description: "Alias for test" },
+	{ value: "off", description: "Alias for hide" },
+];
 
 function uniqueExistingDirs(paths: string[]): string[] {
 	const seen = new Set<string>();
@@ -288,6 +305,76 @@ function listRunSummary(): string {
 	}).join("\n");
 }
 
+function completionState(argumentPrefix: string): { tokens: string[]; current: string; endsWithSpace: boolean } {
+	const endsWithSpace = /\s$/.test(argumentPrefix);
+	const trimmed = argumentPrefix.trim();
+	const tokens = trimmed ? trimmed.split(/\s+/) : [];
+	return {
+		tokens,
+		current: endsWithSpace ? "" : tokens[tokens.length - 1] ?? "",
+		endsWithSpace,
+	};
+}
+
+function completionItems(entries: CompletionEntry[], query: string, valuePrefix?: string): AutocompleteItem[] | null {
+	const normalized = query.toLowerCase();
+	const filtered = entries.filter((entry) => {
+		const value = entry.value.toLowerCase();
+		const label = entry.label?.toLowerCase() ?? "";
+		return !normalized || value.startsWith(normalized) || label.startsWith(normalized);
+	});
+	if (filtered.length === 0) return null;
+	return filtered.map((entry) => ({
+		value: valuePrefix ? `${valuePrefix} ${entry.value}` : entry.value,
+		label: entry.label ?? entry.value,
+		...(entry.description ? { description: entry.description } : {}),
+	}));
+}
+
+function runCompletionItems(query: string, valuePrefix?: string): AutocompleteItem[] | null {
+	const normalized = query.toLowerCase();
+	const items = findAllRuns()
+		.slice(0, 30)
+		.map(({ dir }) => {
+			const status = readStatus(dir);
+			const id = status?.runId ?? path.basename(dir);
+			const agents = status?.steps?.map((step) => step.agent).filter(Boolean).join("+") || "subagent";
+			const smoke = isPaneTestRunDir(dir);
+			const searchable = `${id} ${agents} ${status?.state ?? "unknown"} ${smoke ? "smoke" : ""}`.toLowerCase();
+			return {
+				value: valuePrefix ? `${valuePrefix} ${id}` : id,
+				label: id.slice(0, 12),
+				description: `${status?.state ?? "unknown"}${smoke ? " smoke" : ""} · ${agents} · ${shortenPath(status?.cwd ?? dir, 64)}`,
+				searchable,
+			};
+		})
+		.filter((item) => !normalized || item.searchable.includes(normalized))
+		.map(({ searchable: _searchable, ...item }) => item);
+	return items.length > 0 ? items : null;
+}
+
+function completeSubpaneArgs(argumentPrefix: string): AutocompleteItem[] | null {
+	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
+	if (tokens.length === 0 || (tokens.length === 1 && !endsWithSpace)) {
+		const items = [
+			...(completionItems(SUBPANE_ACTIONS, current) ?? []),
+			...(runCompletionItems(current) ?? []),
+		].slice(0, 50);
+		return items.length > 0 ? items : null;
+	}
+
+	const action = tokens[0]?.toLowerCase();
+	if ((action === "show" || action === "toggle") && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
+		return runCompletionItems(current, action);
+	}
+
+	return null;
+}
+
+function completeSubattachArgs(argumentPrefix: string): AutocompleteItem[] | null {
+	return runCompletionItems(argumentPrefix.trim());
+}
+
 function createPaneTestRun(): { runDir: string; cleanup: () => void } {
 	const roots = getAsyncRoots();
 	const root = roots[0] ?? path.join(process.env.PI_TMP_DIR || os.tmpdir(), "pi-subagents-pane-test", "async-subagent-runs");
@@ -457,6 +544,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("subattach", {
 		description: "Attach to a subagent run session by async run id/prefix",
+		getArgumentCompletions: completeSubattachArgs,
 		handler: async (args, ctx) => {
 			const idOrPrefix = args.trim();
 			if (!idOrPrefix) {
@@ -535,11 +623,13 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("subpane", {
 		description: "Show a top-right live pane for async subagent runs",
+		getArgumentCompletions: completeSubpaneArgs,
 		handler: handleSubpane,
 	});
 
 	pi.registerCommand("subagent-pane", {
 		description: "Alias for /subpane",
+		getArgumentCompletions: completeSubpaneArgs,
 		handler: handleSubpane,
 	});
 }

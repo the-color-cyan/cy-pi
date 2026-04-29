@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
-import type { Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
+import type { AutocompleteItem, Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { Type } from "typebox";
 
@@ -17,6 +17,61 @@ const STAGE_LABELS = STAGES.map((stage) => `stage:${stage}`);
 const WORKFLOW_ACTIONS = ["status", "enable", "disable"] as const;
 const WORK_ACTIONS = ["status", "start", "view", "inspect", "run", "spawn", "stop", "review", "done", "comment"] as const;
 const ISSUE_ACTIONS = ["list", "create", "view", "stage", "comment", "close"] as const;
+
+type CompletionEntry = {
+	value: string;
+	label?: string;
+	description?: string;
+};
+
+const GH_TRACK_COMPLETIONS: CompletionEntry[] = [
+	{ value: "status", description: "Show whether GitHub issue tracking is enabled" },
+	{ value: "enable", description: "Enable tracking for this repository" },
+	{ value: "disable", description: "Disable tracking for this repository" },
+	{ value: "help", description: "Show GitHub tracker command help" },
+];
+
+const GH_ISSUE_COMPLETIONS: CompletionEntry[] = [
+	{ value: "list", description: "List open issues" },
+	{ value: "create", description: "Create an issue" },
+	{ value: "view", description: "View an issue by number" },
+	{ value: "stage", description: "Move an issue to a stage label" },
+	{ value: "comment", description: "Comment on an issue" },
+	{ value: "close", description: "Close an issue" },
+	{ value: "help", description: "Show GitHub tracker command help" },
+];
+
+const GH_WORK_COMPLETIONS: CompletionEntry[] = [
+	{ value: "status", description: "Show active issue and last worker status" },
+	{ value: "select", description: "Pick an existing open issue in the TUI" },
+	{ value: "pick", description: "Alias for select" },
+	{ value: "start", description: "Set the active issue by number" },
+	{ value: "view", description: "View the active issue or a given number" },
+	{ value: "inspect", description: "Alias for view" },
+	{ value: "do", description: "Spawn an isolated async worker" },
+	{ value: "run", description: "Spawn an isolated async worker" },
+	{ value: "spawn", description: "Spawn an isolated async worker" },
+	{ value: "pane", description: "Show, hide, toggle, or test the worker pane" },
+	{ value: "stop", description: "Stop the active issue worker" },
+	{ value: "review", description: "Move active issue to review" },
+	{ value: "done", description: "Move active issue to done" },
+	{ value: "comment", description: "Comment on the active issue" },
+	{ value: "help", description: "Show GitHub tracker command help" },
+];
+
+const GH_WORK_PANE_COMPLETIONS: CompletionEntry[] = [
+	{ value: "show", description: "Show the last worker pane" },
+	{ value: "hide", description: "Hide the worker pane" },
+	{ value: "toggle", description: "Toggle the worker pane" },
+	{ value: "test", description: "Start a simulated worker-pane smoke test" },
+	{ value: "smoke", description: "Alias for test" },
+	{ value: "off", description: "Alias for hide" },
+];
+
+const STAGE_COMPLETIONS: CompletionEntry[] = STAGES.map((stage) => ({
+	value: stage,
+	description: `Move to stage:${stage}`,
+}));
 
 type Stage = (typeof STAGES)[number];
 type WorkflowAction = (typeof WORKFLOW_ACTIONS)[number];
@@ -132,6 +187,68 @@ function splitArgs(input: string): string[] {
 	}
 	if (current) args.push(current);
 	return args;
+}
+
+function completionState(argumentPrefix: string): { tokens: string[]; current: string; endsWithSpace: boolean } {
+	const endsWithSpace = /\s$/.test(argumentPrefix);
+	const tokens = splitArgs(argumentPrefix);
+	return {
+		tokens,
+		current: endsWithSpace ? "" : tokens[tokens.length - 1] ?? "",
+		endsWithSpace,
+	};
+}
+
+function completionItems(entries: CompletionEntry[], query: string, valuePrefix?: string): AutocompleteItem[] | null {
+	const normalized = query.toLowerCase();
+	const filtered = entries.filter((entry) => {
+		const value = entry.value.toLowerCase();
+		const label = entry.label?.toLowerCase() ?? "";
+		return !normalized || value.startsWith(normalized) || label.startsWith(normalized);
+	});
+	if (filtered.length === 0) return null;
+	return filtered.map((entry) => ({
+		value: valuePrefix ? `${valuePrefix} ${entry.value}` : entry.value,
+		label: entry.label ?? entry.value,
+		...(entry.description ? { description: entry.description } : {}),
+	}));
+}
+
+function completeFirstArg(argumentPrefix: string, entries: CompletionEntry[]): AutocompleteItem[] | null {
+	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
+	if (tokens.length === 0 || (tokens.length === 1 && !endsWithSpace)) {
+		return completionItems(entries, current);
+	}
+	return null;
+}
+
+function completeGhIssueArgs(argumentPrefix: string): AutocompleteItem[] | null {
+	const firstArg = completeFirstArg(argumentPrefix, GH_ISSUE_COMPLETIONS);
+	if (firstArg) return firstArg;
+
+	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
+	if (tokens[0] === "stage" && ((tokens.length === 2 && endsWithSpace) || (tokens.length === 3 && !endsWithSpace))) {
+		const valuePrefix = endsWithSpace ? tokens.join(" ") : tokens.slice(0, -1).join(" ");
+		return completionItems(STAGE_COMPLETIONS, current, valuePrefix);
+	}
+
+	return null;
+}
+
+function completeGhWorkArgs(argumentPrefix: string): AutocompleteItem[] | null {
+	const firstArg = completeFirstArg(argumentPrefix, GH_WORK_COMPLETIONS);
+	if (firstArg) return firstArg;
+
+	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
+	const action = tokens[0];
+	if (action === "pane" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
+		return completionItems(GH_WORK_PANE_COMPLETIONS, current, "pane");
+	}
+	if (action === "done" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
+		return completionItems([{ value: "--close", description: "Also close the GitHub issue" }], current, "done");
+	}
+
+	return null;
 }
 
 function parseCreateArgs(args: string): { title: string; body: string } | undefined {
@@ -956,6 +1073,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("gh-track", {
 		description: "Toggle or inspect GitHub issue tracking workflow for this repo",
+		getArgumentCompletions: (prefix: string) => completeFirstArg(prefix, GH_TRACK_COMPLETIONS),
 		handler: async (args, ctx) => {
 			const action = args.trim() || "status";
 			if (action === "help") return notifyResult(ctx, { ok: true, text: helpText() });
@@ -966,6 +1084,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("gh-issue", {
 		description: "List/create/view/stage/comment/close GitHub issues via gh CLI",
+		getArgumentCompletions: completeGhIssueArgs,
 		handler: async (args, ctx) => {
 			const [action = "list", ...rest] = splitArgs(args);
 			const rawRest = args.trim().slice(action.length).trim();
@@ -990,6 +1109,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("gh-work", {
 		description: "Select, inspect, start, stop, spawn, review, or finish work on the active GitHub issue",
+		getArgumentCompletions: completeGhWorkArgs,
 		handler: async (args, ctx) => {
 			const [action = "status", ...rest] = splitArgs(args);
 			const rawRest = args.trim().slice(action.length).trim();
@@ -1049,6 +1169,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("gh-labels", {
 		description: "Initialize standard GitHub tracking labels in the current repo",
+		getArgumentCompletions: (prefix: string) => completeFirstArg(prefix, [{ value: "init", description: "Create/update standard tracking labels" }]),
 		handler: async (args, ctx) => {
 			if ((args.trim() || "init") !== "init") return notifyResult(ctx, { ok: false, text: "Usage: /gh-labels init" });
 			notifyResult(ctx, await initLabels(pi, ctx));
