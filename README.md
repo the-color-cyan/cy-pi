@@ -11,6 +11,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `sh.ts` — adds `/sh <command>` to run a shell command in pi's current working directory
   - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
   - `git-ai.ts`
+  - `pair.ts` — adds `/pair` for pair-programming session management
   - `subagent-handoff.ts`
   - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
@@ -93,6 +94,29 @@ Prompt lookup order:
 3. Built-in fallback prompt inside the extension
 
 This repo's `commit-message-prompt.md` can be linked to the global location with `./scripts/install-local-links.sh`.
+
+## pair extension
+
+`/pair` manages an in-memory pair-programming session backed by custom session entries. State is restored when a session loads and persisted on every change.
+
+Subcommands:
+
+- `/pair start [goal]` — activate a pair session and optionally set a goal.
+- `/pair stop` — deactivate the session.
+- `/pair status` (alias `dashboard`) — show current state.
+- `/pair mode <navigator|mentor|reviewer|debugger|implementer>` — set involvement style.
+- `/pair attention <quiet|ambient|active>` — set how much the partner should interject.
+- `/pair explain <terse|normal|mentor|socratic>` — set explanation depth.
+- `/pair autonomy <observe|suggest|ask|edit|agentic>` — set how independently the partner acts.
+- `/pair goal <text>` — set the current goal.
+- `/pair plan [step1 | step2 | ...]` — without args, asks the LLM to create/revise a plan; with args, sets the plan directly (split on `|`).
+- `/pair step <n|next|prev|done>` — move through the plan; without args, asks the LLM for help on the current step.
+- `/pair checkpoint` — alias for `/pair step` (LLM-facing checkpoint).
+- `/pair review-diff` — asks the LLM to review staged + unstaged diff as a pair partner.
+- `/pair summary` — asks the LLM to summarize session progress.
+- `/pair help` — shows usage.
+
+When active, a small dashboard widget is rendered above the editor. All LLM-facing prompts explicitly frame the assistant as a pair partner, include the current state, and respect the configured mode/attention/autonomy/explanation settings.
 
 ## git-ai extension
 
