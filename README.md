@@ -12,7 +12,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
   - `git-ai.ts`
   - `pair.ts` — adds `/pair` for pair-programming session management
-  - `subagent-handoff.ts`
+  - `subagent-handoff.ts` — adds `/subattach`, `/subback`, and `/subpane` helpers for async subagent runs
   - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
   - `ask`
@@ -126,6 +126,18 @@ Subcommands:
 - `/pair help` — shows usage.
 
 When active, a small dashboard widget is rendered above the editor. All LLM-facing prompts explicitly frame the assistant as a pair partner, include the current state, and respect the configured mode/attention/autonomy/explanation settings.
+
+## subagent handoff / pane extension
+
+`extensions/subagent-handoff.ts` adds helpers around async `pi-subagents` runs:
+
+- `/subattach <id-or-prefix>` — switch into an async subagent run's session.
+- `/subattach-latest` — switch into the most recently updated async subagent run session.
+- `/subback` — return to the session active before `/subattach`.
+- `/subpane [latest|show <id>|<id>|hide|toggle|list|test]` — show a non-capturing top-right live pane for async subagent runs.
+- `/subagent-pane ...` — alias for `/subpane`.
+
+Use `/subpane test` to smoke-test the pane without launching a real subagent. It creates a simulated async run under the pi-subagents temp directory and updates it once per second until the pane is hidden.
 
 ## git-ai extension
 

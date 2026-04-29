@@ -1,25 +1,84 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
+import type { Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
+import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 
 let lastParentSessionFile: string | null = null;
 
+type SubagentStatus = {
+	runId?: string;
+	state?: string;
+	mode?: string;
+	cwd?: string;
+	startedAt?: number;
+	lastUpdate?: number;
+	endedAt?: number;
+	currentStep?: number;
+	currentTool?: string;
+	activityState?: string;
+	lastActivityAt?: number;
+	outputFile?: string;
+	sessionFile?: string;
+	sessionDir?: string;
+	steps?: Array<{
+		agent?: string;
+		status?: string;
+		currentTool?: string;
+		activityState?: string;
+		lastActivityAt?: number;
+		durationMs?: number;
+		error?: string;
+	}>;
+};
+
+type PaneState = {
+	token: number;
+	handle?: OverlayHandle;
+	done?: () => void;
+	interval?: ReturnType<typeof setInterval>;
+	cleanup?: () => void;
+};
+
+function uniqueExistingDirs(paths: string[]): string[] {
+	const seen = new Set<string>();
+	const result: string[] = [];
+	for (const candidate of paths) {
+		const resolved = path.resolve(candidate);
+		if (seen.has(resolved)) continue;
+		seen.add(resolved);
+		if (fs.existsSync(resolved)) result.push(resolved);
+	}
+	return result;
+}
+
 function getAsyncRoots(): string[] {
 	if (process.env.PI_SUBAGENTS_ASYNC_DIR) {
-		return [path.resolve(process.env.PI_SUBAGENTS_ASYNC_DIR)];
+		return uniqueExistingDirs([path.resolve(process.env.PI_SUBAGENTS_ASYNC_DIR)]);
 	}
+
 	const tmp = process.env.PI_TMP_DIR || os.tmpdir();
-	return [
+	const candidates = [
 		path.join(tmp, "pi-subagents-project", "async-subagent-runs"),
 		path.join(tmp, "pi-subagents-user", "async-subagent-runs"),
 	];
+
+	try {
+		for (const entry of fs.readdirSync(tmp, { withFileTypes: true })) {
+			if (!entry.isDirectory() || !entry.name.startsWith("pi-subagents-")) continue;
+			candidates.push(path.join(tmp, entry.name, "async-subagent-runs"));
+		}
+	} catch {
+		// Best-effort discovery only.
+	}
+
+	return uniqueExistingDirs(candidates);
 }
 
 function findRunDirs(idOrPrefix: string): string[] {
 	const matches: string[] = [];
 	for (const root of getAsyncRoots()) {
-		if (!fs.existsSync(root)) continue;
 		for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
 			if (!entry.isDirectory()) continue;
 			if (entry.name === idOrPrefix || entry.name.startsWith(idOrPrefix)) {
@@ -30,10 +89,9 @@ function findRunDirs(idOrPrefix: string): string[] {
 	return matches;
 }
 
-function findLatestRunDir(): string | undefined {
+function findAllRuns(): Array<{ dir: string; mtimeMs: number }> {
 	const allRuns: Array<{ dir: string; mtimeMs: number }> = [];
 	for (const root of getAsyncRoots()) {
-		if (!fs.existsSync(root)) continue;
 		for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
 			if (!entry.isDirectory()) continue;
 			const dir = path.join(root, entry.name);
@@ -47,21 +105,307 @@ function findLatestRunDir(): string | undefined {
 		}
 	}
 	allRuns.sort((a, b) => b.mtimeMs - a.mtimeMs);
-	return allRuns[0]?.dir;
+	return allRuns;
+}
+
+function findLatestRunDir(): string | undefined {
+	return findAllRuns()[0]?.dir;
 }
 
 function readRunSessionFile(runDir: string): string | undefined {
-	const statusPath = path.join(runDir, "status.json");
-	if (!fs.existsSync(statusPath)) return undefined;
+	const status = readStatus(runDir);
+	return typeof status?.sessionFile === "string" ? status.sessionFile : undefined;
+}
+
+function readStatus(runDir: string): SubagentStatus | undefined {
 	try {
-		const status = JSON.parse(fs.readFileSync(statusPath, "utf-8")) as { sessionFile?: string };
-		return status.sessionFile;
+		return JSON.parse(fs.readFileSync(path.join(runDir, "status.json"), "utf-8")) as SubagentStatus;
 	} catch {
 		return undefined;
 	}
 }
 
+function resolveRunPath(runDir: string, maybePath: string | undefined): string | undefined {
+	if (!maybePath) return undefined;
+	return path.isAbsolute(maybePath) ? maybePath : path.join(runDir, maybePath);
+}
+
+function formatDuration(ms: number): string {
+	const safe = Math.max(0, ms);
+	const seconds = Math.floor(safe / 1000);
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `${minutes}m ${seconds % 60}s`;
+	const hours = Math.floor(minutes / 60);
+	return `${hours}h ${minutes % 60}m`;
+}
+
+function shortenPath(value: string, max = 48): string {
+	const home = os.homedir();
+	const shortened = value.startsWith(home) ? `~${value.slice(home.length)}` : value;
+	return shortened.length > max ? `…${shortened.slice(-(max - 1))}` : shortened;
+}
+
+function tailFileLines(filePath: string | undefined, maxLines: number, maxBytes = 64 * 1024): string[] {
+	if (!filePath) return [];
+	try {
+		const stat = fs.statSync(filePath);
+		if (!stat.isFile()) return [];
+		const start = Math.max(0, stat.size - maxBytes);
+		const fd = fs.openSync(filePath, "r");
+		try {
+			const buffer = Buffer.alloc(stat.size - start);
+			const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, start);
+			return buffer.subarray(0, bytesRead).toString("utf8").split(/\r?\n/).filter((line) => line.trim()).slice(-maxLines);
+		} finally {
+			fs.closeSync(fd);
+		}
+	} catch {
+		return [];
+	}
+}
+
+function formatEventLine(raw: string): string | undefined {
+	try {
+		const parsed = JSON.parse(raw) as Record<string, unknown>;
+		const ts = typeof parsed.ts === "number" ? new Date(parsed.ts).toISOString().slice(11, 19) : undefined;
+		const type = typeof parsed.type === "string" ? parsed.type : "event";
+		const agent = typeof parsed.agent === "string" ? parsed.agent : typeof parsed.subagentAgent === "string" ? parsed.subagentAgent : undefined;
+		const status = typeof parsed.status === "string" ? parsed.status : undefined;
+		const msg = typeof parsed.message === "string" ? parsed.message : typeof parsed.error === "string" ? parsed.error : undefined;
+		return [ts, type, agent, status, msg].filter(Boolean).join(" | ");
+	} catch {
+		return raw.trim() || undefined;
+	}
+}
+
+function recentEvents(runDir: string, limit: number): string[] {
+	return tailFileLines(path.join(runDir, "events.jsonl"), limit).map(formatEventLine).filter((line): line is string => Boolean(line));
+}
+
+function statusColor(theme: Theme, state: string | undefined): string {
+	const label = state ?? "unknown";
+	if (label === "running") return theme.fg("warning", label);
+	if (label === "queued") return theme.fg("accent", label);
+	if (label === "complete") return theme.fg("success", label);
+	if (label === "failed") return theme.fg("error", label);
+	if (label === "paused") return theme.fg("warning", label);
+	return label;
+}
+
+class SubagentPane implements Component {
+	private cachedWidth?: number;
+	private cachedLines?: string[];
+
+	constructor(
+		private theme: Theme,
+		private runDir: string,
+	) {}
+
+	refresh(): void {
+		this.cachedWidth = undefined;
+		this.cachedLines = undefined;
+	}
+
+	invalidate(): void {
+		this.refresh();
+	}
+
+	render(width: number): string[] {
+		if (this.cachedLines && this.cachedWidth === width) return this.cachedLines;
+		const status = readStatus(this.runDir);
+		const th = this.theme;
+		const inner = Math.max(1, width - 2);
+		const border = (text: string) => th.fg("border", text);
+		const pad = (text: string) => {
+			const truncated = truncateToWidth(text, inner, "…", true);
+			return truncated + " ".repeat(Math.max(0, inner - visibleWidth(truncated)));
+		};
+		const id = status?.runId ?? path.basename(this.runDir);
+		const stepCount = status?.steps?.length ?? 0;
+		const stepLabel = status?.currentStep !== undefined ? `step ${status.currentStep + 1}/${Math.max(1, stepCount)}` : `${stepCount || 1} step(s)`;
+		const activity = status?.lastActivityAt ? `active ${formatDuration(Date.now() - status.lastActivityAt)} ago` : undefined;
+
+		const body: string[] = [
+			border(`╭${"─".repeat(inner)}╮`),
+			border("│") + pad(`${th.fg("accent", `Subagent ${id.slice(0, 8)}`)} · ${statusColor(th, status?.state)} · ${status?.mode ?? "?"}`) + border("│"),
+			border("│") + pad([stepLabel, activity, status?.currentTool ? `tool ${status.currentTool}` : undefined].filter(Boolean).join(" · ")) + border("│"),
+		];
+
+		const cwd = status?.cwd ?? this.runDir;
+		body.push(border("│") + pad(`cwd ${shortenPath(cwd)}`) + border("│"));
+		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
+
+		const steps = status?.steps ?? [];
+		if (steps.length === 0) {
+			body.push(border("│") + pad(th.fg("dim", "No step details yet.")) + border("│"));
+		} else {
+			for (const [index, step] of steps.slice(0, 5).entries()) {
+				const line = `${index + 1}. ${step.agent ?? "agent"} · ${step.status ?? "pending"}${step.currentTool ? ` · ${step.currentTool}` : ""}`;
+				body.push(border("│") + pad(line) + border("│"));
+				if (step.error) body.push(border("│") + pad(th.fg("error", `  ${step.error}`)) + border("│"));
+			}
+		}
+
+		const events = recentEvents(this.runDir, 5);
+		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
+		if (events.length > 0) {
+			for (const event of events) body.push(border("│") + pad(event) + border("│"));
+		} else {
+			const outputPath = resolveRunPath(this.runDir, status?.outputFile) ?? path.join(this.runDir, `subagent-log-${id}.md`);
+			const outputTail = tailFileLines(outputPath, 5);
+			if (outputTail.length > 0) {
+				for (const line of outputTail) body.push(border("│") + pad(line) + border("│"));
+			} else {
+				body.push(border("│") + pad(th.fg("dim", "No events/output yet.")) + border("│"));
+			}
+		}
+
+		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
+		body.push(border("│") + pad(th.fg("dim", "/subpane hide · /subattach " + id.slice(0, 8))) + border("│"));
+		body.push(border(`╰${"─".repeat(inner)}╯`));
+
+		this.cachedWidth = width;
+		this.cachedLines = body;
+		return body;
+	}
+}
+
+function listRunSummary(): string {
+	const runs = findAllRuns().slice(0, 10);
+	if (runs.length === 0) return "No async subagent runs found.";
+	return runs.map(({ dir }) => {
+		const status = readStatus(dir);
+		const id = status?.runId ?? path.basename(dir);
+		const agents = status?.steps?.map((step) => step.agent).filter(Boolean).join("+") || "subagent";
+		return `${id.slice(0, 12)}  ${status?.state ?? "unknown"}  ${agents}  ${shortenPath(status?.cwd ?? dir, 64)}`;
+	}).join("\n");
+}
+
+function createPaneTestRun(): { runDir: string; cleanup: () => void } {
+	const roots = getAsyncRoots();
+	const root = roots[0] ?? path.join(process.env.PI_TMP_DIR || os.tmpdir(), "pi-subagents-pane-test", "async-subagent-runs");
+	const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+	const runId = `pane-test-${stamp}`;
+	const runDir = path.join(root, runId);
+	fs.mkdirSync(runDir, { recursive: true });
+	const outputFile = path.join(runDir, "output.md");
+	let tick = 0;
+	const write = () => {
+		const now = Date.now();
+		fs.writeFileSync(path.join(runDir, "status.json"), JSON.stringify({
+			runId,
+			state: "running",
+			mode: "single",
+			cwd: process.cwd(),
+			startedAt: now - tick * 1000,
+			lastUpdate: now,
+			lastActivityAt: now,
+			currentStep: 0,
+			currentTool: tick % 2 === 0 ? "bash" : "edit",
+			outputFile,
+			steps: [{ agent: "pane-test", status: "running", currentTool: tick % 2 === 0 ? "bash" : "edit", lastActivityAt: now }],
+		}, null, 2) + "\n", "utf8");
+		fs.appendFileSync(path.join(runDir, "events.jsonl"), JSON.stringify({ ts: now, type: "subagent.test", agent: "pane-test", status: "running", message: `simulated event ${tick}` }) + "\n", "utf8");
+		fs.appendFileSync(outputFile, `simulated subagent output ${tick}\n`, "utf8");
+		tick += 1;
+	};
+	write();
+	const interval = setInterval(write, 1000);
+	return { runDir, cleanup: () => clearInterval(interval) };
+}
+
 export default function (pi: ExtensionAPI) {
+	let paneState: PaneState | undefined;
+	let paneToken = 0;
+
+	const hidePane = (): boolean => {
+		const state = paneState;
+		if (!state) return false;
+		if (state.interval) clearInterval(state.interval);
+		state.cleanup?.();
+		state.handle?.hide();
+		state.done?.();
+		paneState = undefined;
+		return true;
+	};
+
+	const showPane = (ctx: ExtensionContext, runDir: string, cleanup?: () => void): boolean => {
+		if (!ctx.hasUI) return false;
+		hidePane();
+		const token = ++paneToken;
+		void ctx.ui.custom<void>((tui: TUI, theme, _kb, done) => {
+			const component = new SubagentPane(theme, runDir);
+			const interval = setInterval(() => {
+				component.refresh();
+				tui.requestRender();
+			}, 1500);
+			paneState = { token, done, interval, cleanup };
+			return component;
+		}, {
+			overlay: true,
+			overlayOptions: {
+				nonCapturing: true,
+				anchor: "top-right",
+				width: "42%",
+				minWidth: 52,
+				maxHeight: "45%",
+				margin: { top: 1, right: 1 },
+				visible: (termWidth, termHeight) => termWidth >= 100 && termHeight >= 24,
+			},
+			onHandle: (handle) => {
+				if (paneState?.token === token) paneState.handle = handle;
+			},
+		}).finally(() => {
+			if (paneState?.token !== token) return;
+			if (paneState.interval) clearInterval(paneState.interval);
+			paneState.cleanup?.();
+			paneState = undefined;
+		});
+		return true;
+	};
+
+	async function handleSubpane(args: string, ctx: ExtensionContext) {
+		const [action = "latest", idOrPrefix] = args.trim() ? args.trim().split(/\s+/, 2) : ["latest", undefined];
+		if (["hide", "off"].includes(action)) {
+			ctx.ui.notify(hidePane() ? "Subagent pane hidden." : "Subagent pane was not visible.", "info");
+			return;
+		}
+		if (action === "toggle" && paneState) {
+			ctx.ui.notify(hidePane() ? "Subagent pane hidden." : "Subagent pane was not visible.", "info");
+			return;
+		}
+		if (action === "list") {
+			ctx.ui.notify(listRunSummary(), "info");
+			return;
+		}
+		if (action === "test" || action === "smoke") {
+			const test = createPaneTestRun();
+			ctx.ui.notify(showPane(ctx, test.runDir, test.cleanup) ? `Subagent pane test started: ${test.runDir}` : "Subagent pane requires the interactive TUI.", "info");
+			return;
+		}
+
+		const target = action === "latest" || action === "show" || action === "toggle"
+			? idOrPrefix
+			: action;
+		let runDir: string | undefined;
+		if (!target) {
+			runDir = findLatestRunDir();
+		} else {
+			const matches = findRunDirs(target);
+			if (matches.length > 1) {
+				ctx.ui.notify(`Ambiguous subagent run '${target}': ${matches.map((dir) => path.basename(dir)).join(", ")}`, "error");
+				return;
+			}
+			runDir = matches[0];
+		}
+		if (!runDir) {
+			ctx.ui.notify(target ? `No async subagent run found for '${target}'.` : "No async subagent runs found.", "error");
+			return;
+		}
+		ctx.ui.notify(showPane(ctx, runDir) ? `Subagent pane shown for ${path.basename(runDir)}.` : "Subagent pane requires the interactive TUI.", "info");
+	}
+
 	pi.registerCommand("subattach", {
 		description: "Attach to a subagent run session by async run id/prefix",
 		handler: async (args, ctx) => {
@@ -138,5 +482,15 @@ export default function (pi: ExtensionAPI) {
 			}
 			await ctx.switchSession(lastParentSessionFile);
 		},
+	});
+
+	pi.registerCommand("subpane", {
+		description: "Show a top-right live pane for async subagent runs",
+		handler: handleSubpane,
+	});
+
+	pi.registerCommand("subagent-pane", {
+		description: "Alias for /subpane",
+		handler: handleSubpane,
 	});
 }
