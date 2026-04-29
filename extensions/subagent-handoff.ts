@@ -298,22 +298,85 @@ function tailFileLines(filePath: string | undefined, maxLines: number, maxBytes 
 	}
 }
 
+function contentText(content: unknown): string {
+	if (typeof content === "string") return content;
+	if (!Array.isArray(content)) return "";
+	return content
+		.map((part) => {
+			if (!part || typeof part !== "object") return "";
+			const record = part as Record<string, unknown>;
+			return typeof record.text === "string" ? record.text : "";
+		})
+		.filter(Boolean)
+		.join("\n");
+}
+
+function lastMeaningfulLine(text: string): string | undefined {
+	return text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).at(-1);
+}
+
+function compactOneLine(value: string, max = 96): string {
+	const compacted = value.replace(/\s+/g, " ").trim();
+	return compacted.length > max ? `${compacted.slice(0, max - 1)}…` : compacted;
+}
+
+function summarizeToolArgs(toolName: string | undefined, args: unknown): string | undefined {
+	if (!args || typeof args !== "object") return undefined;
+	const record = args as Record<string, unknown>;
+	if (toolName === "bash" && typeof record.command === "string") return compactOneLine(record.command);
+	if (typeof record.path === "string") return record.path;
+	if (typeof record.query === "string") return record.query;
+	if (Array.isArray(record.queries)) return `${record.queries.length} queries`;
+	if (typeof record.url === "string") return record.url;
+	if (Array.isArray(record.urls)) return `${record.urls.length} urls`;
+	return undefined;
+}
+
 function formatEventLine(raw: string): string | undefined {
 	try {
 		const parsed = JSON.parse(raw) as Record<string, unknown>;
-		const ts = typeof parsed.ts === "number" ? new Date(parsed.ts).toISOString().slice(11, 19) : undefined;
 		const type = typeof parsed.type === "string" ? parsed.type : "event";
 		const agent = typeof parsed.agent === "string" ? parsed.agent : typeof parsed.subagentAgent === "string" ? parsed.subagentAgent : undefined;
-		const status = typeof parsed.status === "string" ? parsed.status : undefined;
-		const msg = typeof parsed.message === "string" ? parsed.message : typeof parsed.error === "string" ? parsed.error : undefined;
-		return [ts, type, agent, status, msg].filter(Boolean).join(" | ");
+		const stepIndex = typeof parsed.stepIndex === "number" ? parsed.stepIndex + 1 : undefined;
+		const toolName = typeof parsed.toolName === "string" ? parsed.toolName : undefined;
+
+		if (type === "subagent.step.started") return `▶ step ${stepIndex ?? "?"}: ${agent ?? "subagent"}`;
+		if (type === "subagent.step.completed") return `✓ step ${stepIndex ?? "?"}: ${agent ?? "subagent"}`;
+		if (type === "subagent.step.failed") return `✗ step ${stepIndex ?? "?"}: ${agent ?? "subagent"}`;
+		if (type === "subagent.run.started") return "▶ run started";
+		if (type === "subagent.run.completed") return `✓ run ${typeof parsed.status === "string" ? parsed.status : "completed"}`;
+		if (type === "subagent.control" && typeof parsed.message === "string") return parsed.message;
+
+		if (type === "tool_execution_start") {
+			const summary = summarizeToolArgs(toolName, parsed.args);
+			return `▶ ${toolName ?? "tool"}${summary ? `: ${summary}` : ""}`;
+		}
+		if (type === "tool_execution_update") {
+			const partial = parsed.partialResult as Record<string, unknown> | undefined;
+			const line = lastMeaningfulLine(contentText(partial?.content));
+			return line ? `… ${toolName ?? "tool"}: ${line}` : undefined;
+		}
+		if (type === "tool_execution_end") {
+			const result = parsed.result as Record<string, unknown> | undefined;
+			const line = lastMeaningfulLine(contentText(result?.content));
+			const failed = parsed.isError === true;
+			return `${failed ? "✗" : "✓"} ${toolName ?? "tool"}${line ? `: ${line}` : ""}`;
+		}
+		if ((type === "subagent.child.stdout" || type === "subagent.child.stderr") && typeof parsed.line === "string") {
+			return `${type.endsWith("stderr") ? "stderr" : "stdout"}: ${parsed.line}`;
+		}
+
+		return undefined;
 	} catch {
 		return raw.trim() || undefined;
 	}
 }
 
 function recentEvents(runDir: string, limit: number): string[] {
-	return tailFileLines(path.join(runDir, "events.jsonl"), limit).map(formatEventLine).filter((line): line is string => Boolean(line));
+	return tailFileLines(path.join(runDir, "events.jsonl"), 160)
+		.map(formatEventLine)
+		.filter((line): line is string => Boolean(line))
+		.slice(-limit);
 }
 
 function statusColor(theme: Theme, state: string | undefined): string {
@@ -380,18 +443,16 @@ class SubagentPane implements Component {
 			}
 		}
 
+		const outputPath = resolveRunPath(this.runDir, status?.outputFile) ?? path.join(this.runDir, `subagent-log-${id}.md`);
+		const outputTail = tailFileLines(outputPath, 5);
 		const events = recentEvents(this.runDir, 5);
 		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
-		if (events.length > 0) {
+		if (outputTail.length > 0) {
+			for (const line of outputTail) body.push(border("│") + pad(line) + border("│"));
+		} else if (events.length > 0) {
 			for (const event of events) body.push(border("│") + pad(event) + border("│"));
 		} else {
-			const outputPath = resolveRunPath(this.runDir, status?.outputFile) ?? path.join(this.runDir, `subagent-log-${id}.md`);
-			const outputTail = tailFileLines(outputPath, 5);
-			if (outputTail.length > 0) {
-				for (const line of outputTail) body.push(border("│") + pad(line) + border("│"));
-			} else {
-				body.push(border("│") + pad(th.fg("dim", "No events/output yet.")) + border("│"));
-			}
+			body.push(border("│") + pad(th.fg("dim", "Waiting for tool activity/output...")) + border("│"));
 		}
 
 		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
