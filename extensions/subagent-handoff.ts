@@ -415,6 +415,31 @@ type LiveRun = {
 	updatedAt: number;
 };
 
+type SubagentExecutionArgs = Record<string, unknown>;
+
+function isSubagentExecutionArgs(args: SubagentExecutionArgs | undefined): args is SubagentExecutionArgs {
+	if (!args || typeof args !== "object") return false;
+	if ("action" in args) return false;
+	return Boolean(args.agent || args.chain || args.tasks);
+}
+
+function liveRunMode(args: SubagentExecutionArgs | undefined): LiveRun["mode"] {
+	if (args?.chain) return "chain";
+	if (args?.tasks) return "parallel";
+	return "single";
+}
+
+function createLiveRun(runId: string, args: SubagentExecutionArgs | undefined): LiveRun {
+	return {
+		runId,
+		agent: typeof args?.agent === "string" ? args.agent : undefined,
+		task: typeof args?.task === "string" ? args.task : undefined,
+		mode: liveRunMode(args),
+		state: "running",
+		updatedAt: Date.now(),
+	};
+}
+
 class LiveSubagentPane implements Component {
 	private cachedWidth?: number;
 	private cachedLines?: string[];
@@ -765,18 +790,10 @@ export default function (pi: ExtensionAPI) {
 	pi.on("tool_execution_start", (event, ctx) => {
 		if (event.toolName !== "subagent") return;
 		if (autoOpenMode !== "all") return;
-		if (event.args && typeof event.args === "object" && "action" in event.args) return;
+		const args = event.args as SubagentExecutionArgs | undefined;
+		if (!isSubagentExecutionArgs(args)) return;
 		const runId = event.toolCallId;
-		const args = event.args as Record<string, unknown> | undefined;
-		const mode = args?.chain ? "chain" : args?.tasks ? "parallel" : "single";
-		liveRuns.set(runId, {
-			runId,
-			agent: typeof args?.agent === "string" ? args.agent : undefined,
-			task: typeof args?.task === "string" ? args.task : undefined,
-			mode: mode as LiveRun["mode"],
-			state: "running",
-			updatedAt: Date.now(),
-		});
+		liveRuns.set(runId, createLiveRun(runId, args));
 		if (ctx.hasUI) latestCtx = ctx;
 	});
 
@@ -815,15 +832,61 @@ export default function (pi: ExtensionAPI) {
 		run.updatedAt = Date.now();
 	});
 
+	const unsubSlashRequest = pi.events.on("subagent:slash:request", (payload: unknown) => {
+		if (autoOpenMode !== "all") return;
+		const request = payload as { requestId?: unknown; params?: unknown } | undefined;
+		if (typeof request?.requestId !== "string") return;
+		const args = request.params as SubagentExecutionArgs | undefined;
+		if (!isSubagentExecutionArgs(args)) return;
+		if (args.async === true) return;
+		liveRuns.set(request.requestId, createLiveRun(request.requestId, args));
+		if (latestCtx?.hasUI && (shownRunId === request.requestId || !shownRunId)) {
+			showForegroundPane(latestCtx, request.requestId);
+		}
+	});
+
+	const unsubSlashUpdate = pi.events.on("subagent:slash:update", (payload: unknown) => {
+		if (autoOpenMode !== "all") return;
+		const update = payload as { requestId?: unknown; progress?: LiveRun["progress"]; currentTool?: string } | undefined;
+		if (typeof update?.requestId !== "string") return;
+		const run = liveRuns.get(update.requestId);
+		if (!run) return;
+		if (update.progress) {
+			run.progress = update.progress;
+			const active = update.progress.find((p) => p.status === "running");
+			run.currentTool = update.currentTool ?? active?.currentTool;
+		} else {
+			run.currentTool = update.currentTool;
+		}
+		run.updatedAt = Date.now();
+		if (latestCtx?.hasUI && (shownRunId === run.runId || !shownRunId)) {
+			showForegroundPane(latestCtx, run.runId);
+		}
+	});
+
+	const unsubSlashResponse = pi.events.on("subagent:slash:response", (payload: unknown) => {
+		const response = payload as { requestId?: unknown; isError?: boolean; result?: { details?: { asyncId?: string; asyncDir?: string; progress?: LiveRun["progress"] } } } | undefined;
+		if (typeof response?.requestId !== "string") return;
+		const run = liveRuns.get(response.requestId);
+		if (!run) return;
+		const details = response.result?.details;
+		if (details?.asyncId || details?.asyncDir) {
+			liveRuns.delete(response.requestId);
+			if (shownRunId === response.requestId) hidePane();
+			return;
+		}
+		if (details?.progress) run.progress = details.progress;
+		run.currentTool = undefined;
+		run.state = response.isError ? "failed" : "complete";
+		run.updatedAt = Date.now();
+	});
+
 	pi.on("tool_call", (event) => {
 		if (event.toolName !== "subagent") return;
 		if (syncStrategy !== "async-wait") return;
-		const input = event.input as Record<string, unknown> | undefined;
-		if (!input || typeof input !== "object") return;
-		if ("action" in input) return;
+		const input = event.input as SubagentExecutionArgs | undefined;
+		if (!isSubagentExecutionArgs(input)) return;
 		if (input.async === true) return;
-		const hasExec = Boolean(input.agent || input.chain || input.tasks);
-		if (!hasExec) return;
 		input.async = true;
 		input.clarify = false;
 		coercedToolCallIds.add(event.toolCallId);
@@ -988,6 +1051,9 @@ export default function (pi: ExtensionAPI) {
 		hidePane();
 		try { unsubAsyncStarted(); } catch { /* ignore */ }
 		try { unsubAsyncComplete(); } catch { /* ignore */ }
+		try { unsubSlashRequest(); } catch { /* ignore */ }
+		try { unsubSlashUpdate(); } catch { /* ignore */ }
+		try { unsubSlashResponse(); } catch { /* ignore */ }
 	});
 
 	pi.registerCommand("subattach", {

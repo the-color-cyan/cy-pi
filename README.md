@@ -142,7 +142,7 @@ Use `/subpane test` to smoke-test the pane without launching a real subagent. It
 
 `/subpane auto` controls whether the pane automatically opens when a new subagent run starts:
 - `/subpane auto status` — show current setting.
-- `/subpane auto on` (or `all`) — auto-open for all runs (async and foreground).
+- `/subpane auto on` (or `all`) — auto-open for all runs (async, foreground tool calls, and foreground slash runs).
 - `/subpane auto async` — auto-open only for async/background runs.
 - `/subpane auto off` — disable auto-open.
 
