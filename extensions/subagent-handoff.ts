@@ -7,6 +7,40 @@ import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 
 let lastParentSessionFile: string | null = null;
 
+type AutoOpenMode = "off" | "async" | "all";
+
+function parseAutoOpenMode(value: unknown): AutoOpenMode {
+	if (value === true || value === "true" || value === "on" || value === "all" || value === "1") return "all";
+	if (value === "async") return "async";
+	return "off";
+}
+
+function loadAutoOpenMode(): AutoOpenMode {
+	const env = process.env.PI_SUBPANE_AUTO_OPEN;
+	if (env !== undefined) return parseAutoOpenMode(env);
+	try {
+		const candidates = [
+			path.join(os.homedir(), ".pi", "agent", "settings.json"),
+			path.join(process.cwd(), ".pi", "settings.json"),
+		];
+		for (const candidate of candidates) {
+			if (!fs.existsSync(candidate)) continue;
+			const raw = fs.readFileSync(candidate, "utf-8");
+			const parsed = JSON.parse(raw) as Record<string, unknown>;
+			const subagentPane = parsed.subagentPane;
+			if (subagentPane && typeof subagentPane === "object") {
+				const autoOpen = (subagentPane as Record<string, unknown>).autoOpen;
+				if (autoOpen !== undefined) return parseAutoOpenMode(autoOpen);
+			}
+		}
+	} catch {
+		// ignore config read errors
+	}
+	return "off";
+}
+
+let autoOpenMode = loadAutoOpenMode();
+
 type SubagentStatus = {
 	runId?: string;
 	state?: string;
@@ -56,6 +90,7 @@ const SUBPANE_ACTIONS: CompletionEntry[] = [
 	{ value: "test", description: "Start a simulated pane smoke test" },
 	{ value: "smoke", description: "Alias for test" },
 	{ value: "off", description: "Alias for hide" },
+	{ value: "auto", description: "Configure auto-open: status, on, off, async, all" },
 ];
 
 function uniqueExistingDirs(paths: string[]): string[] {
@@ -293,6 +328,80 @@ class SubagentPane implements Component {
 	}
 }
 
+type LiveRun = {
+	runId: string;
+	agent?: string;
+	task?: string;
+	mode: "single" | "parallel" | "chain";
+	progress?: Array<{ agent?: string; status?: string; currentTool?: string; task?: string }>;
+	currentTool?: string;
+	state: "running" | "complete" | "failed";
+	updatedAt: number;
+};
+
+class LiveSubagentPane implements Component {
+	private cachedWidth?: number;
+	private cachedLines?: string[];
+
+	constructor(
+		private theme: Theme,
+		private getRun: () => LiveRun | undefined,
+	) {}
+
+	refresh(): void {
+		this.cachedWidth = undefined;
+		this.cachedLines = undefined;
+	}
+
+	invalidate(): void {
+		this.refresh();
+	}
+
+	render(width: number): string[] {
+		if (this.cachedLines && this.cachedWidth === width) return this.cachedLines;
+		const run = this.getRun();
+		const th = this.theme;
+		const inner = Math.max(1, width - 2);
+		const border = (text: string) => th.fg("border", text);
+		const pad = (text: string) => {
+			const truncated = truncateToWidth(text, inner, "…", true);
+			return truncated + " ".repeat(Math.max(0, inner - visibleWidth(truncated)));
+		};
+		const id = run?.runId ?? "subagent";
+		const modeLabel = run?.mode ?? "single";
+		const stateLabel = run?.state ?? "running";
+
+		const body: string[] = [
+			border(`╭${"─".repeat(inner)}╮`),
+			border("│") + pad(`${th.fg("accent", `Subagent ${id.slice(0, 8)}`)} · ${statusColor(th, stateLabel)} · ${modeLabel}`) + border("│"),
+		];
+
+		if (run?.currentTool) {
+			body.push(border("│") + pad(`tool ${run.currentTool}`) + border("│"));
+		}
+
+		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
+
+		const progress = run?.progress ?? [];
+		if (progress.length === 0) {
+			body.push(border("│") + pad(th.fg("dim", "Starting...")) + border("│"));
+		} else {
+			for (const [index, step] of progress.slice(0, 5).entries()) {
+				const line = `${index + 1}. ${step.agent ?? "agent"} · ${step.status ?? "pending"}${step.currentTool ? ` · ${step.currentTool}` : ""}`;
+				body.push(border("│") + pad(line) + border("│"));
+			}
+		}
+
+		body.push(border("├") + border("─".repeat(inner)) + border("┤"));
+		body.push(border("│") + pad(th.fg("dim", "/subpane hide")) + border("│"));
+		body.push(border(`╰${"─".repeat(inner)}╯`));
+
+		this.cachedWidth = width;
+		this.cachedLines = body;
+		return body;
+	}
+}
+
 function listRunSummary(): string {
 	const runs = findAllRuns().slice(0, 10);
 	if (runs.length === 0) return "No async subagent runs found.";
@@ -353,6 +462,14 @@ function runCompletionItems(query: string, valuePrefix?: string): AutocompleteIt
 	return items.length > 0 ? items : null;
 }
 
+const AUTO_SUBCOMMANDS: CompletionEntry[] = [
+	{ value: "status", description: "Show current auto-open setting" },
+	{ value: "on", description: "Enable auto-open pane for all runs" },
+	{ value: "off", description: "Disable auto-open pane" },
+	{ value: "async", description: "Auto-open pane only for async runs" },
+	{ value: "all", description: "Auto-open pane for all runs" },
+];
+
 function completeSubpaneArgs(argumentPrefix: string): AutocompleteItem[] | null {
 	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
 	if (tokens.length === 0 || (tokens.length === 1 && !endsWithSpace)) {
@@ -366,6 +483,9 @@ function completeSubpaneArgs(argumentPrefix: string): AutocompleteItem[] | null 
 	const action = tokens[0]?.toLowerCase();
 	if ((action === "show" || action === "toggle") && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
 		return runCompletionItems(current, action);
+	}
+	if (action === "auto" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
+		return completionItems(AUTO_SUBCOMMANDS, current, "auto");
 	}
 
 	return null;
@@ -436,6 +556,20 @@ function createPaneTestRun(): { runDir: string; cleanup: () => void } {
 export default function (pi: ExtensionAPI) {
 	let paneState: PaneState | undefined;
 	let paneToken = 0;
+	let latestCtx: ExtensionContext | undefined;
+	const liveRuns = new Map<string, LiveRun>();
+	let shownRunId: string | undefined;
+
+	const handleAsyncStarted = (payload: unknown) => {
+		if (autoOpenMode !== "async" && autoOpenMode !== "all") return;
+		const p = payload as { asyncDir?: string } | undefined;
+		const runDir = p?.asyncDir;
+		if (!runDir || !fs.existsSync(runDir)) return;
+		if (isPaneTestRunDir(runDir)) return;
+		if (!latestCtx?.hasUI) return;
+		showPane(latestCtx, runDir);
+	};
+	const unsubAsyncStarted = pi.events.on("subagent:async-started", handleAsyncStarted);
 
 	const hidePane = (): boolean => {
 		const state = paneState;
@@ -445,6 +579,44 @@ export default function (pi: ExtensionAPI) {
 		state.handle?.hide();
 		state.done?.();
 		paneState = undefined;
+		shownRunId = undefined;
+		return true;
+	};
+
+	const showForegroundPane = (ctx: ExtensionContext, runId: string): boolean => {
+		if (!ctx.hasUI) return false;
+		if (shownRunId === runId && paneState) return true;
+		hidePane();
+		shownRunId = runId;
+		const token = ++paneToken;
+		void ctx.ui.custom<void>((tui: TUI, theme, _kb, done) => {
+			const component = new LiveSubagentPane(theme, () => liveRuns.get(runId));
+			const interval = setInterval(() => {
+				component.refresh();
+				tui.requestRender();
+			}, 1500);
+			paneState = { token, done, interval };
+			return component;
+		}, {
+			overlay: true,
+			overlayOptions: {
+				nonCapturing: true,
+				anchor: "top-right",
+				width: "42%",
+				minWidth: 52,
+				maxHeight: "45%",
+				margin: { top: 1, right: 1 },
+				visible: (termWidth, termHeight) => termWidth >= 100 && termHeight >= 24,
+			},
+			onHandle: (handle) => {
+				if (paneState?.token === token) paneState.handle = handle;
+			},
+		}).finally(() => {
+			if (paneState?.token !== token) return;
+			if (paneState.interval) clearInterval(paneState.interval);
+			paneState = undefined;
+			shownRunId = undefined;
+		});
 		return true;
 	};
 
@@ -493,6 +665,59 @@ export default function (pi: ExtensionAPI) {
 		return true;
 	};
 
+	pi.on("tool_execution_start", (event, ctx) => {
+		if (event.toolName !== "subagent") return;
+		if (autoOpenMode !== "all") return;
+		if (event.args && typeof event.args === "object" && "action" in event.args) return;
+		const runId = event.toolCallId;
+		const args = event.args as Record<string, unknown> | undefined;
+		const mode = args?.chain ? "chain" : args?.tasks ? "parallel" : "single";
+		liveRuns.set(runId, {
+			runId,
+			agent: typeof args?.agent === "string" ? args.agent : undefined,
+			task: typeof args?.task === "string" ? args.task : undefined,
+			mode: mode as LiveRun["mode"],
+			state: "running",
+			updatedAt: Date.now(),
+		});
+		if (ctx.hasUI) latestCtx = ctx;
+	});
+
+	pi.on("tool_execution_update", (event, ctx) => {
+		if (event.toolName !== "subagent") return;
+		const run = liveRuns.get(event.toolCallId);
+		if (!run) return;
+		const details = (event.partialResult as { details?: { asyncId?: string; asyncDir?: string; progress?: LiveRun["progress"]; results?: unknown[] } } | undefined)?.details;
+		if (details?.asyncId || details?.asyncDir) {
+			liveRuns.delete(event.toolCallId);
+			return;
+		}
+		if (details?.progress) {
+			run.progress = details.progress;
+			const active = details.progress.find((p: any) => p.status === "running");
+			run.currentTool = active?.currentTool;
+		}
+		run.updatedAt = Date.now();
+		if (ctx.hasUI) latestCtx = ctx;
+		if (latestCtx?.hasUI && (shownRunId === run.runId || !shownRunId)) {
+			showForegroundPane(latestCtx, run.runId);
+		}
+	});
+
+	pi.on("tool_execution_end", (event) => {
+		if (event.toolName !== "subagent") return;
+		const run = liveRuns.get(event.toolCallId);
+		if (!run) return;
+		const details = (event.result as { details?: { asyncId?: string; asyncDir?: string } } | undefined)?.details;
+		if (details?.asyncId || details?.asyncDir) {
+			liveRuns.delete(event.toolCallId);
+			if (shownRunId === event.toolCallId) hidePane();
+			return;
+		}
+		run.state = event.isError ? "failed" : "complete";
+		run.updatedAt = Date.now();
+	});
+
 	async function handleSubpane(args: string, ctx: ExtensionContext) {
 		const [action = "latest", idOrPrefix] = args.trim() ? args.trim().split(/\s+/, 2) : ["latest", undefined];
 		if (["hide", "off"].includes(action)) {
@@ -512,6 +737,22 @@ export default function (pi: ExtensionAPI) {
 			const shown = showPane(ctx, test.runDir, test.cleanup);
 			const hint = shown ? paneVisibilityHint() : undefined;
 			ctx.ui.notify(shown ? `Subagent pane test started: ${test.runDir}${hint ? `. ${hint}` : ""}` : "Subagent pane requires the interactive TUI.", hint ? "warning" : "info");
+			return;
+		}
+		if (action === "auto") {
+			const sub = idOrPrefix?.toLowerCase();
+			if (sub === "on" || sub === "all") {
+				autoOpenMode = "all";
+				ctx.ui.notify("Auto-open subagent pane set to all runs.", "info");
+			} else if (sub === "async") {
+				autoOpenMode = "async";
+				ctx.ui.notify("Auto-open subagent pane set to async only.", "info");
+			} else if (sub === "off") {
+				autoOpenMode = "off";
+				ctx.ui.notify("Auto-open subagent pane disabled.", "info");
+			} else {
+				ctx.ui.notify(`Auto-open subagent pane is ${autoOpenMode}.`, "info");
+			}
 			return;
 		}
 
@@ -538,8 +779,13 @@ export default function (pi: ExtensionAPI) {
 		ctx.ui.notify(shown ? `Subagent pane shown for ${path.basename(runDir)}.${hint ? ` ${hint}` : ""}` : "Subagent pane requires the interactive TUI.", hint ? "warning" : "info");
 	}
 
+	pi.on("session_start", (_event, ctx) => {
+		latestCtx = ctx;
+	});
+
 	pi.on("session_shutdown", () => {
 		hidePane();
+		try { unsubAsyncStarted(); } catch { /* ignore */ }
 	});
 
 	pi.registerCommand("subattach", {

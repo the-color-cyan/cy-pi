@@ -22,5 +22,8 @@
       }
     }
   },
+  "subagentPane": {
+    "autoOpen": false
+  },
   "hideThinkingBlock": false
 }
