@@ -1,0 +1,39 @@
+extensions/branch.ts
+  697ab976e56b288d 230,237,242
+extensions/github-tracker.ts
+  fe616f1a8d6531fa 6-8,14,25-34,211-219,234-291,499-515,526-529,533,537,544,569-585,587,593-594,602,623-624,735-736,755-826,974,977-979
+  697ab976e56b288d 5,17-19,22-24,40,44,51,60-69,95-98,363,382-412,414,431,439,445-479,558,566,632-639,732,734,749-752,838,842,853,864-865,868-869,874-876,880-883,898,947,950,956-959,963-965
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "6fd23d3908525d40b65086856aee9be42f464e80",
+  "prompts": {
+    "697ab976e56b288d": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd6e6-c953-745b-8f02-2a793fcf30bb",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 145,
+      "total_deletions": 48,
+      "accepted_lines": 138,
+      "overriden_lines": 0
+    },
+    "fe616f1a8d6531fa": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019dd4dd-c0bb-7228-a63e-0de105864fb4",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 220,
+      "total_deletions": 15,
+      "accepted_lines": 206,
+      "overriden_lines": 0
+    }
+  }
+}
