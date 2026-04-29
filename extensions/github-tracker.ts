@@ -198,11 +198,62 @@ async function createIssue(pi: ExtensionAPI, root: string, title?: string, body?
 	return { ok: true, text: result.stdout.trim() || `Created issue: ${title}` };
 }
 
+function formatIssueView(raw: string): string {
+	const issue = JSON.parse(raw) as {
+		number?: number;
+		title?: string;
+		state?: string;
+		url?: string;
+		body?: string;
+		author?: { login?: string };
+		labels?: Array<{ name?: string }>;
+		assignees?: Array<{ login?: string }>;
+		comments?: Array<{ author?: { login?: string }; body?: string; createdAt?: string }>;
+	};
+
+	const labels = issue.labels?.map((label) => label.name).filter(Boolean).join(", ") || "none";
+	const assignees = issue.assignees?.map((assignee) => assignee.login).filter(Boolean).join(", ") || "none";
+	const lines = [
+		`#${issue.number ?? "?"} ${issue.title ?? "(untitled)"}`,
+		`State: ${issue.state ?? "unknown"}`,
+		`Author: ${issue.author?.login ?? "unknown"}`,
+		`Assignees: ${assignees}`,
+		`Labels: ${labels}`,
+		issue.url ? `URL: ${issue.url}` : undefined,
+		"",
+		issue.body?.trim() ? issue.body.trim() : "(no body)",
+	].filter((line): line is string => typeof line === "string");
+
+	const comments = issue.comments ?? [];
+	if (comments.length > 0) {
+		lines.push("", `Comments (${comments.length}):`);
+		for (const comment of comments) {
+			const byline = [comment.author?.login ?? "unknown", comment.createdAt].filter(Boolean).join(" · ");
+			lines.push(`- ${byline}: ${comment.body?.trim() || "(empty)"}`);
+		}
+	}
+
+	return lines.join("\n");
+}
+
 async function viewIssue(pi: ExtensionAPI, root: string, number?: number): Promise<CommandResult> {
 	if (!number) return { ok: false, text: "Issue number is required." };
-	const result = await exec(pi, "gh", ["issue", "view", String(number), "--comments"], root);
+	// Avoid `gh issue view --comments` because some gh/GitHub combinations query the
+	// deprecated Projects Classic `projectCards` GraphQL field and fail before showing
+	// the issue. Explicit JSON fields omit projectCards while preserving comments.
+	const result = await exec(pi, "gh", [
+		"issue",
+		"view",
+		String(number),
+		"--json",
+		"number,title,state,author,labels,assignees,body,url,comments",
+	], root);
 	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
-	return { ok: true, text: result.stdout.trim() };
+	try {
+		return { ok: true, text: formatIssueView(result.stdout) };
+	} catch {
+		return { ok: true, text: result.stdout.trim() };
+	}
 }
 
 async function setIssueStage(pi: ExtensionAPI, root: string, number?: number, stage?: string): Promise<CommandResult> {
