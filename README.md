@@ -59,35 +59,25 @@ cd ~/cy-pi
 
 When this repo is already installed with `pi install`, the link installer intentionally removes repo-owned global extension/skill symlinks and lets pi package discovery load those resources. This avoids duplicate skill or command conflicts.
 
-For local development, prefer `./scripts/use-local-package.sh`, which replaces the installed package entry with a local path to this checkout and links only non-package resources.
-
-If you temporarily force extension/skill symlinks for testing (conflict-prone), use `--force-package-resources`, then remove them afterward:
-
-```bash
-./scripts/install-local-links.sh --force-package-resources
-# ... test ...
-./scripts/install-local-links.sh --no-package-resources
-```
-
-Then run `/reload` in pi or restart pi. Leaving both package-loaded resources and global symlinks active can create duplicate extension/skill conflicts.
+For local development, use the isolated dev setup below. The older package-based helper `./scripts/use-local-package.sh` is still available when you explicitly want package loading instead of the isolated symlink setup.
 
 ## Local install while developing
 
-The recommended way to develop this repo locally is to point pi settings at this checkout as a local package, so pi loads extensions/skills directly without symlinks. Then link the non-package resources (agents, global prompts):
+Current local setup uses an isolated dev Pi home at `~/.pi-dev/agent`, with this repo's custom resources symlinked into that home. This keeps custom cy-pi extensions separate from the normal `~/.pi/agent` tree, which can be used for OMP or third-party experiments.
+
+```bash
+./scripts/setup-pi-dev-isolation.sh
+```
+
+Use `./scripts/use-pi-mode.sh dev|normal|status` to swap whether `pi` points at the isolated dev harness or the normal `~/.pi/agent` harness. See [`docs/pi-dev-isolation.md`](docs/pi-dev-isolation.md).
+
+The alternative package-based local development flow is to point pi settings at this checkout as a local package, so pi loads extensions/skills directly without symlinks. Then link the non-package resources (agents, global prompts):
 
 ```bash
 ./scripts/use-local-package.sh
 ```
 
 This updates `~/.pi/agent/settings.json` to use this checkout as a package and runs `./scripts/install-local-links.sh --no-package-resources` for the rest. Run `/reload` in pi or restart pi to pick up changes.
-
-If you temporarily need direct global symlinks for testing (conflict-prone), use:
-
-```bash
-./scripts/install-local-links.sh --force-package-resources
-```
-
-Remember to clean them up afterward with `./scripts/install-local-links.sh --no-package-resources`.
 
 ## commit-message extension
 
