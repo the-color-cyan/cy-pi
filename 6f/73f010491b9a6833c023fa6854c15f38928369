@@ -1,0 +1,32 @@
+AGENTS.md
+  5611b7938f66d0a0 9-10
+scripts/use-pi-mode.sh
+  5611b7938f66d0a0 1-119
+README.md
+  5611b7938f66d0a0 62,66,69,72,74
+scripts/setup-pi-dev-isolation.sh
+  5611b7938f66d0a0 1-108
+docs/pi-dev-isolation.md
+  5611b7938f66d0a0 1-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "6f73f010491b9a6833c023fa6854c15f38928369",
+  "prompts": {
+    "5611b7938f66d0a0": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "115be999-adcf-4a11-97a7-4552946b8338",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 363,
+      "total_deletions": 64,
+      "accepted_lines": 321,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/2294503e54a5e30f2f2a723d73cc22f721f53992a21e3b8412e5ac4abb6a377e"
+    }
+  }
+}
