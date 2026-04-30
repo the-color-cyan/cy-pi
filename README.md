@@ -69,7 +69,7 @@ Current local setup uses an isolated dev Pi home at `~/.pi-dev/agent`, with this
 ./scripts/setup-pi-dev-isolation.sh
 ```
 
-Use `./scripts/use-pi-mode.sh dev|normal|status` to swap whether `pi` points at the isolated dev harness or the normal `~/.pi/agent` harness. See [`docs/pi-dev-isolation.md`](docs/pi-dev-isolation.md).
+Use `./scripts/use-pi-mode.sh dev|normal|status` to swap whether `pi` points at the isolated dev harness or the normal `~/.pi/agent` harness. It updates bash, zsh, and fish rc files. See [`docs/pi-dev-isolation.md`](docs/pi-dev-isolation.md).
 
 The alternative package-based local development flow is to point pi settings at this checkout as a local package, so pi loads extensions/skills directly without symlinks. Then link the non-package resources (agents, global prompts):
 

@@ -56,24 +56,21 @@ Use the mode switcher from this repo:
 ./scripts/use-pi-mode.sh dev     # `pi` uses ~/.pi-dev/agent; `pi-normal` uses ~/.pi/agent
 ./scripts/use-pi-mode.sh normal  # `pi` uses ~/.pi/agent; `pi-dev` uses ~/.pi-dev/agent
 ./scripts/use-pi-mode.sh status
-source ~/.zshrc                  # or open a new shell after switching
 ```
 
-The script updates a marked block in `~/.zshrc`.
+The script updates marked blocks in all supported interactive shell rc files:
 
-Dev mode defines:
-
-```bash
-pi() { PI_CODING_AGENT_DIR="$HOME/.pi-dev/agent" command pi "$@"; }
-pi-normal() { command pi "$@"; }
+```text
+~/.bashrc
+~/.zshrc
+~/.config/fish/config.fish
 ```
 
-Normal mode defines:
+Open a new shell after switching, or source the relevant rc file (`source ~/.zshrc`, `source ~/.bashrc`, or `source ~/.config/fish/config.fish`).
 
-```bash
-pi() { command pi "$@"; }
-pi-dev() { PI_CODING_AGENT_DIR="$HOME/.pi-dev/agent" command pi "$@"; }
-```
+Dev mode defines `pi` as the isolated harness and `pi-normal` as the default harness. Normal mode defines `pi` as the default harness and `pi-dev` as the isolated harness.
+
+For one-off/testing edits to a single rc file, set `PI_SHELL_RC=/path/to/rc` when running `scripts/use-pi-mode.sh`.
 
 ## Notes
 
