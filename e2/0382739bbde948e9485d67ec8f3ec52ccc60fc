@@ -1,0 +1,19 @@
+APPEND_SYSTEM.md
+  s_7efbb58f8ce0c2::t_6882d8c599f0a4 5-13,16-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "e20382739bbde948e9485d67ec8f3ec52ccc60fc",
+  "prompts": {},
+  "sessions": {
+    "s_7efbb58f8ce0c2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1faa-d897-71b6-bc82-2c1df1666947",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
