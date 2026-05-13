@@ -1,0 +1,61 @@
+AGENTS.md
+  7ebea8770cc5904c 13-17,19-21,23-25
+docs/agents/triage-labels.md
+  7ebea8770cc5904c 1-2,4,12,14
+  009dc4dff3f01e4c 3,5-11,13,15
+docs/agents/domain.md
+  7ebea8770cc5904c 1-2,4-7,10,12-42,44,46-48,50
+  009dc4dff3f01e4c 3,8-9,11,43,45,49,51
+docs/agents/issue-tracker.md
+  009dc4dff3f01e4c 3,7-10,14,18,22
+  7ebea8770cc5904c 1-2,4-6,11-13,15-17,19-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "25f7793be60276e8b797fafd337a7a42a9c5dcbc",
+  "prompts": {
+    "009dc4dff3f01e4c": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ddc93-ddc8-7277-b6a2-68d275398a14",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 3603,
+      "total_deletions": 411,
+      "accepted_lines": 1560,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/dfaeab77c6cd2484bbf0202e3172989781c052bf6ae06e9cb8787d3af31ef969"
+    },
+    "6c926f593adfef63": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ddc96-12ff-73f0-b691-4137b6f82bb0",
+        "model": "k2p6"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 1710,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/4351c0ecab7a9fb6cd1456b3f6adf4957e09be5b2944595354b14ed5a64be514"
+    },
+    "7ebea8770cc5904c": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "ebc0f6e5-0b78-47c2-bcce-6b230181adde",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan",
+      "messages": [],
+      "total_additions": 102,
+      "total_deletions": 0,
+      "accepted_lines": 73,
+      "overriden_lines": 3,
+      "messages_url": "https://usegitai.com/cas/b8575905f61a113d18417a1e43c73f4d3341d035f6db93c3a917ec6df1ad6d46"
+    }
+  }
+}
