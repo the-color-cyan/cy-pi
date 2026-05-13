@@ -1,0 +1,24 @@
+skills/productivity/README.md
+  s_768b2598738aaa::t_1be59ef00d2c66 2,4
+README.md
+  s_768b2598738aaa::t_2fa471ee22269e 20
+  s_768b2598738aaa::t_023bae25b24785 21
+skills/productivity/grill-me/SKILL.md
+  s_768b2598738aaa::t_4a4e37a47d1057 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "781f50b040019f6c6c8ffa8e599f168a445db395",
+  "prompts": {},
+  "sessions": {
+    "s_768b2598738aaa": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1f8c-af69-76cf-987e-456fd0ed371d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
