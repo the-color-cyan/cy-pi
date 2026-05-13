@@ -23,12 +23,8 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `prompt-analysis`
 - `prompts/` — prompt templates (currently empty)
 - `themes/` — custom themes (currently empty)
-- `agents/` — pi-subagents custom agents and chain definitions
-  - `arm.md` — deep implementation agent for complex multi-area tasks
-  - `hand.md` — balanced implementation agent for typical coding tasks
-  - `finger.md` — ultra-light implementation agent for tiny, local changes
-  - `async-scout.chain.md`
-  - `async-implement-review.chain.md`
+- `agents/` — active pi-subagents custom agents and chain definitions, when present
+- `archive/` — inert resources kept for reference only; these are not declared in the pi package manifest, not published by `npm pack`, and not linked by the install scripts
 - `APPEND_SYSTEM.md` — global system-prompt append content
 - `SUBAGENTS_ASYNC_PLAYBOOK.md` — async subagent reference used by the global instructions
 - `settings.example.json` — portable example settings, including non-custom package sources, with secrets/runtime state removed
@@ -51,7 +47,7 @@ That loads the package resources declared in `package.json`:
 - prompts
 - themes
 
-If you also want the global `APPEND_SYSTEM.md` and pi-subagents agents/chains from this repo, clone it and run the link installer:
+If you also want the global `APPEND_SYSTEM.md` and any active pi-subagents agents/chains from this repo, clone it and run the link installer:
 
 ```bash
 git clone git@github.com:YOUR_USER/cy-pi.git ~/cy-pi
@@ -207,4 +203,4 @@ pi install git:github.com/YOUR_USER/cy-pi@v0.1.0
 
 ## Notes
 
-Pi packages currently auto-discover extensions, skills, prompt templates, and themes. The `agents/` custom agent/chain files and top-level `APPEND_SYSTEM.md` are kept here for portability, but need to be linked or copied into the standard pi locations by `scripts/install-local-links.sh`.
+Pi packages currently auto-discover extensions, skills, prompt templates, and themes. Active `agents/` custom agent/chain files and top-level `APPEND_SYSTEM.md` are kept here for portability, but need to be linked or copied into the standard pi locations by `scripts/install-local-links.sh`. Files under `archive/` are intentionally not loaded or linked.

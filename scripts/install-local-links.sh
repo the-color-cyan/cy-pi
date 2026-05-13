@@ -93,6 +93,28 @@ remove_repo_link() {
   esac
 }
 
+remove_archived_or_stale_agent_link() {
+  local dest="$1"
+  if [ ! -L "$dest" ]; then
+    return 0
+  fi
+
+  local current
+  current="$(readlink "$dest")"
+  case "$current" in
+    "$repo_root"/archive/*)
+      rm "$dest"
+      echo "removed archived agent link $dest"
+      ;;
+    "$repo_root"/agents/*)
+      if [ ! -e "$current" ]; then
+        rm "$dest"
+        echo "removed stale agent link $dest"
+      fi
+      ;;
+  esac
+}
+
 repo_appears_installed_package() {
   # `pi list` prints resolved package paths, which covers local, git, and npm
   # installs. Fall back to a light settings check for local path installs.
@@ -187,7 +209,13 @@ else
   done
 fi
 
-# pi-subagents resources are not part of pi package discovery, so link them explicitly.
+# pi-subagents resources are not part of pi package discovery, so link active
+# top-level agents explicitly. Archived agents are intentionally inert.
+for dest in "$HOME"/.pi/agent/agents/*.md; do
+  [ -e "$dest" ] || [ -L "$dest" ] || continue
+  remove_archived_or_stale_agent_link "$dest"
+done
+
 for src in "$repo_root"/agents/*.md; do
   [ -e "$src" ] || continue
   link_one "$src" "$HOME/.pi/agent/agents/$(basename "$src")"

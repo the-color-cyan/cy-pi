@@ -34,6 +34,33 @@ link_one() {
   echo "linked $dest -> $src"
 }
 
+remove_repo_link() {
+  local dest="$1"
+  if [ ! -L "$dest" ]; then
+    return 0
+  fi
+
+  local current
+  current="$(readlink "$dest")"
+  case "$current" in
+    "$repo_root"/*)
+      rm "$dest"
+      echo "removed repo link $dest"
+      ;;
+  esac
+}
+
+link_dir_if_present() {
+  local src="$1"
+  local dest="$2"
+  if [ -d "$src" ]; then
+    link_one "$src" "$dest"
+  else
+    remove_repo_link "$dest"
+    echo "skipped missing resource directory $src"
+  fi
+}
+
 mkdir -p "$dev_agent_dir" "$dev_agent_dir/sessions"
 
 if [ ! -e "$dev_agent_dir/auth.json" ] && [ -e "$source_agent_dir/auth.json" ]; then
@@ -83,11 +110,11 @@ echo "normalized $dev_agent_dir/settings.json"
 
 # Custom cy-pi resources are linked into the isolated dev agent dir. Third-party
 # packages/resources can remain in the normal ~/.pi tree or in dev settings.
-link_one "$repo_root/extensions" "$dev_agent_dir/extensions"
-link_one "$repo_root/skills" "$dev_agent_dir/skills"
-link_one "$repo_root/prompts" "$dev_agent_dir/prompts"
-link_one "$repo_root/themes" "$dev_agent_dir/themes"
-link_one "$repo_root/agents" "$dev_agent_dir/agents"
+link_dir_if_present "$repo_root/extensions" "$dev_agent_dir/extensions"
+link_dir_if_present "$repo_root/skills" "$dev_agent_dir/skills"
+link_dir_if_present "$repo_root/prompts" "$dev_agent_dir/prompts"
+link_dir_if_present "$repo_root/themes" "$dev_agent_dir/themes"
+link_dir_if_present "$repo_root/agents" "$dev_agent_dir/agents"
 link_one "$repo_root/APPEND_SYSTEM.md" "$dev_agent_dir/APPEND_SYSTEM.md"
 link_one "$repo_root/SUBAGENTS_ASYNC_PLAYBOOK.md" "$dev_agent_dir/SUBAGENTS_ASYNC_PLAYBOOK.md"
 link_one "$repo_root/commit-message-prompt.md" "$dev_agent_dir/commit-message-prompt.md"
