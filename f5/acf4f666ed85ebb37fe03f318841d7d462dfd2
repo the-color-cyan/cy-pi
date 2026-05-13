@@ -1,0 +1,19 @@
+skills/engineering/README.md
+  s_768b2598738aaa::t_2cc1f9a5c520dc 1,12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "f5acf4f666ed85ebb37fe03f318841d7d462dfd2",
+  "prompts": {},
+  "sessions": {
+    "s_768b2598738aaa": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1f8c-af69-76cf-987e-456fd0ed371d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
