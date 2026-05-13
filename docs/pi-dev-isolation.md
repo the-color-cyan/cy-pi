@@ -7,8 +7,8 @@ can use `~/.pi` without mixing with custom cy-pi resources.
 ## Layout
 
 ```text
-~/.pi-dev/agent/       # active home for custom/dev `pi`
-~/.pi/agent/           # normal/default Pi home; keep available for OMP or experiments
+~/.pi-dev/agent/       # active home for custom/dev `pi-dev`
+~/.pi/agent/           # normal/default Pi home; keep available as `pi` for OMP or experiments
 ~/pi/cy-pi/            # source of custom extensions, skills, prompts, themes, agents
 ```
 
@@ -53,7 +53,7 @@ It does not delete or rewrite the normal `~/.pi/agent` tree.
 Use the mode switcher from this repo:
 
 ```bash
-./scripts/use-pi-mode.sh dev     # `pi` uses ~/.pi-dev/agent; `pi-normal` uses ~/.pi/agent
+./scripts/use-pi-mode.sh dev     # bash/zsh: `pi` uses ~/.pi-dev/agent; fish: use `pi-dev`
 ./scripts/use-pi-mode.sh normal  # `pi` uses ~/.pi/agent; `pi-dev` uses ~/.pi-dev/agent
 ./scripts/use-pi-mode.sh status
 ```
@@ -68,7 +68,7 @@ The script updates marked blocks in all supported interactive shell rc files:
 
 Open a new shell after switching, or source the relevant rc file (`source ~/.zshrc`, `source ~/.bashrc`, or `source ~/.config/fish/config.fish`).
 
-Dev mode defines `pi` as the isolated harness and `pi-normal` as the default harness. Normal mode defines `pi` as the default harness and `pi-dev` as the isolated harness.
+For bash/zsh, dev mode defines `pi` as the isolated harness and `pi-normal` as the default harness. For fish, default `pi` is left untouched and `pi-dev` runs the isolated harness. Normal mode defines `pi` as the default harness and `pi-dev` as the isolated harness.
 
 For one-off/testing edits to a single rc file, set `PI_SHELL_RC=/path/to/rc` when running `scripts/use-pi-mode.sh`.
 

@@ -7,76 +7,76 @@ source_agent_dir="${PI_SOURCE_AGENT_DIR:-$HOME/.pi/agent}"
 timestamp="$(date +%Y%m%d%H%M%S)"
 
 backup_if_needed() {
-  local dest="$1"
-  local src="$2"
+	local dest="$1"
+	local src="$2"
 
-  if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
-    return 0
-  fi
+	if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
+		return 0
+	fi
 
-  if [ -L "$dest" ]; then
-    local current
-    current="$(readlink "$dest")"
-    if [ "$current" = "$src" ]; then
-      return 0
-    fi
-  fi
+	if [ -L "$dest" ]; then
+		local current
+		current="$(readlink "$dest")"
+		if [ "$current" = "$src" ]; then
+			return 0
+		fi
+	fi
 
-  mv "$dest" "$dest.backup.$timestamp"
+	mv "$dest" "$dest.backup.$timestamp"
 }
 
 link_one() {
-  local src="$1"
-  local dest="$2"
-  mkdir -p "$(dirname "$dest")"
-  backup_if_needed "$dest" "$src"
-  ln -sfn "$src" "$dest"
-  echo "linked $dest -> $src"
+	local src="$1"
+	local dest="$2"
+	mkdir -p "$(dirname "$dest")"
+	backup_if_needed "$dest" "$src"
+	ln -sfn "$src" "$dest"
+	echo "linked $dest -> $src"
 }
 
 remove_repo_link() {
-  local dest="$1"
-  if [ ! -L "$dest" ]; then
-    return 0
-  fi
+	local dest="$1"
+	if [ ! -L "$dest" ]; then
+		return 0
+	fi
 
-  local current
-  current="$(readlink "$dest")"
-  case "$current" in
-    "$repo_root"/*)
-      rm "$dest"
-      echo "removed repo link $dest"
-      ;;
-  esac
+	local current
+	current="$(readlink "$dest")"
+	case "$current" in
+	"$repo_root"/*)
+		rm "$dest"
+		echo "removed repo link $dest"
+		;;
+	esac
 }
 
 link_dir_if_present() {
-  local src="$1"
-  local dest="$2"
-  if [ -d "$src" ]; then
-    link_one "$src" "$dest"
-  else
-    remove_repo_link "$dest"
-    echo "skipped missing resource directory $src"
-  fi
+	local src="$1"
+	local dest="$2"
+	if [ -d "$src" ]; then
+		link_one "$src" "$dest"
+	else
+		remove_repo_link "$dest"
+		echo "skipped missing resource directory $src"
+	fi
 }
 
 mkdir -p "$dev_agent_dir" "$dev_agent_dir/sessions"
 
 if [ ! -e "$dev_agent_dir/auth.json" ] && [ -e "$source_agent_dir/auth.json" ]; then
-  cp -p "$source_agent_dir/auth.json" "$dev_agent_dir/auth.json"
-  chmod 600 "$dev_agent_dir/auth.json" || true
-  echo "copied auth.json from $source_agent_dir"
+	cp -p "$source_agent_dir/auth.json" "$dev_agent_dir/auth.json"
+	chmod 600 "$dev_agent_dir/auth.json" || true
+	echo "copied auth.json from $source_agent_dir"
 fi
 
 if [ ! -e "$dev_agent_dir/settings.json" ]; then
-  if [ -e "$source_agent_dir/settings.json" ]; then
-    cp -p "$source_agent_dir/settings.json" "$dev_agent_dir/settings.json"
-    echo "copied settings.json from $source_agent_dir"
-  else
-    cp "$repo_root/settings.example.json" "$dev_agent_dir/settings.json"
-    echo "created settings.json from settings.example.json"
-  fi
+	if [ -e "$source_agent_dir/settings.json" ]; then
+		cp -p "$source_agent_dir/settings.json" "$dev_agent_dir/settings.json"
+		echo "copied settings.json from $source_agent_dir"
+	else
+		cp "$repo_root/settings.example.json" "$dev_agent_dir/settings.json"
+		echo "created settings.json from settings.example.json"
+	fi
 fi
 
 python3 - "$dev_agent_dir/settings.json" <<'PY'
@@ -125,11 +125,12 @@ Done.
 Run isolated dev pi with:
   PI_CODING_AGENT_DIR="$dev_agent_dir" pi
 
-Recommended shell wrapper:
-  pi() {
-    PI_CODING_AGENT_DIR="\$HOME/.pi-dev/agent" command pi "\$@"
-  }
+Recommended fish function:
+  function pi-dev
+    set -lx PI_CODING_AGENT_DIR "\$HOME/.pi-dev/agent"
+    command pi \$argv
+  end
 
-Or run:
+For bash/zsh wrappers, or to install managed shell blocks, run:
   scripts/use-pi-mode.sh dev
 EOF

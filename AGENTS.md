@@ -7,7 +7,7 @@ This repo packages portable pi resources.
 - Keep active pi-subagents chains in `agents/`; use `scripts/install-local-links.sh` to link them into `~/.pi/agent/agents`.
 - Keep parked/unused resources under `archive/`; do not add `archive/` to `package.json -> pi`, package `files`, or link installers.
 - Add any new pi extensions to `extensions/` in this repo so they stay portable.
-- For local development, prefer `scripts/setup-pi-dev-isolation.sh` and `scripts/use-pi-mode.sh dev` so custom cy-pi resources load from `~/.pi-dev/agent` symlinks while the normal `~/.pi/agent` tree remains available for OMP or experiments.
+- For local development, prefer `scripts/setup-pi-dev-isolation.sh` and use `pi-dev` (fish) or `scripts/use-pi-mode.sh dev` (bash/zsh) so custom cy-pi resources load from `~/.pi-dev/agent` symlinks while the normal `~/.pi/agent` tree remains available for OMP or experiments.
 - Use `scripts/use-local-package.sh` only when you explicitly want package-based local loading instead of the isolated symlink setup.
 - Prefer portable paths. Use `$HOME`, `homedir()`, or environment variables instead of absolute machine-specific paths.
 - If adding runtime npm dependencies for extensions, put them in `dependencies` and keep pi runtime packages as peer dependencies with `"*"`.
