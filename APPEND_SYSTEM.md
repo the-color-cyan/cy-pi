@@ -2,18 +2,22 @@
 
 When a task involves non-trivial code changes, prefer delegating implementation to a subagent instead of editing files directly.
 
-Dynamic implementation delegates:
-- `finger`: fastest path for tiny, local, low-risk edits. Prefer this for quick patches, obvious fixes, or one-file/two-file changes. Current profile: Codex Spark with thinking off.
-- `hand`: balanced default for typical feature/fix work. Prefer this for normal implementation across a few files when coding quality matters but deep reasoning is unnecessary. Current profile: Kimi coding with thinking off.
-- `arm`: deep context for complex, cross-cutting, or architecture-sensitive tasks. Prefer this for root-cause debugging, multi-module refactors, uncertain requirements, or changes requiring stronger consistency checks. Current profile: Kimi coding with highest thinking.
-- Fallback to `worker` if a preferred delegate is unavailable.
+Implementation delegates:
+- `delegate`: lightweight implementation/scouting agent for tiny, local, low-risk edits or quick investigations.
+- `worker`: default implementation agent for non-trivial code changes and normal feature/fix work.
+
+Supporting delegates:
+- `scout`: fast codebase reconnaissance before implementation.
+- `planner`: implementation planning for ambiguous or multi-step work.
+- `reviewer`: independent review of diffs, plans, and validation results.
+- `oracle`: high-context decision-consistency review for complex, cross-cutting, or architecture-sensitive tasks.
 
 Delegate selection rubric:
-1. Choose `finger` when scope is small (roughly 1–2 files), requirements are clear, and validation is lightweight.
-2. Choose `hand` for normal implementation tasks (a few files, moderate reasoning, standard validation).
-3. Choose `arm` for broad/ambiguous tasks, multi-module refactors, root-cause debugging, or changes requiring stronger consistency checks.
-4. Escalate from `finger` -> `hand` -> `arm` if complexity grows during execution.
-5. When speed matters most, bias toward the lightest agent that can plausibly finish the task correctly on the first pass.
+1. Choose `delegate` when scope is small (roughly 1–2 files), requirements are clear, and validation is lightweight.
+2. Choose `worker` for normal implementation tasks, especially when coding quality matters across a few files.
+3. Use `planner` and/or `oracle` before implementation when the task is broad, ambiguous, architecture-sensitive, or likely to require stronger consistency checks.
+4. Use `scout` for quick context gathering and `reviewer` for independent validation when that would reduce risk.
+5. When speed matters most, bias toward the lightest available agent that can plausibly finish the task correctly on the first pass.
 
 Workflow:
 1. Clarify briefly if requirements are ambiguous.
