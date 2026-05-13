@@ -1,0 +1,116 @@
+skills/matt-pocock-engineering/tdd/deep-modules.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-33
+skills/matt-pocock-engineering/ATTRIBUTION.md
+  s_a85ca8f93668b0::t_a6e2b702ff9722 1-5
+skills/matt-pocock-engineering/improve-codebase-architecture/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-71
+skills/matt-pocock-engineering/tdd/tests.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-61
+skills/matt-pocock-engineering/triage/OUT-OF-SCOPE.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-101
+skills/matt-pocock-engineering/diagnose/scripts/hitl-loop.template.sh
+  s_a85ca8f93668b0::t_e0b17be083be09 1-41
+skills/matt-pocock-engineering/improve-codebase-architecture/DEEPENING.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-37
+skills/matt-pocock-engineering/tdd/SKILL.md
+  s_4b7a234cb7f310::t_65e6a16ea953d5 45-48
+  s_a85ca8f93668b0::t_e0b17be083be09 1-44,49-113
+skills/matt-pocock-engineering/tdd/interface-design.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-31
+skills/matt-pocock-engineering/tdd/mocking.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-59
+skills/matt-pocock-engineering/prototype/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-30
+skills/matt-pocock-engineering/setup-matt-pocock-skills/issue-tracker-local.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-19
+skills/matt-pocock-engineering/diagnose/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-92,95-119
+  s_12d08e21a98f7c::t_a0959b032c2ae2 93-94
+skills/matt-pocock-engineering/setup-matt-pocock-skills/issue-tracker-github.md
+  s_12d08e21a98f7c::t_b3442ede05c676 26-28
+  s_4b7a234cb7f310::t_fae581ec020cb2 13-18,21-25
+  s_a85ca8f93668b0::t_e0b17be083be09 1-12,19-20,29-36
+skills/matt-pocock-engineering/prototype/UI.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-112
+skills/matt-pocock-engineering/triage/AGENT-BRIEF.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-36,41-65,68-174
+  s_4b7a234cb7f310::t_c0769a03c4aa5b 37-40,66-67
+skills/matt-pocock-engineering/grill-with-docs/CONTEXT-FORMAT.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-77
+skills/matt-pocock-engineering/setup-matt-pocock-skills/domain.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-51
+skills/matt-pocock-engineering/setup-matt-pocock-skills/issue-tracker-gitlab.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-23
+skills/matt-pocock-engineering/triage/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-71,73-103
+  s_4b7a234cb7f310::t_40348ad3a7e7d4 72
+skills/matt-pocock-engineering/to-prd/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-19,21-76
+  s_12d08e21a98f7c::t_a092ed2dea1d8c 20
+skills/matt-pocock-engineering/tdd/refactoring.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-10
+skills/matt-pocock-engineering/prototype/LOGIC.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-79
+skills/matt-pocock-engineering/grill-with-docs/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-88
+skills/matt-pocock-engineering/improve-codebase-architecture/INTERFACE-DESIGN.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-44
+skills/matt-pocock-engineering/improve-codebase-architecture/LANGUAGE.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-53
+skills/matt-pocock-engineering/zoom-out/SKILL.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-7
+skills/matt-pocock-engineering/to-issues/SKILL.md
+  s_4b7a234cb7f310::t_8ea6b36c4222d7 16,56,58-61,87
+  s_a85ca8f93668b0::t_e0b17be083be09 1-15,17-55,57,62-86
+skills/matt-pocock-engineering/grill-with-docs/ADR-FORMAT.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-47
+skills/matt-pocock-engineering/LICENSE
+  s_a85ca8f93668b0::t_e0b17be083be09 1-21
+skills/matt-pocock-engineering/README.md
+  s_12d08e21a98f7c::t_663e0eaebf888c 19-20
+  s_a85ca8f93668b0::t_e0b17be083be09 2,5
+  s_12d08e21a98f7c::t_b47ff99a5df804 11
+  s_a85ca8f93668b0::t_24be8dd206aaed 1,3-4,6-10,12-18
+skills/matt-pocock-engineering/setup-matt-pocock-skills/SKILL.md
+  s_12d08e21a98f7c::t_57300f397147d1 3
+  s_4b7a234cb7f310::t_0a8b80190563ba 14,63,79
+  s_a85ca8f93668b0::t_e0b17be083be09 1-2,4-13,15-47,50-62,64-78,80-125
+  s_12d08e21a98f7c::t_ff7a0eb185e6dc 48-49
+skills/matt-pocock-engineering/setup-matt-pocock-skills/triage-labels.md
+  s_a85ca8f93668b0::t_e0b17be083be09 1-15
+skills/matt-pocock-engineering/review/SKILL.md
+  s_12d08e21a98f7c::t_29c6037ae0e281 17-18,23,72-92
+  s_12d08e21a98f7c::t_84eff966fb2ac9 1-16,19-22,24-71,93-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "c07f51dcb7cb6d0c5e111753c81929c0f4322a23",
+  "prompts": {},
+  "sessions": {
+    "s_12d08e21a98f7c": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1f15-357b-760d-bcee-05fb16fcb9b0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_4b7a234cb7f310": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1f72-b57f-71fb-8563-fa0bd20c9849",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_a85ca8f93668b0": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1f19-3383-76c8-a6c5-669deaac1441",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
