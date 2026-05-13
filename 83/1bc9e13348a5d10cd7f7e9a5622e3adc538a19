@@ -1,0 +1,25 @@
+README.md
+  s_fd3fec03c7c404::t_82d5e3d3e373af 19,21-23
+skills/engineering/README.md
+  s_fd3fec03c7c404::t_0118811cf6b452 9-21
+skills/productivity/README.md
+  s_fd3fec03c7c404::t_503886f668cd0a 5-8
+docs/agents/domain.md
+  s_fd3fec03c7c404::t_a9cc55fafd16b1 11,45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "831bc9e13348a5d10cd7f7e9a5622e3adc538a19",
+  "prompts": {},
+  "sessions": {
+    "s_fd3fec03c7c404": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "487ff8df-350d-432d-a578-c629ca43444b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
