@@ -17,6 +17,8 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
   - `ask`
+  - `engineering/` — engineering workflow skills
+  - `productivity/` — general workflow skills (`caveman`, `grill-me`, `handoff`, `write-a-skill`)
   - `git-ai-search`
   - `prompt-analysis`
 - `prompts/` — prompt templates (currently empty)
