@@ -12,7 +12,7 @@ Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
 
-The issue tracker should have been provided to you — run `/setup-matt-pocock-skills` if `docs/agents/issue-tracker.md` is missing.
+The issue tracker should have been provided to you — run `/setup-repo-skills` if `docs/agents/issue-tracker.md` is missing.
 
 When reviewing a GitHub PR, publish the agent outcome using labels from `docs/agents/issue-tracker.md`: `agent-approved` when there are no findings, `agent-rejected` when there are findings. Findings must be posted as a PR comment; clean approvals need only the `agent-approved` label.
 
