@@ -1,0 +1,27 @@
+docs/pi-dev-isolation.md
+  s_87aef2770b0b17::t_cabe07bf04960d 10-11,56,71
+scripts/setup-pi-dev-isolation.sh
+  s_87aef2770b0b17::t_020da698b62c30 128-132,134
+scripts/use-pi-mode.sh
+  s_87aef2770b0b17::t_fe8f4c8c111dc1 24-25,46-47,49-51,55-56
+README.md
+  s_87aef2770b0b17::t_b1879472417bb7 70
+AGENTS.md
+  s_87aef2770b0b17::t_c87490e07b8dba 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d169a8ecd880451761418b5e227d6471daf64686",
+  "prompts": {},
+  "sessions": {
+    "s_87aef2770b0b17": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e235f-992e-75ea-840c-713a8de3acc7",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
