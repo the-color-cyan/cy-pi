@@ -1,0 +1,27 @@
+AGENTS.md
+  s_d31aa713053272::t_aef89f999b9fcf 7-8
+archive/README.md
+  s_d31aa713053272::t_429f3f9949a851 1-11
+scripts/setup-pi-dev-isolation.sh
+  s_d31aa713053272::t_0233ecf087d6d7 37-63,113-117
+README.md
+  s_d31aa713053272::t_2421016dbc257c 26-27,50,206
+scripts/install-local-links.sh
+  s_d31aa713053272::t_9216fd122ad369 96-117,212-217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "e05c9aa02f3c6b09e0836c6594fac4c02451db5c",
+  "prompts": {},
+  "sessions": {
+    "s_d31aa713053272": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e1fa1-fc1d-767a-8f8e-d44e4b3357f6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
