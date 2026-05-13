@@ -16,11 +16,11 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `subagent-handoff.ts` — adds `/subattach`, `/subback`, and `/subpane` helpers for async subagent runs
   - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
-  - `ask`
+  - `eng-ask`
   - `engineering/` — engineering workflow skills
-  - `productivity/` — general workflow skills (`caveman`, `grill-me`, `handoff`, `write-a-skill`)
-  - `git-ai-search`
-  - `prompt-analysis`
+  - `productivity/` — general workflow skills (`eng-caveman`, `eng-grill-me`, `eng-handoff`, `eng-write-a-skill`)
+  - `eng-git-ai-search`
+  - `eng-prompt-analysis`
 - `prompts/` — prompt templates (currently empty)
 - `themes/` — custom themes (currently empty)
 - `agents/` — active pi-subagents custom agents and chain definitions, when present
@@ -127,6 +127,7 @@ When active, a small dashboard widget is rendered above the editor. All LLM-faci
 - `/subagent-pane ...` — alias for `/subpane`.
 
 Hotkeys are registered for quick pane control:
+
 - `Ctrl+Alt+P` — toggle the pane (hide if visible, otherwise show latest run).
 - `Ctrl+Alt+H` — hide the pane.
 
@@ -135,6 +136,7 @@ Customize or disable them with `"subagentPane": { "hotkeys": { "toggle": "ctrl+a
 Use `/subpane test` to smoke-test the pane without launching a real subagent. It creates a simulated async run under the pi-subagents temp directory and updates it once per second until the pane is hidden. Smoke-test runs are labeled `smoke` in `/subpane list`; `/subpane latest` prefers real async runs over smoke-test runs.
 
 `/subpane auto` controls whether the pane automatically opens when a new subagent run starts:
+
 - `/subpane auto status` — show current setting.
 - `/subpane auto on` (or `all`) — auto-open for all runs (async, foreground tool calls, and foreground slash runs).
 - `/subpane auto async` — auto-open only for async/background runs.
@@ -143,6 +145,7 @@ Use `/subpane test` to smoke-test the pane without launching a real subagent. It
 To enable auto-open by default, add `"subagentPane": { "autoOpen": true }` (or `"all"`) to `~/.pi/agent/settings.json` (or set `PI_SUBPANE_AUTO_OPEN=true`/`all`). Use `"async"` or `PI_SUBPANE_AUTO_OPEN=async` for async-only. It is off by default.
 
 `/subpane sync` controls how foreground (sync) subagent tool calls behave:
+
 - `/subpane sync status` — show current strategy.
 - `/subpane sync foreground` — keep sync runs in foreground (default).
 - `/subpane sync async-wait` — launch sync runs as async and wait for completion.
