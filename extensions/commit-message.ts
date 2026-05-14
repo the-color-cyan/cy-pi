@@ -1,9 +1,18 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { complete } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, ExtensionCommandContext } from "@mariozechner/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionCommandContext,
+} from "@mariozechner/pi-coding-agent";
 import { copyToClipboard } from "@mariozechner/pi-coding-agent";
 
 const PROMPT_FILE_NAME = "commit-message-prompt.md";
@@ -46,22 +55,62 @@ function readPromptFile(ctx: GitContext): { prompt: string; source: string } {
 	return { prompt: DEFAULT_PROMPT, source: "built-in default" };
 }
 
+function normalizeSubjectBodyGap(message: string): string {
+	const lines = message.replace(/\r\n?/g, "\n").split("\n");
+	if (lines.length <= 1) return message.replace(/\r\n?/g, "\n");
+
+	const subject = lines[0].trimEnd();
+	const firstBodyLine = lines.findIndex(
+		(line, index) => index > 0 && line.trim().length > 0,
+	);
+	if (firstBodyLine === -1) return subject;
+
+	return [subject, "", ...lines.slice(firstBodyLine)].join("\n");
+}
+
 function cleanCommitMessage(text: string): string {
-	return text
-		.trim()
-		.replace(/^```(?:gitcommit|text)?\s*/i, "")
-		.replace(/\s*```$/i, "")
-		.trim();
+	return normalizeSubjectBodyGap(
+		text
+			.replace(/\r\n?/g, "\n")
+			.trim()
+			.replace(/^```(?:gitcommit|text)?\s*/i, "")
+			.replace(/\s*```$/i, "")
+			.trim(),
+	);
+}
+
+function formatForLazygitPaste(message: string): string {
+	const lines = message.replace(/\r\n?/g, "\n").trim().split("\n");
+	if (lines.length <= 1) return lines[0] ?? "";
+
+	const subject = lines[0].trimEnd();
+	const firstBodyLine = lines.findIndex(
+		(line, index) => index > 0 && line.trim().length > 0,
+	);
+	if (firstBodyLine === -1) return subject;
+
+	return [subject, ...lines.slice(firstBodyLine)].join("\n");
 }
 
 function parseCommandOptions(args: string): CommandOptions {
-	const clipboardOnlyFlag = /(^|\s)(--clipboard-only|--clipboard|--no-lazygit|--no-lg)(?=\s|$)/;
+	const clipboardOnlyFlag =
+		/(^|\s)(--clipboard-only|--clipboard|--no-lazygit|--no-lg)(?=\s|$)/;
 	const useLazygit = !clipboardOnlyFlag.test(args);
-	const guidance = args.replace(/(^|\s)(--clipboard-only|--clipboard|--no-lazygit|--no-lg)(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
+	const guidance = args
+		.replace(
+			/(^|\s)(--clipboard-only|--clipboard|--no-lazygit|--no-lg)(?=\s|$)/g,
+			" ",
+		)
+		.replace(/\s+/g, " ")
+		.trim();
 	return { useLazygit, guidance };
 }
 
-function buildPrompt(instructions: string, git: GitContext, extra: string): string {
+function buildPrompt(
+	instructions: string,
+	git: GitContext,
+	extra: string,
+): string {
 	return [
 		instructions.trim(),
 		"",
@@ -80,14 +129,19 @@ function buildPrompt(instructions: string, git: GitContext, extra: string): stri
 		"<git-diff>",
 		git.diff.trim(),
 		"</git-diff>",
-	].filter((part): part is string => typeof part === "string").join("\n");
+	]
+		.filter((part): part is string => typeof part === "string")
+		.join("\n");
 }
 
 async function git(pi: ExtensionAPI, cwd: string, args: string[]) {
 	return pi.exec("git", args, { cwd, timeout: 30_000 });
 }
 
-async function getGitContext(pi: ExtensionAPI, cwd: string): Promise<GitContext> {
+async function getGitContext(
+	pi: ExtensionAPI,
+	cwd: string,
+): Promise<GitContext> {
 	const rootResult = await git(pi, cwd, ["rev-parse", "--show-toplevel"]);
 	if (rootResult.code !== 0) {
 		throw new Error("Not inside a git repository.");
@@ -104,12 +158,18 @@ async function getGitContext(pi: ExtensionAPI, cwd: string): Promise<GitContext>
 	const hasStaged = stagedStat.stdout.trim().length > 0;
 	const diffArgs = hasStaged ? ["diff", "--cached"] : ["diff"];
 	const diffResult = await git(pi, root, diffArgs);
-	const untrackedResult = await git(pi, root, ["ls-files", "--others", "--exclude-standard"]);
+	const untrackedResult = await git(pi, root, [
+		"ls-files",
+		"--others",
+		"--exclude-standard",
+	]);
 
 	const diff = diffResult.stdout.trim() || stagedStat.stdout.trim();
 	const untracked = untrackedResult.stdout.trim();
 	if (!diff && !untracked) {
-		throw new Error("No diff found. Stage changes first, or modify tracked files.");
+		throw new Error(
+			"No diff found. Stage changes first, or modify tracked files.",
+		);
 	}
 
 	return {
@@ -121,7 +181,10 @@ async function getGitContext(pi: ExtensionAPI, cwd: string): Promise<GitContext>
 	};
 }
 
-async function copyMessage(message: string, ctx: ExtensionCommandContext): Promise<boolean> {
+async function copyMessage(
+	message: string,
+	ctx: ExtensionCommandContext,
+): Promise<boolean> {
 	try {
 		await copyToClipboard(message);
 		return true;
@@ -134,7 +197,12 @@ async function copyMessage(message: string, ctx: ExtensionCommandContext): Promi
 	}
 }
 
-async function showCommitMessage(message: string, promptSource: string, copied: boolean, ctx: ExtensionCommandContext) {
+async function showCommitMessage(
+	message: string,
+	promptSource: string,
+	copied: boolean,
+	ctx: ExtensionCommandContext,
+) {
 	if (!ctx.hasUI) return;
 
 	const shown = await ctx.ui.editor(
@@ -142,32 +210,50 @@ async function showCommitMessage(message: string, promptSource: string, copied: 
 		message,
 	);
 
-	if (typeof shown === "string" && shown.trim() && shown.trim() !== message.trim()) {
+	if (
+		typeof shown === "string" &&
+		shown.trim() &&
+		shown.trim() !== message.trim()
+	) {
 		if (await copyMessage(shown.trim(), ctx)) {
 			ctx.ui.notify("Updated commit message copied to clipboard.", "info");
 		}
 	}
 }
 
-function withCommitTemplateEnv(templatePath: string): Record<string, string | undefined> {
+function withCommitTemplateEnv(
+	templatePath: string,
+): Record<string, string | undefined> {
 	const env = { ...process.env };
 	const parsedCount = Number.parseInt(env.GIT_CONFIG_COUNT ?? "0", 10);
-	const index = Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 0;
+	const index =
+		Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 0;
 	env.GIT_CONFIG_COUNT = String(index + 1);
 	env[`GIT_CONFIG_KEY_${index}`] = "commit.template";
 	env[`GIT_CONFIG_VALUE_${index}`] = templatePath;
 	return env;
 }
 
-async function launchLazygit(gitContext: GitContext, message: string, copied: boolean, ctx: ExtensionCommandContext): Promise<boolean> {
+async function launchLazygit(
+	gitContext: GitContext,
+	message: string,
+	copied: boolean,
+	ctx: ExtensionCommandContext,
+): Promise<boolean> {
 	if (!ctx.hasUI) {
-		ctx.ui.notify("lazygit requires the interactive TUI; falling back to clipboard only.", "warning");
+		ctx.ui.notify(
+			"lazygit requires the interactive TUI; falling back to clipboard only.",
+			"warning",
+		);
 		return false;
 	}
 
 	const lazygitCheck = spawnSync("lazygit", ["--version"], { stdio: "ignore" });
 	if (lazygitCheck.error || lazygitCheck.status !== 0) {
-		ctx.ui.notify("lazygit is not available; commit message copied to clipboard.", "warning");
+		ctx.ui.notify(
+			"lazygit is not available; commit message copied to clipboard.",
+			"warning",
+		);
 		return false;
 	}
 
@@ -176,33 +262,46 @@ async function launchLazygit(gitContext: GitContext, message: string, copied: bo
 	writeFileSync(templatePath, `${message.trim()}\n`, "utf8");
 
 	try {
-		const exitCode = await ctx.ui.custom<number | null>((tui, _theme, _kb, done) => {
-			tui.stop();
-			process.stdout.write("\x1b[2J\x1b[H");
-			process.stdout.write([
-				"Generated commit message:",
-				"",
-				message,
-				"",
-				copied ? "Copied to clipboard." : "Clipboard copy failed; the message is still available as a git commit template.",
-				"In lazygit, use Commit with editor (C by default) for a prefilled editor, or paste into the inline commit box.",
-				"",
-			].join("\n"));
+		const exitCode = await ctx.ui.custom<number | null>(
+			(tui, _theme, _kb, done) => {
+				tui.stop();
+				process.stdout.write("\x1b[2J\x1b[H");
+				process.stdout.write(
+					[
+						"Generated commit message:",
+						"",
+						message,
+						"",
+						copied
+							? "Copied to clipboard."
+							: "Clipboard copy failed; the message is still available as a git commit template.",
+						"In lazygit, use Commit with editor (C by default) for a prefilled editor, or paste into the inline commit box.",
+						"",
+					].join("\n"),
+				);
 
-			const result = spawnSync("lazygit", ["--path", gitContext.root, "status"], {
-				cwd: gitContext.root,
-				stdio: "inherit",
-				env: withCommitTemplateEnv(templatePath),
-			});
+				const result = spawnSync(
+					"lazygit",
+					["--path", gitContext.root, "status"],
+					{
+						cwd: gitContext.root,
+						stdio: "inherit",
+						env: withCommitTemplateEnv(templatePath),
+					},
+				);
 
-			tui.start();
-			tui.requestRender(true);
-			done(result.status ?? (result.error ? 1 : 0));
-			return { render: () => [], invalidate: () => {} };
-		});
+				tui.start();
+				tui.requestRender(true);
+				done(result.status ?? (result.error ? 1 : 0));
+				return { render: () => [], invalidate: () => {} };
+			},
+		);
 
 		if (exitCode && exitCode !== 0) {
-			ctx.ui.notify(`lazygit exited with code ${exitCode}; commit message is still on the clipboard.`, "warning");
+			ctx.ui.notify(
+				`lazygit exited with code ${exitCode}; commit message is still on the clipboard.`,
+				"warning",
+			);
 			return false;
 		}
 		return true;
@@ -213,7 +312,8 @@ async function launchLazygit(gitContext: GitContext, message: string, copied: bo
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("commit-message", {
-		description: "Generate a git commit message, copy it, and open lazygit when available",
+		description:
+			"Generate a git commit message, copy it, and open lazygit when available",
 		handler: async (args, ctx) => {
 			const options = parseCommandOptions(args);
 			await ctx.waitForIdle();
@@ -222,7 +322,10 @@ export default function (pi: ExtensionAPI) {
 			try {
 				gitContext = await getGitContext(pi, ctx.cwd);
 			} catch (error) {
-				ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
+				ctx.ui.notify(
+					error instanceof Error ? error.message : String(error),
+					"error",
+				);
 				return;
 			}
 
@@ -238,7 +341,10 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 			if (!auth.apiKey) {
-				ctx.ui.notify(`No API key available for ${model.provider}/${model.id}.`, "error");
+				ctx.ui.notify(
+					`No API key available for ${model.provider}/${model.id}.`,
+					"error",
+				);
 				return;
 			}
 
@@ -251,7 +357,12 @@ export default function (pi: ExtensionAPI) {
 					messages: [
 						{
 							role: "user" as const,
-							content: [{ type: "text" as const, text: buildPrompt(prompt, gitContext, options.guidance) }],
+							content: [
+								{
+									type: "text" as const,
+									text: buildPrompt(prompt, gitContext, options.guidance),
+								},
+							],
 							timestamp: Date.now(),
 						},
 					],
@@ -261,7 +372,10 @@ export default function (pi: ExtensionAPI) {
 
 			const message = cleanCommitMessage(
 				response.content
-					.filter((part): part is { type: "text"; text: string } => part.type === "text")
+					.filter(
+						(part): part is { type: "text"; text: string } =>
+							part.type === "text",
+					)
 					.map((part) => part.text)
 					.join("\n"),
 			);
@@ -271,13 +385,21 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			const copied = await copyMessage(message, ctx);
+			const clipboardMessage = options.useLazygit
+				? formatForLazygitPaste(message)
+				: message;
+			const copied = await copyMessage(clipboardMessage, ctx);
 			if (copied) {
 				ctx.ui.notify("Commit message copied to clipboard.", "info");
 			}
 
 			if (options.useLazygit) {
-				const launched = await launchLazygit(gitContext, message, copied, ctx);
+				const launched = await launchLazygit(
+					gitContext,
+					clipboardMessage,
+					copied,
+					ctx,
+				);
 				if (launched) return;
 			}
 
