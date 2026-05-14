@@ -1,0 +1,21 @@
+scripts/install-local-links.sh
+  s_a32bdfc9f65025::t_f3c3896f02d5a2 118-137,141-157,191,193-199,201,203,205,208-211
+archive/README.md
+  s_a32bdfc9f65025::t_93cd520fe473c9 11-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "f9b3e78ff0c0036e628da2b23bf2e84cf9a6b9b0",
+  "prompts": {},
+  "sessions": {
+    "s_a32bdfc9f65025": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e28b1-4e03-708e-9d3a-36635aff7806",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
