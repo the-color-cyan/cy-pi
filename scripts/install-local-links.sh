@@ -7,7 +7,7 @@ package_resource_mode="auto"
 force_package_resources="no"
 
 usage() {
-  cat <<'EOF'
+	cat <<'EOF'
 Usage: scripts/install-local-links.sh [--package-resources|--force-package-resources|--no-package-resources]
 
 By default, package resources (extensions, skills, prompts, themes) are linked only
@@ -26,113 +26,135 @@ EOF
 }
 
 while [ "$#" -gt 0 ]; do
-  case "$1" in
-    --package-resources)
-      package_resource_mode="yes"
-      ;;
-    --force-package-resources)
-      force_package_resources="yes"
-      ;;
-    --no-package-resources)
-      package_resource_mode="no"
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    *)
-      echo "Unknown argument: $1" >&2
-      usage >&2
-      exit 1
-      ;;
-  esac
-  shift
+	case "$1" in
+	--package-resources)
+		package_resource_mode="yes"
+		;;
+	--force-package-resources)
+		force_package_resources="yes"
+		;;
+	--no-package-resources)
+		package_resource_mode="no"
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*)
+		echo "Unknown argument: $1" >&2
+		usage >&2
+		exit 1
+		;;
+	esac
+	shift
 done
 
 backup_if_needed() {
-  local dest="$1"
-  local src="$2"
+	local dest="$1"
+	local src="$2"
 
-  if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
-    return 0
-  fi
+	if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
+		return 0
+	fi
 
-  if [ -L "$dest" ]; then
-    local current
-    current="$(readlink "$dest")"
-    if [ "$current" = "$src" ]; then
-      return 0
-    fi
-  fi
+	if [ -L "$dest" ]; then
+		local current
+		current="$(readlink "$dest")"
+		if [ "$current" = "$src" ]; then
+			return 0
+		fi
+	fi
 
-  mv "$dest" "$dest.backup.$timestamp"
+	mv "$dest" "$dest.backup.$timestamp"
 }
 
 link_one() {
-  local src="$1"
-  local dest="$2"
-  mkdir -p "$(dirname "$dest")"
-  backup_if_needed "$dest" "$src"
-  ln -sfn "$src" "$dest"
-  echo "linked $dest -> $src"
+	local src="$1"
+	local dest="$2"
+	mkdir -p "$(dirname "$dest")"
+	backup_if_needed "$dest" "$src"
+	ln -sfn "$src" "$dest"
+	echo "linked $dest -> $src"
 }
 
 remove_repo_link() {
-  local dest="$1"
-  if [ ! -L "$dest" ]; then
-    return 0
-  fi
+	local dest="$1"
+	if [ ! -L "$dest" ]; then
+		return 0
+	fi
 
-  local current
-  current="$(readlink "$dest")"
-  case "$current" in
-    "$repo_root"/*)
-      rm "$dest"
-      echo "removed duplicate repo link $dest"
-      ;;
-  esac
+	local current
+	current="$(readlink "$dest")"
+	case "$current" in
+	"$repo_root"/*)
+		rm "$dest"
+		echo "removed duplicate repo link $dest"
+		;;
+	esac
 }
 
 remove_archived_or_stale_agent_link() {
-  local dest="$1"
-  if [ ! -L "$dest" ]; then
-    return 0
-  fi
+	local dest="$1"
+	if [ ! -L "$dest" ]; then
+		return 0
+	fi
 
-  local current
-  current="$(readlink "$dest")"
-  case "$current" in
-    "$repo_root"/archive/*)
-      rm "$dest"
-      echo "removed archived agent link $dest"
-      ;;
-    "$repo_root"/agents/*)
-      if [ ! -e "$current" ]; then
-        rm "$dest"
-        echo "removed stale agent link $dest"
-      fi
-      ;;
-  esac
+	local current
+	current="$(readlink "$dest")"
+	case "$current" in
+	"$repo_root"/archive/*)
+		rm "$dest"
+		echo "removed archived agent link $dest"
+		;;
+	"$repo_root"/agents/*)
+		if [ ! -e "$current" ]; then
+			rm "$dest"
+			echo "removed stale agent link $dest"
+		fi
+		;;
+	esac
+}
+
+remove_archived_or_stale_extension_link() {
+	local dest="$1"
+	if [ ! -L "$dest" ]; then
+		return 0
+	fi
+
+	local current
+	current="$(readlink "$dest")"
+	case "$current" in
+	"$repo_root"/archive/*)
+		rm "$dest"
+		echo "removed archived extension link $dest"
+		;;
+	"$repo_root"/extensions/*)
+		if [ ! -e "$current" ]; then
+			rm "$dest"
+			echo "removed stale extension link $dest"
+		fi
+		;;
+	esac
 }
 
 repo_appears_installed_package() {
-  # `pi list` prints resolved package paths, which covers local, git, and npm
-  # installs. Fall back to a light settings check for local path installs.
-  if command -v pi >/dev/null 2>&1; then
-    local package_list
-    package_list="$(pi list 2>/dev/null || true)"
-    if printf '%s\n' "$package_list" | grep -F -q "$repo_root"; then
-      return 0
-    fi
-    # Git/npm installs resolve to pi's package cache rather than this checkout.
-    # The installed directory normally keeps the package.json name as the final
-    # path segment, so treat an installed cy-pi package as equivalent.
-    if printf '%s\n' "$package_list" | grep -E -q '(^|/)cy-pi($|[[:space:]])'; then
-      return 0
-    fi
-  fi
+	# `pi list` prints resolved package paths, which covers local, git, and npm
+	# installs. Fall back to a light settings check for local path installs.
+	if command -v pi >/dev/null 2>&1; then
+		local package_list
+		package_list="$(pi list 2>/dev/null || true)"
+		if printf '%s\n' "$package_list" | grep -F -q "$repo_root"; then
+			return 0
+		fi
+		# Git/npm installs resolve to pi's package cache rather than this checkout.
+		# The installed directory normally keeps the package.json name as the final
+		# path segment, so treat an installed cy-pi package as equivalent.
+		if printf '%s\n' "$package_list" | grep -E -q '(^|/)cy-pi($|[[:space:]])'; then
+			return 0
+		fi
+	fi
 
-  python3 - "$repo_root" <<'PY'
+	python3 - "$repo_root" <<'PY'
 import json, os, pathlib, sys
 repo = pathlib.Path(sys.argv[1]).resolve()
 settings_files = [
@@ -166,59 +188,64 @@ PY
 
 link_package_resources="yes"
 if [ "$force_package_resources" = "yes" ]; then
-  link_package_resources="yes"
+	link_package_resources="yes"
 elif [ "$package_resource_mode" = "yes" ]; then
-  if repo_appears_installed_package; then
-    echo "error: This repo appears installed as a pi package, so --package-resources would cause duplicate conflicts." >&2
-    echo "       Use scripts/use-local-package.sh for local development (loads this checkout as a local pi package)." >&2
-    echo "       Or pass --force-package-resources to override (conflict-prone)." >&2
-    exit 1
-  fi
-  link_package_resources="yes"
+	if repo_appears_installed_package; then
+		echo "error: This repo appears installed as a pi package, so --package-resources would cause duplicate conflicts." >&2
+		echo "       Use scripts/use-local-package.sh for local development (loads this checkout as a local pi package)." >&2
+		echo "       Or pass --force-package-resources to override (conflict-prone)." >&2
+		exit 1
+	fi
+	link_package_resources="yes"
 elif [ "$package_resource_mode" = "no" ]; then
-  link_package_resources="no"
+	link_package_resources="no"
 elif repo_appears_installed_package; then
-  link_package_resources="no"
+	link_package_resources="no"
 else
-  link_package_resources="yes"
+	link_package_resources="yes"
 fi
 
+for dest in "$HOME"/.pi/agent/extensions/*.ts; do
+	[ -e "$dest" ] || [ -L "$dest" ] || continue
+	remove_archived_or_stale_extension_link "$dest"
+done
+
 if [ "$link_package_resources" = "yes" ]; then
-  echo "Linking package resources for direct local discovery."
+	echo "Linking package resources for direct local discovery."
 
-  for src in "$repo_root"/extensions/*.ts; do
-    [ -e "$src" ] || continue
-    link_one "$src" "$HOME/.pi/agent/extensions/$(basename "$src")"
-  done
+	for src in "$repo_root"/extensions/*.ts; do
+		[ -e "$src" ] || continue
+		link_one "$src" "$HOME/.pi/agent/extensions/$(basename "$src")"
+	done
 
-  for src in "$repo_root"/skills/*; do
-    [ -d "$src" ] || continue
-    link_one "$src" "$HOME/.agents/skills/$(basename "$src")"
-  done
+	for src in "$repo_root"/skills/*; do
+		[ -d "$src" ] || continue
+		link_one "$src" "$HOME/.agents/skills/$(basename "$src")"
+	done
 else
-  echo "Using pi package discovery for extensions/skills; removing duplicate repo-owned global links."
+	echo "Using pi package discovery for extensions/skills; removing duplicate repo-owned global links."
 
-  for src in "$repo_root"/extensions/*.ts; do
-    [ -e "$src" ] || continue
-    remove_repo_link "$HOME/.pi/agent/extensions/$(basename "$src")"
-  done
+	for src in "$repo_root"/extensions/*.ts; do
+		[ -e "$src" ] || continue
+		remove_repo_link "$HOME/.pi/agent/extensions/$(basename "$src")"
+	done
 
-  for src in "$repo_root"/skills/*; do
-    [ -d "$src" ] || continue
-    remove_repo_link "$HOME/.agents/skills/$(basename "$src")"
-  done
+	for src in "$repo_root"/skills/*; do
+		[ -d "$src" ] || continue
+		remove_repo_link "$HOME/.agents/skills/$(basename "$src")"
+	done
 fi
 
 # pi-subagents resources are not part of pi package discovery, so link active
 # top-level agents explicitly. Archived agents are intentionally inert.
 for dest in "$HOME"/.pi/agent/agents/*.md; do
-  [ -e "$dest" ] || [ -L "$dest" ] || continue
-  remove_archived_or_stale_agent_link "$dest"
+	[ -e "$dest" ] || [ -L "$dest" ] || continue
+	remove_archived_or_stale_agent_link "$dest"
 done
 
 for src in "$repo_root"/agents/*.md; do
-  [ -e "$src" ] || continue
-  link_one "$src" "$HOME/.pi/agent/agents/$(basename "$src")"
+	[ -e "$src" ] || continue
+	link_one "$src" "$HOME/.pi/agent/agents/$(basename "$src")"
 done
 
 # Global prompt/context files.
