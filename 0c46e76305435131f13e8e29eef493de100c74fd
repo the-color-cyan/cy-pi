@@ -1,0 +1,31 @@
+skills/productivity/caveman/SKILL.md
+  s_1c980aee113ab9::t_08bfb87fe7d43f 2
+README.md
+  s_1c980aee113ab9::t_68ca40753f22c0 19
+skills/productivity/handoff/SKILL.md
+  s_1c980aee113ab9::t_e4234775355a24 2
+skills/productivity/README.md
+  s_1c980aee113ab9::t_a5bc0ace16b101 5-8
+skills/productivity/grill-me/SKILL.md
+  s_1c980aee113ab9::t_cd3534e9119183 2
+skills/productivity/write-a-skill/SKILL.md
+  s_1c980aee113ab9::t_ce08f465877855 2
+docs/agents/domain.md
+  s_1c980aee113ab9::t_fa5e9092fca773 11,45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "0c46e76305435131f13e8e29eef493de100c74fd",
+  "prompts": {},
+  "sessions": {
+    "s_1c980aee113ab9": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e26da-08c5-723c-8d20-a01898f7e829",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
