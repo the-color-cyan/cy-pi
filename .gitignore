@@ -19,3 +19,4 @@ run-history.jsonl
 # OS/editor noise
 .DS_Store
 *.swp
+/.pi-lens/cache
