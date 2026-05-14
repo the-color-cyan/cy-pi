@@ -1,0 +1,20 @@
+extensions/commit-message.ts
+  s_bc838a0e59e1af::t_c73a5212bf7a2a 82-92,96-97,99-105,109-113,132-134,141-144,161-165,170-172,184-187,200-205,213-217,224-226,229-230,237-242,244-247,253-256,265-298,301-304,315-316,325-328,344-347,360-365,375-378,388-391,397-402
+  s_bc838a0e59e1af::t_5eac249ae79a51 58-63,65-70,72-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "278df002fc2aac9e6705a26327903a73c0a71903",
+  "prompts": {},
+  "sessions": {
+    "s_bc838a0e59e1af": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e28b8-e735-774f-88a2-3b92eb159c80",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
