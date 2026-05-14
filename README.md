@@ -16,7 +16,7 @@ This repo is a pi package for resources pi can load directly, plus a small link 
   - `subagent-handoff.ts` — adds `/subattach`, `/subback`, and `/subpane` helpers for async subagent runs
   - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
-  - `productivity/` — general workflow skills (`caveman`, `grill-me`, `handoff`, `write-a-skill`)
+  - `productivity/` — general workflow skills (`handoff`)
 - `prompts/` — prompt templates (currently empty)
 - `themes/` — custom themes (currently empty)
 - `agents/` — active pi-subagents custom agents and chain definitions, when present
