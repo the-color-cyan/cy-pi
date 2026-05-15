@@ -1,12 +1,12 @@
 ---
 name: open-pr
-description: Helps create GitHub pull requests from the current branch with explicit base-branch confirmation and issue linking. Use when the user asks to open, create, or prepare a PR, pull request, merge request, or asks to link related GitHub issues in a PR.
+description: Helps create GitHub pull requests from the current branch with explicit base-branch confirmation and automatic issue discovery from the tracker. Use when the user asks to open, create, or prepare a PR, pull request, merge request, or asks to link related GitHub issues in a PR.
 argument-hint: "Optional PR title or context"
 ---
 
 # Open PR
 
-Create a GitHub pull request safely from the current branch, with explicit base-branch confirmation and linked issues.
+Create a GitHub pull request safely from the current branch, with explicit base-branch confirmation and issue links discovered from the tracker.
 
 ## Invocation behavior
 
@@ -22,7 +22,7 @@ Do not reply with only a passive loaded/ready message. Immediately run the prefl
    - default branch and remotes
    - existing PR for the current branch
 2. Ask the user which branch to merge into before creating the PR.
-3. Find related issue numbers.
+3. Search the issue tracker for issues related to the current branch before asking the user for issue numbers.
 4. Create or update the PR body with GitHub issue-linking keywords.
 
 ## Workflow
@@ -50,17 +50,42 @@ Provide context in the question:
 
 Do not create a PR until the user confirms a valid base branch.
 
-### 3. Find tied issues
+### 3. Discover tied issues from the tracker
 
-Collect related issue numbers from available evidence:
+Do not ask the user to supply issue numbers until after you have searched the issue tracker.
+
+Collect search evidence from:
 
 - active GitHub issue workflow, if present
 - current branch name, e.g. `feature/123-thing`, `issue-123`, `fix-123`
+- normalized branch tokens, e.g. split `feature/add-open-pr-issue-discovery` into `add`, `open`, `pr`, `issue`, `discovery`
+- issue numbers embedded in branch names, commit messages, user-provided PR context/title, or an existing PR body
 - commit messages on the branch
-- user-provided PR context or title
 - existing PR body, if updating
 
-If issue ties are unclear, ask the user for related issue numbers or allow “none”.
+Search GitHub issues directly. Prefer targeted searches first, then broader token searches when needed:
+
+```sh
+# Exact issue number hints from branch/commits/context
+gh issue view <number> --comments --json number,title,state,body,labels,comments,url
+
+# Exact branch string and meaningful branch tokens, including closed issues
+gh search issues "<current-branch>" --repo "$(gh repo view --json nameWithOwner -q .nameWithOwner)" --state all --json number,title,state,body,labels,url
+
+gh issue list --state all --limit 100 --json number,title,state,body,labels,url \
+  --search "<meaningful branch token or phrase>"
+```
+
+When broad issue listings are needed, keep tool output small by filtering/summarizing in the command (for example with `jq`) before showing results.
+
+Rank candidate issues by confidence:
+
+1. Explicit issue number in branch/commits/context/active workflow.
+2. Exact current branch string in issue title/body/comments.
+3. Multiple distinctive branch tokens in issue title/body.
+4. Commit subject or PR-title phrase matches issue title/body.
+
+Use high-confidence matches automatically in the draft PR body. If multiple plausible issues remain, present the discovered candidates and ask the user to choose among them or select “none”. Only ask for freeform issue numbers after search returns no useful candidates.
 
 ### 4. Link issues in the PR body
 
@@ -77,7 +102,7 @@ Use plain references for issues that are related but should not auto-close:
 Related to #789
 ```
 
-Prefer `Closes #N` for implementation work that completes an issue. Do not use closing keywords when the relationship is uncertain.
+Prefer `Closes #N` for high-confidence implementation work that completes an issue. Use `Related to #N` for plausible or user-confirmed non-closing relationships. Do not use closing keywords when the relationship is uncertain.
 
 ### 5. Create the PR
 
