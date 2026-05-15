@@ -7,6 +7,9 @@
     "pi-package"
   ],
   "type": "module",
+  "scripts": {
+    "test": "bash tests/pi-dev.test.sh"
+  },
   "files": [
     "AGENTS.md",
     "APPEND_SYSTEM.md",

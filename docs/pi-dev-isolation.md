@@ -1,79 +1,106 @@
-# Isolated dev Pi setup
+# Isolated `pi-dev` setup
 
-This repo is used as the custom-resource source for the local development Pi harness.
-The development harness is isolated from the normal Pi/OMP home so third-party experiments
-can use `~/.pi` without mixing with custom cy-pi resources.
+`pi-dev` is an explicit launcher for a separate Pi home at `~/.pi-dev/agent`.
+Normal `pi` continues to use `~/.pi/agent`.
 
 ## Layout
 
 ```text
-~/.pi-dev/agent/       # active home for custom/dev `pi-dev`
-~/.pi/agent/           # normal/default Pi home; keep available as `pi` for OMP or experiments
-~/pi/cy-pi/            # source of custom extensions, skills, prompts, themes, agents
+~/.pi/agent/           # normal/default Pi home
+~/.pi-dev/agent/       # isolated dev Pi home used by scripts/pi-dev.sh
+~/pi/cy-pi/            # this repo, containing the launcher and local resources
 ```
 
-`~/.pi-dev/agent` contains symlinks back to this checkout:
+## Launcher
 
-```text
-~/.pi-dev/agent/extensions -> ~/pi/cy-pi/extensions
-~/.pi-dev/agent/skills     -> ~/pi/cy-pi/skills
-~/.pi-dev/agent/prompts    -> ~/pi/cy-pi/prompts
-~/.pi-dev/agent/themes     -> ~/pi/cy-pi/themes
-~/.pi-dev/agent/agents     -> ~/pi/cy-pi/agents
+From this repo:
+
+```bash
+./scripts/pi-dev.sh
 ```
 
-The top-level prompt/support files are linked too:
+Recommended shell alias:
+
+```bash
+alias pi-dev="$HOME/pi/cy-pi/scripts/pi-dev.sh"
+```
+
+Plain launch is intentionally non-mutating:
+
+```bash
+pi-dev                  # launch current ~/.pi-dev/agent
+pi-dev --model k2p6     # pass args through to pi
+```
+
+## Refresh from normal Pi
+
+Refresh makes the dev home behave like normal Pi, except `cy-pi` is forced to the dev channel:
+
+```bash
+pi-dev --refresh
+pi-dev --refresh --no-launch
+```
+
+Refresh behavior:
+
+1. reads live normal settings from `~/.pi/agent/settings.json`
+2. merges normal preferences and package entries into `~/.pi-dev/agent/settings.json`
+3. preserves dev-only package entries, except all existing `cy-pi` entries are removed
+4. sets `subagents.defaultSessionDir` to `~/.pi-dev/agent/sessions/subagent`
+5. installs normal third-party packages into the dev home
+6. installs `cy-pi` from `CY_PI_DEV_SOURCE`, defaulting to:
 
 ```text
+git:git@github.com:the-color-cyan/cy-pi@main
+```
+
+After installing package-mode `cy-pi`, the script symlinks non-package resources from the installed checkout into the dev home:
+
+```text
+agents/
 APPEND_SYSTEM.md
 SUBAGENTS_ASYNC_PLAYBOOK.md
 commit-message-prompt.md
 ```
 
-## Setup / refresh
+Package-discovered resources (`extensions/`, `skills/`, `prompts/`, `themes/`) stay owned by Pi package discovery in package mode.
 
-From this repo:
+## Local checkout mode
 
-```bash
-./scripts/setup-pi-dev-isolation.sh
-```
-
-The script:
-
-1. creates `~/.pi-dev/agent`
-2. copies `auth.json` and `settings.json` from `~/.pi/agent` on first run only
-3. removes this repo's `git:github.com/the-color-cyan/cy-pi` package entry from the dev settings
-4. updates the subagent session directory to `~/.pi-dev/agent/sessions/subagent`
-5. links this repo's custom resources into `~/.pi-dev/agent`
-
-It does not delete or rewrite the normal `~/.pi/agent` tree.
-
-## Swap active shell mode
-
-Use the mode switcher from this repo:
+Use local mode for active editing without pushing to `main`:
 
 ```bash
-./scripts/use-pi-mode.sh dev     # bash/zsh: `pi` uses ~/.pi-dev/agent; fish: use `pi-dev`
-./scripts/use-pi-mode.sh normal  # `pi` uses ~/.pi/agent; `pi-dev` uses ~/.pi-dev/agent
-./scripts/use-pi-mode.sh status
+pi-dev --local --refresh
 ```
 
-The script updates marked blocks in all supported interactive shell rc files:
+Local mode removes `cy-pi` package entries and symlinks this checkout's resources into `~/.pi-dev/agent`, including both package resources and non-package resources.
 
-```text
-~/.bashrc
-~/.zshrc
-~/.config/fish/config.fish
+## Reset refresh
+
+```bash
+pi-dev --reset-refresh
 ```
 
-Open a new shell after switching, or source the relevant rc file (`source ~/.zshrc`, `source ~/.bashrc`, or `source ~/.config/fish/config.fish`).
+Reset refresh archives the current dev home, rebuilds it, refreshes, then launches unless `--no-launch` is passed.
+Backups are stored next to the dev home and pruned with both limits:
 
-For bash/zsh, dev mode defines `pi` as the isolated harness and `pi-normal` as the default harness. For fish, default `pi` is left untouched and `pi-dev` runs the isolated harness. Normal mode defines `pi` as the default harness and `pi-dev` as the isolated harness.
+- keep the newest 10 backups
+- delete backups older than 30 days
+- never delete the backup created by the current command
 
-For one-off/testing edits to a single rc file, set `PI_SHELL_RC=/path/to/rc` when running `scripts/use-pi-mode.sh`.
+## Auth
+
+Auth is explicit. Refresh and reset do not copy credentials by default.
+
+```bash
+pi-dev --refresh --copy-auth
+pi-dev --reset-refresh --copy-auth
+```
+
+`--copy-auth` copies `~/.pi/agent/auth.json` to `~/.pi-dev/agent/auth.json` with restrictive permissions when possible.
 
 ## Notes
 
-- Avoid `pi install git:github.com/the-color-cyan/cy-pi` in the dev harness while using symlinks; it can duplicate commands/skills.
-- Third-party packages can still live in the dev settings if needed, but custom cy-pi resources should come from the symlinks.
+- `pi-dev` does not mutate shell rc files.
+- Use `CY_PI_DEV_SOURCE=... pi-dev --refresh` to test another branch/tag/source.
 - Project-local `.pi/` directories are still shared by both harnesses when running inside that project.

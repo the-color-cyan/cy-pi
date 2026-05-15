@@ -27,12 +27,12 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 
 Not included: `auth.json`, sessions, run history, caches, or API keys.
 
-## Install from git later
+## Install from git
 
-After you create a remote, install the pi package with a pinned ref:
+Install the stable package with a pinned tag:
 
 ```bash
-pi install git:github.com/YOUR_USER/cy-pi@v0.1.0
+pi install git:git@github.com:the-color-cyan/cy-pi@v0.1.0
 ```
 
 That loads the package resources declared in `package.json`:
@@ -42,35 +42,46 @@ That loads the package resources declared in `package.json`:
 - prompts
 - themes
 
-If you also want the global `APPEND_SYSTEM.md` and any active pi-subagents agents/chains from this repo, clone it and run the link installer:
+If you also want global resources that pi packages do not discover yet (`APPEND_SYSTEM.md`, active `agents/`, and related prompt/playbook files), clone this repo and run the link installer:
 
 ```bash
-git clone git@github.com:YOUR_USER/cy-pi.git ~/cy-pi
-cd ~/cy-pi
+git clone git@github.com:the-color-cyan/cy-pi.git ~/pi/cy-pi
+cd ~/pi/cy-pi
 ./scripts/install-local-links.sh
 ```
 
 When this repo is already installed with `pi install`, the link installer intentionally removes repo-owned global extension/skill symlinks and lets pi package discovery load those resources. This avoids duplicate skill or command conflicts.
 
-For local development, use the isolated dev setup below. The older package-based helper `./scripts/use-local-package.sh` is still available when you explicitly want package loading instead of the isolated symlink setup.
+## Isolated `pi-dev` launcher
 
-## Local install while developing
-
-Current local setup uses an isolated dev Pi home at `~/.pi-dev/agent`, with this repo's custom resources symlinked into that home. This keeps custom cy-pi extensions separate from the normal `~/.pi/agent` tree, which can be used for OMP or third-party experiments.
+Use `scripts/pi-dev.sh` for an explicit dev harness. Normal `pi` remains untouched; `pi-dev.sh` launches Pi with `PI_CODING_AGENT_DIR=~/.pi-dev/agent`.
 
 ```bash
-./scripts/setup-pi-dev-isolation.sh
+./scripts/pi-dev.sh                         # launch existing dev home; no refresh
+./scripts/pi-dev.sh --refresh               # match normal pi packages/settings, force cy-pi@main
+./scripts/pi-dev.sh --local --refresh       # use this checkout via symlinks
+./scripts/pi-dev.sh --reset-refresh         # archive/rebuild dev home, then refresh
+./scripts/pi-dev.sh --refresh --no-launch   # refresh only
+./scripts/pi-dev.sh --refresh --model k2p6  # pass args through to pi
 ```
 
-Use `./scripts/use-pi-mode.sh dev|normal|status` to install managed shell helpers. In bash/zsh, dev mode points `pi` at the isolated harness; in fish, default `pi` stays unchanged and the isolated harness is available as `pi-dev`. See [`docs/pi-dev-isolation.md`](docs/pi-dev-isolation.md).
+Package mode installs private `cy-pi` from SSH by default:
 
-The alternative package-based local development flow is to point pi settings at this checkout as a local package, so pi loads extensions/skills directly without symlinks. Then link the non-package resources (agents, global prompts):
+```text
+git:git@github.com:the-color-cyan/cy-pi@main
+```
+
+Override it with `CY_PI_DEV_SOURCE` when needed. `--copy-auth` is required to copy `~/.pi/agent/auth.json`; refreshes do not copy credentials by default. Reset backups are kept under `~/.pi-dev/` with retention of 10 newest backups and 30 days.
+
+Recommended shell alias:
 
 ```bash
-./scripts/use-local-package.sh
+alias pi-dev="$HOME/pi/cy-pi/scripts/pi-dev.sh"
 ```
 
-This updates `~/.pi/agent/settings.json` to use this checkout as a package and runs `./scripts/install-local-links.sh --no-package-resources` for the rest. Run `/reload` in pi or restart pi to pick up changes.
+See [`docs/pi-dev-isolation.md`](docs/pi-dev-isolation.md).
+
+The older normal-harness helper `scripts/use-local-package.sh` is still available when you explicitly want `~/.pi/agent/settings.json` to point at this checkout as a local package.
 
 ## commit-message extension
 
@@ -153,10 +164,10 @@ To install those packages into the local global pi install, run:
 ./scripts/install-packages.sh
 ```
 
-Install this repo itself separately with your actual remote, preferably pinned to a tag:
+Install this repo itself separately, preferably pinned to a tag:
 
 ```bash
-pi install git:github.com/YOUR_USER/cy-pi@v0.1.0
+pi install git:git@github.com:the-color-cyan/cy-pi@v0.1.0
 ```
 
 ## Notes
