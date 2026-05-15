@@ -1,0 +1,20 @@
+extensions/cd.ts
+  s_f423a81cafef90::t_8864bf87391d54 164-169
+  s_f423a81cafef90::t_690183f3d5ef8c 158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "371f1d38a513595411b252286499d279dbbe7087",
+  "prompts": {},
+  "sessions": {
+    "s_f423a81cafef90": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2c79-67b6-711e-b81e-c9470db1b6a1",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
