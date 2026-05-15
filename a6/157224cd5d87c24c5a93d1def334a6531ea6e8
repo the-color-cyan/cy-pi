@@ -1,0 +1,19 @@
+justfile
+  s_82a8afb8d58abe::t_be79d9e926822a 1-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "a6157224cd5d87c24c5a93d1def334a6531ea6e8",
+  "prompts": {},
+  "sessions": {
+    "s_82a8afb8d58abe": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2ca2-88aa-7263-aa03-8c8df5d43cb0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
