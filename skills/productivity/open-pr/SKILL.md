@@ -85,7 +85,7 @@ Rank candidate issues by confidence:
 3. Multiple distinctive branch tokens in issue title/body.
 4. Commit subject or PR-title phrase matches issue title/body.
 
-Use high-confidence matches automatically in the draft PR body. If multiple plausible issues remain, present the discovered candidates and ask the user to choose among them or select “none”. Only ask for freeform issue numbers after search returns no useful candidates.
+Use high-confidence matches automatically in the draft PR body. If multiple plausible issues remain, present the discovered candidates and ask the user to choose among them or select “none”. The choices must include an explicit “all discovered issues” option that selects every candidate you found, plus individual issue options and “none”. Only ask for freeform issue numbers after search returns no useful candidates.
 
 ### 4. Link issues in the PR body
 
