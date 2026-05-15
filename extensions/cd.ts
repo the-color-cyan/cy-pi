@@ -1,8 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	statSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import type { ExtensionAPI, ExtensionCommandContext, SessionEntry, SessionHeader } from "@mariozechner/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionCommandContext,
+	SessionEntry,
+	SessionHeader,
+} from "@mariozechner/pi-coding-agent";
 
 const CURRENT_SESSION_VERSION = 3;
 let activeCwd = process.cwd();
@@ -44,12 +56,16 @@ function assertDirectory(path: string): void {
 }
 
 function defaultSessionDir(cwd: string): string {
-	const agentDir = process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
+	const agentDir =
+		process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
 	const safePath = `--${cwd.replace(/^[/\\]/, "").replace(/[/\\:]/g, "-")}--`;
 	return join(agentDir, "sessions", safePath);
 }
 
-function createMigratedSessionFile(ctx: ExtensionCommandContext, targetCwd: string): string {
+function createMigratedSessionFile(
+	ctx: ExtensionCommandContext,
+	targetCwd: string,
+): string {
 	const timestamp = new Date().toISOString();
 	const id = randomUUID();
 	const sessionDir = defaultSessionDir(targetCwd);
@@ -88,7 +104,8 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("cd", {
-		description: "Change pi's working directory by migrating the current session to another directory",
+		description:
+			"Change pi's working directory by migrating the current session to another directory",
 		getArgumentCompletions: (prefix: string) => {
 			const rawPrefix = unquote(prefix);
 			const expanded = expandHome(rawPrefix);
@@ -100,7 +117,9 @@ export default function (pi: ExtensionAPI) {
 			try {
 				if (!statSync(searchDir).isDirectory()) return null;
 				return readdirSync(searchDir, { withFileTypes: true })
-					.filter((entry) => entry.isDirectory() && entry.name.startsWith(partial))
+					.filter(
+						(entry) => entry.isDirectory() && entry.name.startsWith(partial),
+					)
 					.slice(0, 50)
 					.map((entry) => {
 						const value = `${base}${entry.name}/`;
@@ -124,7 +143,10 @@ export default function (pi: ExtensionAPI) {
 				targetCwd = resolveTargetCwd(trimmedArgs, ctx.cwd);
 				assertDirectory(targetCwd);
 			} catch (error) {
-				ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
+				ctx.ui.notify(
+					error instanceof Error ? error.message : String(error),
+					"error",
+				);
 				return;
 			}
 
@@ -133,11 +155,18 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
+			const previousCwd = ctx.cwd;
 			const targetSessionFile = createMigratedSessionFile(ctx, targetCwd);
 			let result: { cancelled: boolean };
 			try {
 				result = await ctx.switchSession(targetSessionFile, {
 					withSession: async (newCtx) => {
+						await newCtx.sendMessage({
+							customType: "cd.cwd_changed",
+							content: `Session working directory changed from ${previousCwd} to ${newCtx.cwd}. Treat ${newCtx.cwd} as the current cwd for future filesystem operations.`,
+							display: false,
+							details: { previousCwd, cwd: newCtx.cwd },
+						});
 						newCtx.ui.notify(
 							`Changed directory to ${displayPath(newCtx.cwd)}. Session migrated to ${targetSessionFile}`,
 							"info",
@@ -150,7 +179,10 @@ export default function (pi: ExtensionAPI) {
 				} catch {
 					// Ignore cleanup failures; the switch error is more useful.
 				}
-				ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
+				ctx.ui.notify(
+					error instanceof Error ? error.message : String(error),
+					"error",
+				);
 				return;
 			}
 
@@ -160,7 +192,10 @@ export default function (pi: ExtensionAPI) {
 				} catch {
 					// Ignore cleanup failures after cancellation.
 				}
-				ctx.ui.notify("Directory change cancelled by another extension.", "warning");
+				ctx.ui.notify(
+					"Directory change cancelled by another extension.",
+					"warning",
+				);
 			}
 		},
 	});
