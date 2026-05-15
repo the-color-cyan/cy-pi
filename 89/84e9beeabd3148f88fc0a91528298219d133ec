@@ -1,0 +1,19 @@
+skills/productivity/open-pr/SKILL.md
+  s_e14c2d11400d6f::t_48c55ddf6d56a4 1-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "8984e9beeabd3148f88fc0a91528298219d133ec",
+  "prompts": {},
+  "sessions": {
+    "s_e14c2d11400d6f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2c52-8c2c-756f-a079-6b9c57a199d8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
