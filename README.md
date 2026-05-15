@@ -22,7 +22,8 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 - `archive/` — inert resources kept for reference only; these are not declared in the pi package manifest, not published by `npm pack`, and not linked by the install scripts
 - `APPEND_SYSTEM.md` — global system-prompt append content
 - `SUBAGENTS_ASYNC_PLAYBOOK.md` — async subagent reference used by the global instructions
-- `settings.example.json` — portable example settings, including non-custom package sources, with secrets/runtime state removed
+- `settings.example.json` — portable example settings with secrets/runtime state removed
+- `packages.example.json` — portable list of non-custom package sources to sync across pi instances
 - `commit-message-prompt.md` — default global prompt for `/commit-message`
 
 Not included: `auth.json`, sessions, run history, caches, or API keys.
@@ -152,17 +153,25 @@ or project-local:
 .pi/settings.json
 ```
 
-The `packages` list tracks non-custom pi packages to install alongside this repo's custom resources:
+`packages.example.json` tracks non-custom pi packages to install alongside this repo's custom resources. To refresh it from the local global pi settings (`~/.pi/agent/settings.json`) while excluding this repo's `cy-pi` package entry, run:
 
-- `npm:@zenobius/pi-rose-pine`
-- `npm:pi-subagents`
-- `npm:pi-web-access`
+```bash
+./scripts/copy-packages.sh
+```
+
+You can also pass explicit source and output paths:
+
+```bash
+./scripts/copy-packages.sh ~/.pi/agent/settings.json packages.example.json
+```
 
 To install those packages into the local global pi install, run:
 
 ```bash
 ./scripts/install-packages.sh
 ```
+
+`install-packages.sh` also accepts a settings-style JSON file with a `packages` array for compatibility.
 
 Install this repo itself separately, preferably pinned to a tag:
 

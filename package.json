@@ -8,7 +8,9 @@
   ],
   "type": "module",
   "scripts": {
-    "test": "bash tests/pi-dev.test.sh"
+    "test": "bash tests/pi-dev.test.sh",
+    "copy-packages": "bash scripts/copy-packages.sh",
+    "install-packages": "bash scripts/install-packages.sh"
   },
   "files": [
     "AGENTS.md",
@@ -19,6 +21,7 @@
     "extensions",
     "prompts",
     "scripts",
+    "packages.example.json",
     "settings.example.json",
     "skills",
     "themes"

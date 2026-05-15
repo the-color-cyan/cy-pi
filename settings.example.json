@@ -2,11 +2,6 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.5",
   "defaultThinkingLevel": "xhigh",
-  "packages": [
-    "npm:@zenobius/pi-rose-pine",
-    "npm:pi-subagents",
-    "npm:pi-web-access"
-  ],
   "theme": "rose-pine",
   "subagents": {
     "asyncByDefault": true,
