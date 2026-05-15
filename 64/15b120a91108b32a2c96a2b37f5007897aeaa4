@@ -1,0 +1,39 @@
+packages.example.json
+  s_2536f0235009fc::t_629518dce96eaf 1-2,9,12
+  s_2536f0235009fc::t_8b545709520f05 3-8,10-11
+package.json
+  s_2536f0235009fc::t_9b794892b6ee38 11-13,24
+scripts/copy-packages.sh
+  s_5b1bfed2bd4c74::t_c86390a02c7b18 46-47,52-53,116-118,126-133,138,147-150,166-167
+  s_2536f0235009fc::t_f5646ea6f09d9b 1-45,48-51,54-115,125,134-137,139-146,153-165,168
+  s_5b1bfed2bd4c74::t_20e828e9a94374 119-124,151-152
+scripts/install-packages.sh
+  s_2536f0235009fc::t_33c6aaae3cc79e 5,8-9,11-12,14-16,21-22,26-27,31,56-57,64
+  s_5b1bfed2bd4c74::t_189ee1ce2021d4 39-40,42-45,48-54,59-60,63,68-71
+README.md
+  s_2536f0235009fc::t_38ce1d2bff47e6 25-26,156,158-166,174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "6415b120a91108b32a2c96a2b37f5007897aeaa4",
+  "prompts": {},
+  "sessions": {
+    "s_2536f0235009fc": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2c92-28df-7086-9d6c-81734caefdc2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_5b1bfed2bd4c74": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2c8f-0fd6-7149-be3a-bfed2178a969",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
