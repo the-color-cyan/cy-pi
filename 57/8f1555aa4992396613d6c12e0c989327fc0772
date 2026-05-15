@@ -1,0 +1,19 @@
+skills/productivity/open-pr/SKILL.md
+  s_838b83e6d44e27::t_05e5687c6091d7 3,9,25,53,55-57,61-62,66-88,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "578f1555aa4992396613d6c12e0c989327fc0772",
+  "prompts": {},
+  "sessions": {
+    "s_838b83e6d44e27": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2c68-c0cd-714f-baed-bc719ba61b34",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
