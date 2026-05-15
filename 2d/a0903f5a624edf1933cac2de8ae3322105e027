@@ -1,0 +1,21 @@
+tmp/worker-model-update-report.md
+  s_0a8e030bb2ec96::t_414b4107b6239d 1-26
+agents/worker.md
+  s_0a8e030bb2ec96::t_f4763200216323 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "2da0903f5a624edf1933cac2de8ae3322105e027",
+  "prompts": {},
+  "sessions": {
+    "s_0a8e030bb2ec96": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2cad-7139-724d-b0af-875307144422",
+        "model": "kimi-for-coding"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
