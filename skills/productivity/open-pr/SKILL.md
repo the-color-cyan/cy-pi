@@ -8,6 +8,12 @@ argument-hint: "Optional PR title or context"
 
 Create a GitHub pull request safely from the current branch, with explicit base-branch confirmation and linked issues.
 
+## Invocation behavior
+
+When this skill is loaded directly, including `/skill:open-pr` with no arguments, treat that invocation as the user's request to start creating a PR now.
+
+Do not reply with only a passive loaded/ready message. Immediately run the preflight checks that do not mutate state, then ask the user which base branch to merge into before any PR creation or branch push.
+
 ## Quick start
 
 1. Inspect repo state:
@@ -33,7 +39,7 @@ Run checks before creating anything:
 
 ### 2. Ask for base branch
 
-Always ask the user what branch the PR should merge into.
+Always ask the user what branch the PR should merge into. Use the `ask_user` tool when available, with discovered candidate base branches as options plus a freeform branch option.
 
 Provide context in the question:
 
