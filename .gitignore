@@ -20,3 +20,4 @@ run-history.jsonl
 .DS_Store
 *.swp
 /.pi-lens/cache
+/.pi-lens
