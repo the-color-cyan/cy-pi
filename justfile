@@ -6,27 +6,15 @@ default:
 
 # Run the test suite.
 test:
-    bash tests/pi-dev.test.sh
+    npm test
 
-# Copy pi package sources from settings into packages.example.json.
-copy-packages source_settings="" packages_output="":
-    ./scripts/copy-packages.sh {{source_settings}} {{packages_output}}
+# Initialize this checkout for direct Pi agent-home use.
+init-agent-home:
+    ./scripts/init-agent-home.sh
 
-# Install pi package sources from packages.example.json, another packages JSON, or settings JSON.
-install-packages input="":
-    ./scripts/install-packages.sh {{input}}
-
-# Link this checkout's local pi resources into ~/.pi/agent.
-install-local-links *args:
-    ./scripts/install-local-links.sh {{args}}
-
-# Replace cy-pi package entries in pi settings with a local path to this checkout.
-use-local-package:
-    ./scripts/use-local-package.sh
-
-# Launch or refresh an isolated pi dev home at ~/.pi-dev/agent.
-pi-dev *args:
-    ./scripts/pi-dev.sh {{args}}
+# Launch pi with this checkout as PI_CODING_AGENT_DIR.
+pi-home *args:
+    ./scripts/pi-home.sh {{args}}
 
 # Benchmark pi extension startup overhead.
 benchmark *args:

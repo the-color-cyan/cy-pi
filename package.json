@@ -2,15 +2,13 @@
   "name": "cy-pi",
   "version": "0.1.0",
   "private": true,
-  "description": "Portable pi agent resources for Cyan.",
+  "description": "Portable pi agent home resources for Cyan.",
   "keywords": [
-    "pi-package"
+    "pi-agent-home"
   ],
   "type": "module",
   "scripts": {
-    "test": "bash tests/pi-dev.test.sh",
-    "copy-packages": "bash scripts/copy-packages.sh",
-    "install-packages": "bash scripts/install-packages.sh"
+    "test": "bash -n scripts/*.sh && npm exec tsc -- --noEmit"
   },
   "files": [
     "AGENTS.md",
@@ -21,7 +19,6 @@
     "extensions",
     "prompts",
     "scripts",
-    "packages.example.json",
     "settings.example.json",
     "skills",
     "themes"
