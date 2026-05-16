@@ -2,13 +2,15 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-packages_file="$repo_root/packages.example.json"
+packages_file="$repo_root/packages.cyan.json"
+settings_file="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}/settings.json"
+prune=false
 
 usage() {
 	cat <<'EOF'
 Usage: scripts/install-packages.sh [--prune] [packages.json|settings.json]
 
-Installs the pi package sources listed in packages.example.json into the local
+Installs the pi package sources listed in packages.cyan.json into the local
 global pi settings (~/.pi/agent/settings.json) via `pi install`.
 
 Pass a different JSON file to install from that file. The input may be either a

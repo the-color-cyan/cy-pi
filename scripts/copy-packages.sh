@@ -3,18 +3,18 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source_settings="${HOME}/.pi/agent/settings.json"
-output_file="$repo_root/packages.example.json"
+output_file="$repo_root/packages.cyan.json"
 
 usage() {
 	cat <<'EOF'
 Usage: scripts/copy-packages.sh [source-settings.json] [packages-output.json]
 
 Copies pi package sources from the local global pi settings into
-packages.example.json, excluding cy-pi itself.
+packages.cyan.json, excluding cy-pi itself.
 
 Defaults:
   source-settings.json: ~/.pi/agent/settings.json
-  packages-output.json: ./packages.example.json
+  packages-output.json: ./packages.cyan.json
 EOF
 }
 
