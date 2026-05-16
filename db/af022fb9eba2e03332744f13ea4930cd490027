@@ -1,0 +1,19 @@
+justfile
+  s_6124f750ae89dd::t_e3745a78a63eab 15-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "dbaf022fb9eba2e03332744f13ea4930cd490027",
+  "prompts": {},
+  "sessions": {
+    "s_6124f750ae89dd": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2f57-5549-720f-805b-97c5bcfecd08",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
