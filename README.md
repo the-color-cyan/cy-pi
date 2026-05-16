@@ -171,6 +171,12 @@ To install those packages into the local global pi install, run:
 ./scripts/install-packages.sh
 ```
 
+To first remove package entries from local pi settings that are not listed in the input file, run:
+
+```bash
+./scripts/install-packages.sh --prune
+```
+
 `install-packages.sh` also accepts a settings-style JSON file with a `packages` array for compatibility.
 
 Install this repo itself separately, preferably pinned to a tag:
