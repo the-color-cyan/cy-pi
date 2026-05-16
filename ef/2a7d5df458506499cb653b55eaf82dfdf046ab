@@ -1,0 +1,22 @@
+README.md
+  s_fa4b3845341b16::t_ad4833f62272b5 174-179
+scripts/install-packages.sh
+  s_fa4b3845341b16::t_342f895e06a6eb 97-153
+  s_fa4b3845341b16::t_4de34dee6aa47f 17-22,26-53,55-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "ef2a7d5df458506499cb653b55eaf82dfdf046ab",
+  "prompts": {},
+  "sessions": {
+    "s_fa4b3845341b16": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2e5f-3e25-749b-aca0-0505f2a3d481",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
