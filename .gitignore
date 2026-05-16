@@ -3,10 +3,18 @@ node_modules/
 dist/
 .cache/
 
-# pi runtime/local state - keep these out of the portable package
+# pi runtime/local state - keep these out of git when this checkout is used
+# directly as PI_CODING_AGENT_DIR / ~/.pi/agent
 auth.json
+settings.json
+settings.json.backup.*
 sessions/
 run-history.jsonl
+git/
+bin/
+github-tracker.json
+github-tracker-runs/
+logs/
 *.db
 *.sqlite
 *.sqlite3

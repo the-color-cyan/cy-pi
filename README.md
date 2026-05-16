@@ -2,7 +2,12 @@
 
 Portable pi agent resources for cyan.
 
-This repo is a pi package for resources pi can load directly, plus a small link installer for pi resources that are not part of pi package discovery yet.
+This repo can be used two ways:
+
+1. **Agent-home mode** — clone it and run pi with this checkout as `PI_CODING_AGENT_DIR`, like using a Neovim config checkout in place.
+2. **Package mode** — install it as a pi package and use the link installer for resources pi packages do not discover yet.
+
+Agent-home mode is the preferred local workflow for editing this repo's resources in place.
 
 ## Contents
 
@@ -26,7 +31,35 @@ This repo is a pi package for resources pi can load directly, plus a small link 
 - `packages.example.json` — portable list of non-custom package sources to sync across pi instances
 - `commit-message-prompt.md` — default global prompt for `/commit-message`
 
-Not included: `auth.json`, sessions, run history, caches, or API keys.
+Not included: `auth.json`, local `settings.json`, sessions, run history, caches, generated worktrees, or API keys.
+
+## Use as your Pi agent home
+
+Clone the repo, initialize ignored runtime files, and launch pi with the checkout as the agent home:
+
+```bash
+git clone git@github.com:the-color-cyan/cy-pi.git ~/pi/cy-pi
+cd ~/pi/cy-pi
+./scripts/init-agent-home.sh
+./scripts/pi-home.sh
+```
+
+`pi-home.sh` is just a convenience wrapper for:
+
+```bash
+PI_CODING_AGENT_DIR="$PWD" pi
+```
+
+This keeps resources editable in place: `extensions/`, `skills/`, `prompts/`, `themes/`, `agents/`, `APPEND_SYSTEM.md`, and the top-level prompt/playbook files are all loaded from the checkout. Runtime state such as `auth.json`, `settings.json`, sessions, run history, tracker state, and generated worktrees is ignored by git.
+
+If you want the normal `pi` command to use this checkout without the wrapper, you can symlink `~/.pi/agent` to the repo after moving your existing live home aside:
+
+```bash
+mv ~/.pi/agent ~/.pi/agent.backup.$(date +%Y%m%d%H%M%S)
+ln -s ~/pi/cy-pi ~/.pi/agent
+```
+
+Only do that after preserving any local `auth.json` or `settings.json` you still need. Do not install this checkout as a package inside its own `settings.json`; that can duplicate commands/skills.
 
 ## Install from git
 
@@ -82,7 +115,7 @@ alias pi-dev="$HOME/pi/cy-pi/scripts/pi-dev.sh"
 
 See [`docs/pi-dev-isolation.md`](docs/pi-dev-isolation.md).
 
-The older normal-harness helper `scripts/use-local-package.sh` is still available when you explicitly want `~/.pi/agent/settings.json` to point at this checkout as a local package.
+The older normal-harness helper `scripts/use-local-package.sh` is still available when you explicitly want `~/.pi/agent/settings.json` to point at this checkout as a local package. For day-to-day local editing, prefer agent-home mode (`scripts/pi-home.sh`) instead.
 
 ## commit-message extension
 
@@ -141,7 +174,9 @@ Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
 ## Settings and package sync
 
-Use `settings.example.json` as a starting point only. Copy relevant parts into:
+Use `settings.example.json` as a starting point only. In agent-home mode, `scripts/init-agent-home.sh` copies it to ignored local `settings.json` if that file does not exist.
+
+For the standard global install, copy relevant parts into:
 
 ```text
 ~/.pi/agent/settings.json
