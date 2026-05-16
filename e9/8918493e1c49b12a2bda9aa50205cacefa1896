@@ -1,0 +1,27 @@
+.gitignore
+  s_b29aac76a3054d::t_784b599a2a795e 6-7,9-10,13-17
+scripts/pi-home.sh
+  s_b29aac76a3054d::t_8f311e3fd95c03 1-7
+scripts/init-agent-home.sh
+  s_b29aac76a3054d::t_b9b1be62a9c8ec 1-37
+AGENTS.md
+  s_b29aac76a3054d::t_6e00cfa1ed4d10 3,5-6,8,10
+README.md
+  s_b29aac76a3054d::t_7c38d7006aba2f 5-10,34-62,118,177-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "e98918493e1c49b12a2bda9aa50205cacefa1896",
+  "prompts": {},
+  "sessions": {
+    "s_b29aac76a3054d": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2f2b-b59d-76bb-9a57-4b84023c5838",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
