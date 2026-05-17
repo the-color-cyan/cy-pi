@@ -1,0 +1,34 @@
+extensions/commit-message.ts
+  s_f9bca8b5bd5b05::t_89d14e0678663d 530-608,610,615-654
+  s_f9bca8b5bd5b05::t_609640507b0e9a 369-370,372,374,378-397
+  s_f8bc52462a5880::t_667e99a821c910 275-281,609,611-614
+  s_f8bc52462a5880::t_ff1d404609816c 319,323-327
+  s_f8bc52462a5880::t_0257eab4b7a299 50,260-263,268
+  s_f9bca8b5bd5b05::t_12033ee17141d5 40-49,51-57
+  s_f9bca8b5bd5b05::t_32176ffd43986a 216-259,264-267,269-274,282-318,320-322,328-368,371,373,375-377,398-399
+  s_f9bca8b5bd5b05::t_0625c6eada125e 127-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "6b5397d4a8dcdbe9dd20ed7f9bab13e8e76bdb05",
+  "prompts": {},
+  "sessions": {
+    "s_f8bc52462a5880": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e33d7-ad6d-7b96-860e-b9763096b456",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_f9bca8b5bd5b05": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e33de-adbf-7405-bcb3-6b96326e7f96",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
