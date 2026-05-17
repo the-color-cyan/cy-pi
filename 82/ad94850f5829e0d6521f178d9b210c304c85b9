@@ -1,0 +1,19 @@
+extensions/commit-message.ts
+  s_d969f77e15a45f::t_26892342866073 133,136,144,563
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "82ad94850f5829e0d6521f178d9b210c304c85b9",
+  "prompts": {},
+  "sessions": {
+    "s_d969f77e15a45f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e34b8-042b-70d2-b574-6a60667b7668",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
