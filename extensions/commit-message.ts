@@ -37,6 +37,24 @@ type CommandOptions = {
 	guidance: string;
 };
 
+type CommitWorktreeOptions = {
+	dryRun: boolean;
+	push: boolean;
+	guidance: string;
+};
+
+type WorktreeFile = {
+	path: string;
+	status: string;
+	tracked: boolean;
+	stagePaths: string[];
+};
+
+type CommitGroup = {
+	files: string[];
+	reason: string;
+};
+
 function agentDir(): string {
 	return process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
 }
@@ -104,6 +122,20 @@ function parseCommandOptions(args: string): CommandOptions {
 		.replace(/\s+/g, " ")
 		.trim();
 	return { useLazygit, guidance };
+}
+
+function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
+	const dryRunFlag = /(^|\s)--dry-run(?=\s|$)/;
+	const noPushFlag = /(^|\s)--no-push(?=\s|$)/;
+	const guidance = args
+		.replace(/(^|\s)(--dry-run|--no-push)(?=\s|$)/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+	return {
+		dryRun: dryRunFlag.test(args),
+		push: !noPushFlag.test(args),
+		guidance,
+	};
 }
 
 function buildPrompt(
@@ -179,6 +211,190 @@ async function getGitContext(
 		diffKind: hasStaged ? "staged" : "working tree",
 		untracked,
 	};
+}
+
+async function getModelAuth(ctx: ExtensionCommandContext) {
+	const model = ctx.model;
+	if (!model) throw new Error("No active model selected.");
+
+	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
+	if (!auth.ok) throw new Error(auth.error);
+	if (!auth.apiKey) {
+		throw new Error(`No API key available for ${model.provider}/${model.id}.`);
+	}
+
+	return { model, auth };
+}
+
+async function completeText(
+	ctx: ExtensionCommandContext,
+	prompt: string,
+): Promise<string> {
+	const { model, auth } = await getModelAuth(ctx);
+	const response = await complete(
+		model,
+		{
+			messages: [
+				{
+					role: "user" as const,
+					content: [{ type: "text" as const, text: prompt }],
+					timestamp: Date.now(),
+				},
+			],
+		},
+		{ apiKey: auth.apiKey, headers: auth.headers },
+	);
+
+	return response.content
+		.filter(
+			(part): part is { type: "text"; text: string } => part.type === "text",
+		)
+		.map((part) => part.text)
+		.join("\n");
+}
+
+function parseStatusLine(line: string): WorktreeFile | undefined {
+	const status = line.slice(0, 2);
+	const rawPath = line.slice(3).trim();
+	if (!rawPath) return undefined;
+	const renameParts = rawPath.includes(" -> ")
+		? rawPath.split(" -> ").map((part) => part.trim())
+		: undefined;
+	const path = renameParts ? renameParts[renameParts.length - 1]! : rawPath;
+	const tracked = !status.includes("?");
+	if (!tracked && (path === "config" || path.startsWith("config/"))) {
+		return undefined;
+	}
+	return { path, status, tracked, stagePaths: renameParts ?? [path] };
+}
+
+async function getWorktreeFiles(
+	pi: ExtensionAPI,
+	root: string,
+): Promise<WorktreeFile[]> {
+	const stagedResult = await git(pi, root, ["diff", "--cached", "--quiet"]);
+	if (stagedResult.code !== 0) {
+		throw new Error(
+			"commit-worktree requires no pre-staged changes; commit or unstage them first.",
+		);
+	}
+
+	const statusResult = await git(pi, root, ["status", "--short"]);
+	if (statusResult.code !== 0) throw new Error(statusResult.stderr.trim());
+	return statusResult.stdout
+		.split("\n")
+		.map(parseStatusLine)
+		.filter((file): file is WorktreeFile => Boolean(file));
+}
+
+function groupPrompt(
+	root: string,
+	files: WorktreeFile[],
+	guidance: string,
+): string {
+	return [
+		"Group the current git working tree files into one or more commits.",
+		"Group files together only when they are part of the same logical change.",
+		'Return only JSON: {"groups":[{"files":["path"],"reason":"short reason"}]}',
+		"Every listed file must appear exactly once. Do not invent files.",
+		guidance ? `Additional user guidance: ${guidance}` : undefined,
+		"",
+		`Repository: ${root}`,
+		"Files:",
+		...files.map((file) => `- ${file.status} ${file.path}`),
+	]
+		.filter((part): part is string => typeof part === "string")
+		.join("\n");
+}
+
+function parseGroups(text: string, files: WorktreeFile[]): CommitGroup[] {
+	const allowed = new Set(files.map((file) => file.path));
+	try {
+		const jsonText = text
+			.trim()
+			.replace(/^```(?:json)?\s*/i, "")
+			.replace(/\s*```$/i, "");
+		const parsed = JSON.parse(jsonText) as { groups?: CommitGroup[] };
+		const groups = Array.isArray(parsed.groups) ? parsed.groups : [];
+		const seen = new Set<string>();
+		const normalized = groups
+			.map((group) => ({
+				files: Array.isArray(group.files)
+					? group.files.filter((file) => {
+							if (!allowed.has(file) || seen.has(file)) return false;
+							seen.add(file);
+							return true;
+						})
+					: [],
+				reason:
+					typeof group.reason === "string" ? group.reason : "Logical change",
+			}))
+			.filter((group) => group.files.length > 0);
+		const missing = files
+			.map((file) => file.path)
+			.filter((file) => !seen.has(file));
+		if (missing.length)
+			normalized.push({ files: missing, reason: "Remaining changes" });
+		return normalized;
+	} catch {
+		return [
+			{ files: files.map((file) => file.path), reason: "Working tree changes" },
+		];
+	}
+}
+
+async function pathDiff(
+	pi: ExtensionAPI,
+	root: string,
+	files: string[],
+): Promise<string> {
+	const diff = await git(pi, root, ["diff", "--", ...files]);
+	const cached = await git(pi, root, ["diff", "--cached", "--", ...files]);
+	const untracked = await git(pi, root, [
+		"ls-files",
+		"--others",
+		"--exclude-standard",
+		"--",
+		...files,
+	]);
+	const untrackedSummary = untracked.stdout.trim()
+		? `\n\n<untracked-files>\n${untracked.stdout.trim()}\n</untracked-files>`
+		: "";
+	return (
+		[cached.stdout.trim(), diff.stdout.trim()].filter(Boolean).join("\n") +
+		untrackedSummary
+	);
+}
+
+async function generateWorktreeCommitMessage(
+	pi: ExtensionAPI,
+	ctx: ExtensionCommandContext,
+	root: string,
+	prompt: string,
+	status: string,
+	files: string[],
+	guidance: string,
+): Promise<string> {
+	const diff = await pathDiff(pi, root, files);
+	const message = cleanCommitMessage(
+		await completeText(
+			ctx,
+			buildPrompt(
+				prompt,
+				{
+					root,
+					status,
+					diff,
+					diffKind: "working tree",
+					untracked: "",
+				},
+				guidance,
+			),
+		),
+	);
+	if (!message)
+		throw new Error(`Model returned an empty message for ${files.join(", ")}.`);
+	return message;
 }
 
 async function copyMessage(
@@ -311,6 +527,131 @@ async function launchLazygit(
 }
 
 export default function (pi: ExtensionAPI) {
+	pi.registerCommand("commit-worktree", {
+		description:
+			"Generate commit messages, split working tree changes, commit them, and push",
+		handler: async (args, ctx) => {
+			const options = parseCommitWorktreeOptions(args);
+			await ctx.waitForIdle();
+
+			try {
+				await getModelAuth(ctx);
+				const rootResult = await git(pi, ctx.cwd, [
+					"rev-parse",
+					"--show-toplevel",
+				]);
+				if (rootResult.code !== 0)
+					throw new Error("Not inside a git repository.");
+				const root = rootResult.stdout.trim();
+				const files = await getWorktreeFiles(pi, root);
+				if (!files.length) {
+					throw new Error(
+						"No committable git changes found. Untracked local config is skipped by default.",
+					);
+				}
+
+				ctx.ui.notify("Grouping working tree changes...", "info");
+				const groups = parseGroups(
+					await completeText(ctx, groupPrompt(root, files, options.guidance)),
+					files,
+				);
+				const status = files
+					.map((file) => `${file.status} ${file.path}`)
+					.join("\n");
+				const promptInfo = readPromptFile({
+					root,
+					status,
+					diff: "",
+					diffKind: "working tree",
+					untracked: "",
+				});
+
+				const planned: Array<{ group: CommitGroup; message: string }> = [];
+				for (const group of groups) {
+					ctx.ui.notify(
+						`Generating message for ${group.files.join(", ")}...`,
+						"info",
+					);
+					planned.push({
+						group,
+						message: await generateWorktreeCommitMessage(
+							pi,
+							ctx,
+							root,
+							promptInfo.prompt,
+							status,
+							group.files,
+							[group.reason, options.guidance].filter(Boolean).join("; "),
+						),
+					});
+				}
+
+				const summary = planned
+					.map(({ group, message }, index) =>
+						[
+							`${index + 1}. ${message.split("\n")[0]}`,
+							`   reason: ${group.reason}`,
+							`   files: ${group.files.join(", ")}`,
+						].join("\n"),
+					)
+					.join("\n\n");
+				if (ctx.hasUI) await ctx.ui.editor("Commit worktree plan", summary);
+				else console.log(summary);
+
+				if (options.dryRun) {
+					ctx.ui.notify(
+						"Dry run complete; no files were staged, committed, or pushed.",
+						"info",
+					);
+					return;
+				}
+
+				const filesByPath = new Map(files.map((file) => [file.path, file]));
+				for (const { group, message } of planned) {
+					const stagePaths = group.files.flatMap(
+						(file) => filesByPath.get(file)?.stagePaths ?? [file],
+					);
+					const addResult = await git(pi, root, ["add", "-A", "--", ...stagePaths]);
+					if (addResult.code !== 0) throw new Error(addResult.stderr.trim());
+
+					const tempDir = mkdtempSync(join(tmpdir(), "pi-commit-worktree-"));
+					const messagePath = join(tempDir, "COMMIT_MESSAGE");
+					writeFileSync(messagePath, `${message.trim()}\n`, "utf8");
+					try {
+						const commitResult = await git(pi, root, [
+							"commit",
+							"-F",
+							messagePath,
+						]);
+						if (commitResult.code !== 0)
+							throw new Error(commitResult.stderr.trim());
+					} finally {
+						rmSync(tempDir, { recursive: true, force: true });
+					}
+				}
+
+				if (options.push) {
+					const pushResult = await git(pi, root, ["push"]);
+					if (pushResult.code !== 0) throw new Error(pushResult.stderr.trim());
+					ctx.ui.notify(
+						`Committed ${planned.length} group(s) and pushed.`,
+						"info",
+					);
+				} else {
+					ctx.ui.notify(
+						`Committed ${planned.length} group(s); push skipped.`,
+						"info",
+					);
+				}
+			} catch (error) {
+				ctx.ui.notify(
+					error instanceof Error ? error.message : String(error),
+					"error",
+				);
+			}
+		},
+	});
+
 	pi.registerCommand("commit-message", {
 		description:
 			"Generate a git commit message, copy it, and open lazygit when available",
