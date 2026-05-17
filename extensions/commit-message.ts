@@ -130,10 +130,10 @@ function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 	const dryRunFlag = /(^|\s)--dry-run(?=\s|$)/;
 	const noPushFlag = /(^|\s)--no-push(?=\s|$)/;
 	const yesFlag = /(^|\s)--yes(?=\s|$)/;
-	const includeUntrackedCommand = /(^|\s)(include-untracked|untracked)(?=\s|$)/;
+	const trackedOnlyFlag = /(^|\s)(--tracked-only|--no-untracked)(?=\s|$)/;
 	const guidance = args
 		.replace(
-			/(^|\s)(--dry-run|--no-push|--yes|include-untracked|untracked)(?=\s|$)/g,
+			/(^|\s)(--dry-run|--no-push|--yes|--tracked-only|--no-untracked|include-untracked|untracked)(?=\s|$)/g,
 			" ",
 		)
 		.replace(/\s+/g, " ")
@@ -141,7 +141,7 @@ function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 	return {
 		dryRun: dryRunFlag.test(args),
 		push: !noPushFlag.test(args),
-		includeUntracked: includeUntrackedCommand.test(args),
+		includeUntracked: !trackedOnlyFlag.test(args),
 		yes: yesFlag.test(args),
 		guidance,
 	};
@@ -560,9 +560,7 @@ export default function (pi: ExtensionAPI) {
 					options.includeUntracked,
 				);
 				if (!files.length) {
-					throw new Error(
-						"No committable git changes found. Run `/throw include-untracked` to include untracked files.",
-					);
+					throw new Error("No committable git changes found.");
 				}
 
 				ctx.ui.notify("Grouping working tree changes...", "info");
