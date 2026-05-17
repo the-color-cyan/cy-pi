@@ -275,7 +275,7 @@ async function getWorktreeFiles(
 	const stagedResult = await git(pi, root, ["diff", "--cached", "--quiet"]);
 	if (stagedResult.code !== 0) {
 		throw new Error(
-			"commit-worktree requires no pre-staged changes; commit or unstage them first.",
+			"throw requires no pre-staged changes; commit or unstage them first.",
 		);
 	}
 
@@ -527,7 +527,7 @@ async function launchLazygit(
 }
 
 export default function (pi: ExtensionAPI) {
-	pi.registerCommand("commit-worktree", {
+	pi.registerCommand("throw", {
 		description:
 			"Generate commit messages, split working tree changes, commit them, and push",
 		handler: async (args, ctx) => {
@@ -611,7 +611,12 @@ export default function (pi: ExtensionAPI) {
 					const stagePaths = group.files.flatMap(
 						(file) => filesByPath.get(file)?.stagePaths ?? [file],
 					);
-					const addResult = await git(pi, root, ["add", "-A", "--", ...stagePaths]);
+					const addResult = await git(pi, root, [
+						"add",
+						"-A",
+						"--",
+						...stagePaths,
+					]);
 					if (addResult.code !== 0) throw new Error(addResult.stderr.trim());
 
 					const tempDir = mkdtempSync(join(tmpdir(), "pi-commit-worktree-"));
