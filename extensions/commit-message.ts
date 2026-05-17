@@ -130,7 +130,10 @@ function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 	const noPushFlag = /(^|\s)--no-push(?=\s|$)/;
 	const includeUntrackedCommand = /(^|\s)(include-untracked|untracked)(?=\s|$)/;
 	const guidance = args
-		.replace(/(^|\s)(--dry-run|--no-push|include-untracked|untracked)(?=\s|$)/g, " ")
+		.replace(
+			/(^|\s)(--dry-run|--no-push|include-untracked|untracked)(?=\s|$)/g,
+			" ",
+		)
 		.replace(/\s+/g, " ")
 		.trim();
 	return {
