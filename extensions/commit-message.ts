@@ -40,6 +40,7 @@ type CommandOptions = {
 type CommitWorktreeOptions = {
 	dryRun: boolean;
 	push: boolean;
+	includeUntracked: boolean;
 	guidance: string;
 };
 
@@ -127,13 +128,15 @@ function parseCommandOptions(args: string): CommandOptions {
 function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 	const dryRunFlag = /(^|\s)--dry-run(?=\s|$)/;
 	const noPushFlag = /(^|\s)--no-push(?=\s|$)/;
+	const includeUntrackedCommand = /(^|\s)(include-untracked|untracked)(?=\s|$)/;
 	const guidance = args
-		.replace(/(^|\s)(--dry-run|--no-push)(?=\s|$)/g, " ")
+		.replace(/(^|\s)(--dry-run|--no-push|include-untracked|untracked)(?=\s|$)/g, " ")
 		.replace(/\s+/g, " ")
 		.trim();
 	return {
 		dryRun: dryRunFlag.test(args),
 		push: !noPushFlag.test(args),
+		includeUntracked: includeUntrackedCommand.test(args),
 		guidance,
 	};
 }
@@ -253,7 +256,10 @@ async function completeText(
 		.join("\n");
 }
 
-function parseStatusLine(line: string): WorktreeFile | undefined {
+function parseStatusLine(
+	line: string,
+	includeUntracked: boolean,
+): WorktreeFile | undefined {
 	const status = line.slice(0, 2);
 	const rawPath = line.slice(3).trim();
 	if (!rawPath) return undefined;
@@ -262,15 +268,14 @@ function parseStatusLine(line: string): WorktreeFile | undefined {
 		: undefined;
 	const path = renameParts ? renameParts[renameParts.length - 1]! : rawPath;
 	const tracked = !status.includes("?");
-	if (!tracked && (path === "config" || path.startsWith("config/"))) {
-		return undefined;
-	}
+	if (!tracked && !includeUntracked) return undefined;
 	return { path, status, tracked, stagePaths: renameParts ?? [path] };
 }
 
 async function getWorktreeFiles(
 	pi: ExtensionAPI,
 	root: string,
+	includeUntracked: boolean,
 ): Promise<WorktreeFile[]> {
 	const stagedResult = await git(pi, root, ["diff", "--cached", "--quiet"]);
 	if (stagedResult.code !== 0) {
@@ -283,7 +288,7 @@ async function getWorktreeFiles(
 	if (statusResult.code !== 0) throw new Error(statusResult.stderr.trim());
 	return statusResult.stdout
 		.split("\n")
-		.map(parseStatusLine)
+		.map((line) => parseStatusLine(line, includeUntracked))
 		.filter((file): file is WorktreeFile => Boolean(file));
 }
 
@@ -543,10 +548,14 @@ export default function (pi: ExtensionAPI) {
 				if (rootResult.code !== 0)
 					throw new Error("Not inside a git repository.");
 				const root = rootResult.stdout.trim();
-				const files = await getWorktreeFiles(pi, root);
+				const files = await getWorktreeFiles(
+					pi,
+					root,
+					options.includeUntracked,
+				);
 				if (!files.length) {
 					throw new Error(
-						"No committable git changes found. Untracked local config is skipped by default.",
+						"No committable git changes found. Run `/throw include-untracked` to include untracked files.",
 					);
 				}
 
