@@ -41,6 +41,7 @@ type CommitWorktreeOptions = {
 	dryRun: boolean;
 	push: boolean;
 	includeUntracked: boolean;
+	yes: boolean;
 	guidance: string;
 };
 
@@ -128,10 +129,11 @@ function parseCommandOptions(args: string): CommandOptions {
 function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 	const dryRunFlag = /(^|\s)--dry-run(?=\s|$)/;
 	const noPushFlag = /(^|\s)--no-push(?=\s|$)/;
+	const yesFlag = /(^|\s)--yes(?=\s|$)/;
 	const includeUntrackedCommand = /(^|\s)(include-untracked|untracked)(?=\s|$)/;
 	const guidance = args
 		.replace(
-			/(^|\s)(--dry-run|--no-push|include-untracked|untracked)(?=\s|$)/g,
+			/(^|\s)(--dry-run|--no-push|--yes|include-untracked|untracked)(?=\s|$)/g,
 			" ",
 		)
 		.replace(/\s+/g, " ")
@@ -140,6 +142,7 @@ function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 		dryRun: dryRunFlag.test(args),
 		push: !noPushFlag.test(args),
 		includeUntracked: includeUntrackedCommand.test(args),
+		yes: yesFlag.test(args),
 		guidance,
 	};
 }
@@ -601,14 +604,39 @@ export default function (pi: ExtensionAPI) {
 				const summary = planned
 					.map(({ group, message }, index) =>
 						[
-							`${index + 1}. ${message.split("\n")[0]}`,
-							`   reason: ${group.reason}`,
-							`   files: ${group.files.join(", ")}`,
+							`Commit ${index + 1} message:`,
+							message,
+							"",
+							`Plan reason: ${group.reason}`,
+							`Files to stage: ${group.files.join(", ")}`,
 						].join("\n"),
 					)
-					.join("\n\n");
-				if (ctx.hasUI) await ctx.ui.editor("Commit worktree plan", summary);
-				else console.log(summary);
+					.join("\n\n---\n\n");
+				const confirmationText = [
+					summary,
+					"",
+					"To continue, leave the line below exactly as-is and save.",
+					"Delete or change it, or cancel the editor, to abort.",
+					"COMMIT AND PUSH",
+				].join("\n");
+				if (ctx.hasUI && !options.yes) {
+					const confirmed = await ctx.ui.editor(
+						"Commit worktree plan",
+						confirmationText,
+					);
+					if (
+						typeof confirmed !== "string" ||
+						!confirmed.split("\n").includes("COMMIT AND PUSH")
+					) {
+						ctx.ui.notify(
+							"Commit aborted; no files were staged, committed, or pushed.",
+							"info",
+						);
+						return;
+					}
+				} else {
+					console.log(summary);
+				}
 
 				if (options.dryRun) {
 					ctx.ui.notify(
