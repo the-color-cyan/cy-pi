@@ -1,0 +1,24 @@
+extensions/ascii-header.ts
+  s_fe6db33895631f::t_e85f93ecd2b006 138,156,170-172
+  s_fe6db33895631f::t_76745ddd22a1b8 1-3,17-42
+  s_fe6db33895631f::t_2a14cf3fbd8d31 4,104
+  s_fe6db33895631f::t_493d36ddf75a4d 139,145-155,157-164,173-175
+  s_fe6db33895631f::t_679162be9d180c 10-12,69-102,105-119
+  s_fe6db33895631f::t_922edee2ab71fd 46-68,133,140-144,165-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "eedaa6d78a81ddf15d1b5a63f73086022288808d",
+  "prompts": {},
+  "sessions": {
+    "s_fe6db33895631f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e33cb-50b4-76d7-9065-7ac06894fd3c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
