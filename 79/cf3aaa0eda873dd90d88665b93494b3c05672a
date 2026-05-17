@@ -1,0 +1,29 @@
+extensions/ascii-header.ts
+  s_3ffd115b70eef2::t_02a9b7402ed3a7 9,12,32,34-35,40-62,64-65
+  s_c0b96b157dfa57::t_7a40b317f3c8f4 1-6,8,13-31,33,63,67-88,91-97
+  s_c0b96b157dfa57::t_f9452b6cd07140 90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "79cf3aaa0eda873dd90d88665b93494b3c05672a",
+  "prompts": {},
+  "sessions": {
+    "s_3ffd115b70eef2": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2fa3-0bfc-76d9-8cd1-042c8b707b01",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_c0b96b157dfa57": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e2f9a-de0d-7791-adeb-4b0e45aa05e9",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
