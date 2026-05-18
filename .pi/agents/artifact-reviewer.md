@@ -64,11 +64,11 @@ CRITICAL: Use EXACTLY this format. One markdown table; one row per finding. Noth
 ```
 | plan-loc | codebase-loc | severity | dimension | finding | recommendation |
 | --- | --- | --- | --- | --- | --- |
-| Phase 2 §3 (orders.ts) | packages/rpiv-foo/src/handlers/orders.ts:55 | blocker | actionability | Phase 2 imports `{ orderRepo }` but Phase 1 §1 exports it as `{ ordersRepo }` — name mismatch | Rename Phase 2's import to `ordersRepo` to match Phase 1's export |
+| Phase 2 §3 (orders.ts) | packages/acme-foo/src/handlers/orders.ts:55 | blocker | actionability | Phase 2 imports `{ orderRepo }` but Phase 1 §1 exports it as `{ ordersRepo }` — name mismatch | Rename Phase 2's import to `ordersRepo` to match Phase 1's export |
 | Phase 3 §2 (config-loader.ts) | <n/a> | concern | code-quality | `catch (e) { throw new ConfigError("invalid") }` swallows the underlying cause; stack trace is lost | Wrap with `cause: e` — `throw new ConfigError("invalid", { cause: e })` |
-| Phase 1 §4 (types.ts) | packages/rpiv-foo/src/types/index.ts:12 | suggestion | codebase-fit | Phase 1 declares `type UserId = string` but `src/types/index.ts:12` already exports `UserId` | Re-import existing UserId from `packages/rpiv-foo/src/types/index.ts` |
-| Phase 4 §1 (foo-bridge.ts) | <n/a> | blocker | actionability | Module path `@juicesharp/rpiv-pi/lib/foo` does not exist; rpiv-pi has no `lib/` directory at HEAD | Add a Phase 0 that scaffolds `lib/` + registers it in `package.json` exports — name the scaffold phase, do not draft its contents |
-| Phase 2 §5 (component-binding.ts) | packages/rpiv-bar/view/component-binding.ts:16-22 | concern | codebase-fit | Phase 2's `BoundBinding<S>` drops the `predicate?` field that the cited sibling carries | Add `predicate?: (state: S, ctx: C) => boolean` to match the superset |
+| Phase 1 §4 (types.ts) | packages/acme-foo/src/types/index.ts:12 | suggestion | codebase-fit | Phase 1 declares `type UserId = string` but `src/types/index.ts:12` already exports `UserId` | Re-import existing UserId from `packages/acme-foo/src/types/index.ts` |
+| Phase 4 §1 (foo-bridge.ts) | <n/a> | blocker | actionability | Module path `@acme/pi-integration/lib/foo` does not exist; pi-integration has no `lib/` directory at HEAD | Add a Phase 0 that scaffolds `lib/` + registers it in `package.json` exports — name the scaffold phase, do not draft its contents |
+| Phase 2 §5 (component-binding.ts) | packages/acme-bar/view/component-binding.ts:16-22 | concern | codebase-fit | Phase 2's `BoundBinding<S>` drops the `predicate?` field that the cited sibling carries | Add `predicate?: (state: S, ctx: C) => boolean` to match the superset |
 ```
 
 **Row rules**:
