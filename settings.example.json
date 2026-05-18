@@ -1,12 +1,34 @@
 {
+  "packages": [
+    "npm:@zenobius/pi-rose-pine",
+    "npm:pi-lens",
+    "npm:pi-web-access",
+    "npm:pi-btw",
+    "npm:pi-ask-user",
+    "npm:@tmustier/pi-ralph-wiggum",
+    "npm:pi-subagents",
+    "npm:@haispeed/pi-obsidian"
+  ],
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.5",
-  "defaultThinkingLevel": "xhigh",
+  "enabledModels": [
+    "openai-codex/gpt-5.3-codex-spark",
+    "kimi-coding/kimi-for-coding",
+    "openai-codex/gpt-5.5",
+    "openai-codex/gpt-5.4-mini"
+  ],
+  "defaultThinkingLevel": "low",
   "theme": "rose-pine",
+  "hideThinkingBlock": false,
+  "compaction": {
+    "enabled": false
+  },
+  "doubleEscapeAction": "tree",
+  "quietStartup": true,
   "subagents": {
     "asyncByDefault": true,
     "forceTopLevelAsync": false,
-    "defaultSessionDir": "~/.pi/agent/sessions/subagent",
+    "defaultSessionDir": "$PI_CODING_AGENT_DIR/sessions/subagent",
     "parallel": {
       "maxTasks": 8,
       "concurrency": 4
@@ -25,6 +47,5 @@
       "hide": "ctrl+alt+h",
       "show": false
     }
-  },
-  "hideThinkingBlock": false
+  }
 }

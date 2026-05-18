@@ -103,4 +103,4 @@ Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
 ## Settings
 
-Use `settings.example.json` as a starting point only. `scripts/init-agent-home.sh` copies it to ignored local `settings.json` if that file does not exist.
+`settings.example.json` is the portable reference setup for fresh clones. `scripts/init-agent-home.sh` copies it to ignored local `settings.json` when missing, materializes checkout-local paths such as the subagent session directory, creates ignored runtime directories, and runs `npm ci` in `npm/` when npm is available so packaged Pi extensions/skills match this reference system.
