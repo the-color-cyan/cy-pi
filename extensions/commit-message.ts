@@ -609,9 +609,9 @@ export default function (pi: ExtensionAPI) {
 						].join("\n"),
 					)
 					.join("\n\n---\n\n");
-				console.log(summary);
 
 				if (options.dryRun) {
+					ctx.ui.notify(summary, "info");
 					ctx.ui.notify(
 						"Dry run complete; no files were staged, committed, or pushed.",
 						"info",
