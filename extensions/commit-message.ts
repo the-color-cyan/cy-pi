@@ -20,7 +20,9 @@ const DEFAULT_PROMPT = `You are writing a git commit message for the changes bel
 
 Requirements:
 - Return only the commit message, with no markdown fences or commentary.
-- Use Conventional Commit style when it fits.
+- Use standard scoped Conventional Commit format for the subject: type(scope): imperative summary.
+- Choose a clear type such as feat, fix, docs, refactor, test, chore, build, ci, perf, or style.
+- Choose a concise lowercase scope that names the affected area.
 - Keep the subject line imperative, specific, and under 72 characters when possible.
 - Add a concise body only if it helps explain the why or notable details.`;
 
@@ -41,7 +43,6 @@ type CommitWorktreeOptions = {
 	dryRun: boolean;
 	push: boolean;
 	includeUntracked: boolean;
-	yes: boolean;
 	guidance: string;
 };
 
@@ -129,7 +130,6 @@ function parseCommandOptions(args: string): CommandOptions {
 function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 	const dryRunFlag = /(^|\s)--dry-run(?=\s|$)/;
 	const noPushFlag = /(^|\s)--no-push(?=\s|$)/;
-	const yesFlag = /(^|\s)--yes(?=\s|$)/;
 	const trackedOnlyFlag = /(^|\s)(--tracked-only|--no-untracked)(?=\s|$)/;
 	const guidance = args
 		.replace(
@@ -142,7 +142,6 @@ function parseCommitWorktreeOptions(args: string): CommitWorktreeOptions {
 		dryRun: dryRunFlag.test(args),
 		push: !noPushFlag.test(args),
 		includeUntracked: !trackedOnlyFlag.test(args),
-		yes: yesFlag.test(args),
 		guidance,
 	};
 }
@@ -286,7 +285,7 @@ async function getWorktreeFiles(
 	const stagedResult = await git(pi, root, ["diff", "--cached", "--quiet"]);
 	if (stagedResult.code !== 0) {
 		throw new Error(
-			"throw requires no pre-staged changes; commit or unstage them first.",
+			"yeet requires no pre-staged changes; commit or unstage them first.",
 		);
 	}
 
@@ -538,7 +537,7 @@ async function launchLazygit(
 }
 
 export default function (pi: ExtensionAPI) {
-	pi.registerCommand("throw", {
+	pi.registerCommand("yeet", {
 		description:
 			"Generate commit messages, split working tree changes, commit them, and push",
 		handler: async (args, ctx) => {
@@ -610,31 +609,7 @@ export default function (pi: ExtensionAPI) {
 						].join("\n"),
 					)
 					.join("\n\n---\n\n");
-				const confirmationText = [
-					summary,
-					"",
-					"To continue, leave the line below exactly as-is and save.",
-					"Delete or change it, or cancel the editor, to abort.",
-					"COMMIT AND PUSH",
-				].join("\n");
-				if (ctx.hasUI && !options.yes) {
-					const confirmed = await ctx.ui.editor(
-						"Commit worktree plan",
-						confirmationText,
-					);
-					if (
-						typeof confirmed !== "string" ||
-						!confirmed.split("\n").includes("COMMIT AND PUSH")
-					) {
-						ctx.ui.notify(
-							"Commit aborted; no files were staged, committed, or pushed.",
-							"info",
-						);
-						return;
-					}
-				} else {
-					console.log(summary);
-				}
+				console.log(summary);
 
 				if (options.dryRun) {
 					ctx.ui.notify(
