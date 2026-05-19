@@ -1,0 +1,19 @@
+extensions/commit-message.ts
+  s_239a104c1fdf32::t_6efca4f347d1af 614
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "fc4750e61d86ae9d4e5b7ecb07899f8456f2f6f3",
+  "prompts": {},
+  "sessions": {
+    "s_239a104c1fdf32": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e417c-b3ee-7a10-80e5-7f1a1be6cee6",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
