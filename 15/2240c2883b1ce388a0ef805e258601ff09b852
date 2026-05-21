@@ -1,0 +1,19 @@
+.ralph/issue-13-tdd.md
+  s_f169da23b88a8b::t_ff7e1b67628394 1,3,11,26-27,37,39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "152240c2883b1ce388a0ef805e258601ff09b852",
+  "prompts": {},
+  "sessions": {
+    "s_f169da23b88a8b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4905-d3eb-7445-97d4-cf513492d593",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
