@@ -1,0 +1,110 @@
+tests/cd-migration.test.ts
+  s_d972497733332f::t_ca37e293d687e7 1-47,49-69
+extensions/lib/cd-startup.ts
+  s_023cc7359434c7::t_2b1ad494ac03a2 78-81
+  s_023cc7359434c7::t_a9719f887fd943 34-35
+  s_f946be960d3279::t_e468869d27452b 6,18-22,27-31,66-71
+  s_5379b3f8f4a47b::t_cd50ff7f0020e9 15,63-65,72-77,82-83
+tests/evanescent-adapter.test.ts
+  s_d22e0db5726b3e::t_d368176c55d0b5 7,143-144,146-183,187-192
+  s_f946be960d3279::t_d6060f014704cc 9-11,20-42
+  s_f946be960d3279::t_f3695e49207095 196-230
+  s_f946be960d3279::t_fe1e1a03d50fc6 107
+  s_d22e0db5726b3e::t_cf6f05967d3772 145,184-186
+  s_023cc7359434c7::t_265867ac26909b 1-2,4-6,16-19,43-77,142,231
+  s_f946be960d3279::t_2df00862ac55fb 3,8,12-13,15,79-81,89-106,108,110,112-117,120,125,127-130,139-141
+  s_f946be960d3279::t_1721cf23c68777 82-86,88,109,111,118-119,121-122,124,126,131-138,193-195
+package.json
+  s_d22e0db5726b3e::t_833b3da0f2d98a 45-47
+extensions/lib/cd-migration.ts
+  s_d972497733332f::t_2601ebcf641055 14
+  s_d972497733332f::t_8c3a03cc2b602d 1-7,9-13,15-66,68-90
+extensions/lib/evanescent.ts
+  s_d972497733332f::t_eb604cd5a37e87 13,191-193,210
+  s_f946be960d3279::t_d7e94d081dc90a 213-230
+  s_f946be960d3279::t_f8ca80c9b00246 49,52,64
+  s_f946be960d3279::t_8f00aa5f197521 194-209
+  s_5379b3f8f4a47b::t_48e9dfc27d99eb 109-122,155
+tests/evanescent.test.ts
+  s_f946be960d3279::t_19f33c5618b8f1 127
+  s_5379b3f8f4a47b::t_92ac3440526dac 125-126,128-148,150-152
+  s_f946be960d3279::t_06cc805592acfc 200-201,203,210-222,224-225
+  s_d972497733332f::t_5296a0d8294bac 11,56-59,61,64-65,67,69
+  s_f946be960d3279::t_3037570b316a39 40-49
+  s_f946be960d3279::t_a52dbb76d1258b 55,62-63,68
+tests/cd-startup.test.ts
+  s_5379b3f8f4a47b::t_81b1bc3564e898 3-7,9,48-51,56-58,68-69
+  s_023cc7359434c7::t_8bb3abd65d75aa 8,52,67
+  s_f946be960d3279::t_397c6e55a999c5 17-23,44-45,53-55,59-64
+extensions/cd.ts
+  s_f946be960d3279::t_a3815907a081a6 113-124
+  s_5379b3f8f4a47b::t_96fb6e831f1d59 5-9,82,84-110,126,128-129,131-139,141-151,153-157
+  s_d972497733332f::t_c6a7983ea9879e 1,213-216
+  s_5379b3f8f4a47b::t_6631d6aa8e8858 4,48-52,54-72,111-112,125,127,130
+extensions/evanescent.ts
+  s_5379b3f8f4a47b::t_af376611b56a82 3,211-226,228-235,237-246,248-249
+  s_d972497733332f::t_6c45958b266a6a 4-11,13,18-29,80-81,83-87,154-155,168-171,180-181,183,194-196,200-204,206,208-210,295-301,304,306-309,311-323
+  s_f946be960d3279::t_d5ef4e63ea6d03 12,82,116-135,147-152
+  s_f946be960d3279::t_fe2e82dea7be42 30-52,182,184-193
+  s_d972497733332f::t_e851be4348b908 53-56,58-77,79,197-199,207
+  s_5379b3f8f4a47b::t_b21bc67df690e7 247
+  s_5379b3f8f4a47b::t_478b92a12faafa 281-284,286-287,293
+  s_d972497733332f::t_66b8596d05e786 2,57
+  s_023cc7359434c7::t_ee440084512eb1 14-17
+  s_f946be960d3279::t_5146fd5f1715f9 176-179
+  s_f946be960d3279::t_50261de805b3ff 136-146
+  s_023cc7359434c7::t_5aac536bb8f248 1,78,88-115,153
+  s_d22e0db5726b3e::t_4c2397bbb57e69 265-280,294
+  s_5379b3f8f4a47b::t_f43d7175cf6e79 156-167,172-175,205
+  s_5379b3f8f4a47b::t_0681b15e63b9fe 250-264
+  s_f946be960d3279::t_c13a59750ed6f3 302-303
+  s_d22e0db5726b3e::t_7ae8b86e448bc3 285,288-292
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "e985b4b0a1521df58145d2f31a855decfdea2acf",
+  "prompts": {},
+  "sessions": {
+    "s_023cc7359434c7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4869-9a62-72ea-9b10-ab157e281993",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_5379b3f8f4a47b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4855-6645-70a2-bcb3-bef56d580588",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_d22e0db5726b3e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e48f1-06e0-772d-bb9e-1b8cd14c127d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_d972497733332f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4833-4f65-7db7-a2cb-9ed8ccb62752",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_f946be960d3279": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e486f-48ab-7530-b066-dae7a2526b18",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
