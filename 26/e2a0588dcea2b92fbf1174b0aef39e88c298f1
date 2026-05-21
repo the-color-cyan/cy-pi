@@ -1,0 +1,23 @@
+commit-message-prompt.md
+  s_c61c735eaf8f3c::t_8ecc616c97f5ba 6-8
+extensions/commit-message.ts
+  s_c61c735eaf8f3c::t_4b9cbc918d43fe 288,540
+  s_c61c735eaf8f3c::t_ebe2acddc28913 23-25
+  s_c61c735eaf8f3c::t_a6eb78a7739049 612
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "26e2a0588dcea2b92fbf1174b0aef39e88c298f1",
+  "prompts": {},
+  "sessions": {
+    "s_c61c735eaf8f3c": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e3ce3-7315-7640-a5bc-0ba9bc72201d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}

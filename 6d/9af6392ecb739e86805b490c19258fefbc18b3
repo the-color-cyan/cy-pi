@@ -1,0 +1,19 @@
+context.md
+  s_37289fa2327165::t_245518a2a7c8d9 1-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "6d9af6392ecb739e86805b490c19258fefbc18b3",
+  "prompts": {},
+  "sessions": {
+    "s_37289fa2327165": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e417e-22af-705b-a68c-f6a8b14317e2",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
