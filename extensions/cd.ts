@@ -1,22 +1,12 @@
-import { randomUUID } from "node:crypto";
-import {
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	statSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import type {
-	ExtensionAPI,
-	ExtensionCommandContext,
-	SessionEntry,
-	SessionHeader,
-} from "@mariozechner/pi-coding-agent";
-
-const CURRENT_SESSION_VERSION = 3;
+import type { ExtensionAPI, SessionEntry } from "@mariozechner/pi-coding-agent";
+import {
+	createMigratedSessionFile,
+	removeFreshStartupSessionArtifact,
+} from "./lib/cd-migration.ts";
+import { consumeStartupCwdRequests } from "./lib/cd-startup.ts";
 let activeCwd = process.cwd();
 
 function usage(currentCwd: string): string {
@@ -55,41 +45,31 @@ function assertDirectory(path: string): void {
 	}
 }
 
-function defaultSessionDir(cwd: string): string {
-	const agentDir =
-		process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
-	const safePath = `--${cwd.replace(/^[/\\]/, "").replace(/[/\\:]/g, "-")}--`;
-	return join(agentDir, "sessions", safePath);
-}
-
-function createMigratedSessionFile(
-	ctx: ExtensionCommandContext,
-	targetCwd: string,
-): string {
-	const timestamp = new Date().toISOString();
-	const id = randomUUID();
-	const sessionDir = defaultSessionDir(targetCwd);
-	mkdirSync(sessionDir, { recursive: true });
-
-	const sessionFile = join(
-		sessionDir,
-		`${timestamp.replace(/[:.]/g, "-")}_${id}.jsonl`,
-	);
-	const currentSessionFile = ctx.sessionManager.getSessionFile();
-	const header: SessionHeader = {
-		type: "session",
-		version: CURRENT_SESSION_VERSION,
-		id,
-		timestamp,
-		cwd: targetCwd,
-		parentSession: currentSessionFile,
+type MigratingContext = {
+	cwd: string;
+	sessionManager: {
+		getSessionFile(): string | undefined;
+		getEntries(): SessionEntry[];
 	};
-
-	const entries: SessionEntry[] = ctx.sessionManager.getEntries();
-	const lines = [header, ...entries].map((entry) => JSON.stringify(entry));
-	writeFileSync(sessionFile, `${lines.join("\n")}\n`, "utf8");
-	return sessionFile;
-}
+	ui: { notify(message: string, level: "info" | "warning" | "error"): void };
+	hasUI: boolean;
+	waitForIdle(): Promise<void>;
+	switchSession(
+		sessionFile: string,
+		options: {
+			withSession(newCtx: {
+				cwd: string;
+				ui: MigratingContext["ui"];
+				sendMessage(message: {
+					customType: string;
+					content: string;
+					display: boolean;
+					details?: Record<string, unknown>;
+				}): Promise<void>;
+			}): Promise<void>;
+		},
+	): Promise<{ cancelled: boolean }>;
+};
 
 function displayPath(path: string): string {
 	const home = homedir();
@@ -99,8 +79,82 @@ function displayPath(path: string): string {
 }
 
 export default function (pi: ExtensionAPI) {
-	pi.on("session_start", async (_event, ctx) => {
+	pi.on("session_start", async (event, ctx) => {
 		activeCwd = ctx.cwd;
+		if (event.reason !== "startup") return;
+
+		const resolution = consumeStartupCwdRequests();
+		if (resolution.kind === "none") return;
+
+		let targetCwd: string | undefined;
+		if (resolution.kind === "migrate") {
+			targetCwd = resolution.targetCwd;
+		} else if (ctx.hasUI) {
+			targetCwd = await ctx.ui.select(
+				"Resolve Startup cwd conflict",
+				resolution.targets,
+				{ timeout: 120_000 },
+			);
+			if (!targetCwd) {
+				ctx.ui.notify("Startup cwd migration cancelled.", "warning");
+				return;
+			}
+		} else {
+			ctx.ui.notify(
+				`Startup cwd conflict between: ${resolution.targets.join(", ")}. Migration skipped.`,
+				"error",
+			);
+			return;
+		}
+
+		if (targetCwd === ctx.cwd) return;
+		const migratingCtx = ctx as unknown as MigratingContext;
+		await migratingCtx.waitForIdle();
+		if (
+			resolution.requests.some((request) => request.requiresFreshSession) &&
+			migratingCtx.sessionManager.getEntries().length > 0
+		) {
+			ctx.ui.notify(
+				"Startup cwd migration requires a fresh empty startup session.",
+				"error",
+			);
+			throw new Error(
+				"Startup cwd migration requires a fresh empty startup session.",
+			);
+		}
+		const startupSessionFile = migratingCtx.sessionManager.getSessionFile();
+		const targetSessionFile = createMigratedSessionFile({
+			sessionManager: migratingCtx.sessionManager,
+			targetCwd,
+		});
+		const result = await migratingCtx.switchSession(targetSessionFile, {
+			withSession: async (newCtx) => {
+				await newCtx.sendMessage({
+					customType: "cd.startup_cwd_changed",
+					content: `Startup migration changed cwd from ${ctx.cwd} to ${newCtx.cwd}.`,
+					display: false,
+					details: { previousCwd: ctx.cwd, cwd: newCtx.cwd },
+				});
+				newCtx.ui.notify(
+					`Startup migrated cwd to ${displayPath(newCtx.cwd)}.`,
+					"info",
+				);
+			},
+		});
+		if (result.cancelled) {
+			try {
+				unlinkSync(targetSessionFile);
+			} catch {
+				// Ignore cleanup failures after cancellation.
+			}
+			ctx.ui.notify(
+				"Startup cwd migration cancelled by another extension.",
+				"warning",
+			);
+			return;
+		}
+		if (startupSessionFile)
+			await removeFreshStartupSessionArtifact(startupSessionFile);
 	});
 
 	pi.registerCommand("cd", {
@@ -156,7 +210,10 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			const previousCwd = ctx.cwd;
-			const targetSessionFile = createMigratedSessionFile(ctx, targetCwd);
+			const targetSessionFile = createMigratedSessionFile({
+				sessionManager: ctx.sessionManager,
+				targetCwd,
+			});
 			let result: { cancelled: boolean };
 			try {
 				result = await ctx.switchSession(targetSessionFile, {

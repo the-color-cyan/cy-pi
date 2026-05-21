@@ -8,6 +8,7 @@ import {
 	ACTIVE_MARKER_FILE,
 	cleanupEvanescentRuns,
 	createEvanescentRun,
+	findEvanescentRunFromWorkspace,
 	materializeRun,
 	planEvanescentCleanup,
 	readMetadata,
@@ -36,9 +37,36 @@ test("creates an evanescent run with empty workspace and metadata outside worksp
 	assert.equal(metadata.materialized, false);
 });
 
+test("generated evanescent run ids use the creation time", async () => {
+	const root = await tempRoot();
+	const run = await createEvanescentRun({
+		tempRoot: root,
+		pid: 123,
+		now: new Date("2026-01-01T00:00:00Z"),
+	});
+	assert.equal(run.metadata.id.startsWith("2026-01-01T00-00-00-000Z-"), true);
+});
+
 test("resolves default and configured cradle paths", () => {
 	assert.equal(resolveCradlePath(undefined, "/home/test"), "/home/test/cradle");
 	assert.equal(resolveCradlePath("~/kept", "/home/test"), "/home/test/kept");
+});
+
+test("finds an evanescent run from its workspace or a workspace subdirectory", async () => {
+	const root = await tempRoot();
+	const run = await createEvanescentRun({
+		tempRoot: root,
+		id: "run-a",
+		pid: 1,
+	});
+	const nested = join(run.workspace, "src", "feature");
+	await mkdir(nested, { recursive: true });
+	assert.equal(
+		(await findEvanescentRunFromWorkspace(run.workspace))?.root,
+		run.root,
+	);
+	assert.equal((await findEvanescentRunFromWorkspace(nested))?.root, run.root);
+	assert.equal(await findEvanescentRunFromWorkspace(root), null);
 });
 
 test("cleanup selects max-age and max-count candidates while skipping protected runs", async () => {
@@ -94,6 +122,34 @@ test("cleanup selects max-age and max-count candidates while skipping protected 
 	]);
 });
 
+test("cleanup treats stale active markers as eligible when marker pid is not alive", async () => {
+	const root = await tempRoot();
+	await createEvanescentRun({
+		tempRoot: root,
+		id: "stale-marker",
+		pid: 111,
+		now: new Date("2026-01-01T00:00:00Z"),
+	});
+	const activeMarker = await createEvanescentRun({
+		tempRoot: root,
+		id: "active-marker",
+		pid: 222,
+		now: new Date("2026-01-01T00:00:00Z"),
+	});
+	await writeFile(join(activeMarker.root, ACTIVE_MARKER_FILE), "999", "utf8");
+
+	const candidates = await planEvanescentCleanup(root, {
+		now: new Date("2026-01-10T00:00:00Z"),
+		maxAgeMs: 24 * 60 * 60 * 1000,
+		isPidAlive: (pid) => pid === 999,
+	});
+
+	assert.deepEqual(
+		candidates.map((run) => run.metadata.id),
+		["stale-marker"],
+	);
+});
+
 test("cleanup removes planned candidates only", async () => {
 	const root = await tempRoot();
 	const old = await createEvanescentRun({
@@ -141,9 +197,30 @@ test("materialize moves whole run, rejects existing destinations, updates metada
 	assert.equal(result.destinationRoot, join(cradle, "kept"));
 	assert.equal(result.workspacePath, join(cradle, "kept", "workspace"));
 	assert.equal(existsSync(join(result.workspacePath, "note.txt")), true);
+	assert.equal(
+		existsSync(join(result.destinationRoot, ACTIVE_MARKER_FILE)),
+		false,
+	);
 	assert.equal(existsSync(run.root), false);
 	const metadata = await readMetadata(result.destinationRoot);
 	assert.equal(metadata.materialized, true);
 	assert.equal(metadata.materializedPath, result.destinationRoot);
 	assert.equal(metadata.workspacePath, result.workspacePath);
+});
+
+test("materialize without a name uses the evanescent run id as destination", async () => {
+	const root = await tempRoot();
+	const run = await createEvanescentRun({
+		tempRoot: root,
+		id: "run-id-destination",
+		pid: 1,
+	});
+
+	const result = await materializeRun(run.root, join(root, "cradle"));
+
+	assert.equal(
+		result.destinationRoot,
+		join(root, "cradle", "run-id-destination"),
+	);
+	assert.equal(result.workspacePath, join(result.destinationRoot, "workspace"));
 });

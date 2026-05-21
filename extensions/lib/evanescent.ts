@@ -10,7 +10,7 @@ import {
 	writeFile,
 } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 export const EVANESCENT_SCHEMA_VERSION = 1;
 export const METADATA_FILE = "evanescent-run.json";
@@ -46,9 +46,10 @@ export function resolveCradlePath(input?: string, home = homedir()): string {
 export async function createEvanescentRun(
 	options: { tempRoot?: string; now?: Date; pid?: number; id?: string } = {},
 ): Promise<EvanescentRun> {
+	const createdAt = options.now ?? new Date();
 	const id =
 		options.id ??
-		`${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID()}`;
+		`${createdAt.toISOString().replace(/[:.]/g, "-")}-${randomUUID()}`;
 	const root = join(options.tempRoot ?? defaultTempRoot(), id);
 	const workspace = join(root, "workspace");
 	await mkdir(workspace, { recursive: true });
@@ -60,7 +61,7 @@ export async function createEvanescentRun(
 	const metadata: EvanescentMetadata = {
 		schemaVersion: EVANESCENT_SCHEMA_VERSION,
 		id,
-		createdAt: (options.now ?? new Date()).toISOString(),
+		createdAt: createdAt.toISOString(),
 		workspacePath: workspace,
 		materialized: false,
 		materializedPath: null,
@@ -105,6 +106,20 @@ export type CleanupPolicy = {
 	isPidAlive?: (pid: number) => boolean;
 };
 
+async function hasLiveActiveMarker(
+	runRoot: string,
+	alive: (pid: number) => boolean,
+): Promise<boolean> {
+	const markerPath = join(runRoot, ACTIVE_MARKER_FILE);
+	if (!existsSync(markerPath)) return false;
+	try {
+		const markerPid = Number((await readFile(markerPath, "utf8")).trim());
+		return alive(markerPid);
+	} catch {
+		return false;
+	}
+}
+
 async function listRuns(tempRoot: string): Promise<EvanescentRun[]> {
 	if (!existsSync(tempRoot)) return [];
 	const names = await readdir(tempRoot);
@@ -137,7 +152,7 @@ export async function planEvanescentCleanup(
 		if (current && resolve(run.root) === current) continue;
 		if (run.metadata.materialized) continue;
 		if (alive(run.metadata.pid)) continue;
-		if (existsSync(join(run.root, ACTIVE_MARKER_FILE))) continue;
+		if (await hasLiveActiveMarker(run.root, alive)) continue;
 		eligible.push(run);
 	}
 
@@ -171,6 +186,46 @@ export async function cleanupEvanescentRuns(
 	for (const run of candidates)
 		await rm(run.root, { recursive: true, force: true });
 	return candidates.map((run) => run.root);
+}
+
+export async function findEvanescentRunFromWorkspace(
+	cwd: string,
+): Promise<EvanescentRun | null> {
+	let current = resolve(cwd);
+	while (true) {
+		if (current.split(/[\\/]/).at(-1) === "workspace") {
+			const root = dirname(current);
+			try {
+				const metadata = await readMetadata(root);
+				if (resolve(metadata.workspacePath) === current) {
+					return { root, workspace: current, metadata };
+				}
+			} catch {
+				return null;
+			}
+		}
+		const parent = dirname(current);
+		if (parent === current) return null;
+		current = parent;
+	}
+}
+
+export async function rollbackMaterializedRun(
+	destinationRoot: string,
+	originalRun: EvanescentRun,
+): Promise<void> {
+	await rename(destinationRoot, originalRun.root);
+	await writeFile(
+		join(originalRun.root, ACTIVE_MARKER_FILE),
+		String(originalRun.metadata.pid),
+		"utf8",
+	);
+	await writeMetadata(originalRun.root, {
+		...originalRun.metadata,
+		workspacePath: originalRun.workspace,
+		materialized: false,
+		materializedPath: null,
+	});
 }
 
 export async function materializeRun(

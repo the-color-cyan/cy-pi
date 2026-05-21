@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { StartupCwdCoordinator } from "../extensions/lib/cd-startup.ts";
+import {
+	StartupCwdCoordinator,
+	consumeStartupCwdRequests,
+	requestStartupCwd,
+	resetStartupCwdRequestsForTests,
+	startupCwdRequestsWereConsumed,
+} from "../extensions/lib/cd-startup.ts";
 
 test("single startup cwd request is consumed as migration", () => {
 	const coordinator = new StartupCwdCoordinator();
@@ -8,7 +14,13 @@ test("single startup cwd request is consumed as migration", () => {
 	assert.deepEqual(coordinator.consume(), {
 		kind: "migrate",
 		targetCwd: "/tmp/work",
-		requests: [{ requester: "evanescent", targetCwd: "/tmp/work" }],
+		requests: [
+			{
+				requester: "evanescent",
+				targetCwd: "/tmp/work",
+				requiresFreshSession: undefined,
+			},
+		],
 	});
 });
 
@@ -29,10 +41,32 @@ test("conflicting headless startup cwd requests fail closed as conflict", () => 
 		kind: "conflict",
 		targets: ["/tmp/a", "/tmp/b"],
 		requests: [
-			{ requester: "a", targetCwd: "/tmp/a" },
-			{ requester: "b", targetCwd: "/tmp/b" },
+			{ requester: "a", targetCwd: "/tmp/a", requiresFreshSession: undefined },
+			{ requester: "b", targetCwd: "/tmp/b", requiresFreshSession: undefined },
 		],
 	});
+});
+
+test("module-level startup cwd API shares requests across extensions", () => {
+	resetStartupCwdRequestsForTests();
+	assert.equal(startupCwdRequestsWereConsumed(), false);
+	requestStartupCwd("evanescent", "/tmp/work", {
+		requiresFreshSession: true,
+	});
+	assert.deepEqual(consumeStartupCwdRequests(), {
+		kind: "migrate",
+		targetCwd: "/tmp/work",
+		requests: [
+			{
+				requester: "evanescent",
+				targetCwd: "/tmp/work",
+				requiresFreshSession: true,
+			},
+		],
+	});
+	assert.equal(startupCwdRequestsWereConsumed(), true);
+	assert.throws(() => requestStartupCwd("late", "/tmp/other"), /closed/);
+	resetStartupCwdRequestsForTests();
 });
 
 test("startup cwd requests are rejected after consumption", () => {
