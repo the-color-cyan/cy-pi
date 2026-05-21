@@ -127,20 +127,30 @@ export default function (pi: ExtensionAPI) {
 			sessionManager: migratingCtx.sessionManager,
 			targetCwd,
 		});
-		const result = await migratingCtx.switchSession(targetSessionFile, {
-			withSession: async (newCtx) => {
-				await newCtx.sendMessage({
-					customType: "cd.startup_cwd_changed",
-					content: `Startup migration changed cwd from ${ctx.cwd} to ${newCtx.cwd}.`,
-					display: false,
-					details: { previousCwd: ctx.cwd, cwd: newCtx.cwd },
-				});
-				newCtx.ui.notify(
-					`Startup migrated cwd to ${displayPath(newCtx.cwd)}.`,
-					"info",
-				);
-			},
-		});
+		let result: { cancelled: boolean };
+		try {
+			result = await migratingCtx.switchSession(targetSessionFile, {
+				withSession: async (newCtx) => {
+					await newCtx.sendMessage({
+						customType: "cd.startup_cwd_changed",
+						content: `Startup migration changed cwd from ${ctx.cwd} to ${newCtx.cwd}.`,
+						display: false,
+						details: { previousCwd: ctx.cwd, cwd: newCtx.cwd },
+					});
+					newCtx.ui.notify(
+						`Startup migrated cwd to ${displayPath(newCtx.cwd)}.`,
+						"info",
+					);
+				},
+			});
+		} catch (error) {
+			try {
+				unlinkSync(targetSessionFile);
+			} catch {
+				// Ignore cleanup failures; the switch error is more useful.
+			}
+			throw error;
+		}
 		if (result.cancelled) {
 			try {
 				unlinkSync(targetSessionFile);

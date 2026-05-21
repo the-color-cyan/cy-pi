@@ -12,7 +12,12 @@ import evanescentExtension, {
 import {
 	createEvanescentRun,
 	readMetadata,
+	writeMetadata,
 } from "../extensions/lib/evanescent.ts";
+import {
+	consumeStartupCwdRequests,
+	resetStartupCwdRequestsForTests,
+} from "../extensions/lib/cd-startup.ts";
 
 async function tempRoot() {
 	return mkdtemp(join(tmpdir(), "evanescent-adapter-test-"));
@@ -39,6 +44,54 @@ test("evanescent direct startup migration waits for pending cd startup request",
 		}),
 		true,
 	);
+});
+
+test("evanescent flag prepares a fresh run and startup cwd request during extension loading", async () => {
+	resetStartupCwdRequestsForTests();
+	const root = await tempRoot();
+	const previousTempRoot = process.env.PI_EVANESCENT_TEMP_ROOT;
+	process.env.PI_EVANESCENT_TEMP_ROOT = join(root, "temp-runs");
+	const registeredFlags: Array<{ name: string; description?: string }> = [];
+	try {
+		await evanescentExtension({
+			registerFlag: (name: string, definition: { description?: string }) => {
+				registeredFlags.push({ name, description: definition.description });
+			},
+			getFlag: (name: string) => name === "evanescent",
+			on: () => {},
+			registerCommand: () => {},
+			registerTool: () => {},
+		} as any);
+
+		assert.deepEqual(
+			registeredFlags.map((flag) => flag.name),
+			["evanescent"],
+		);
+		const resolution = consumeStartupCwdRequests();
+		assert.equal(resolution.kind, "migrate");
+		assert.equal(
+			resolution.kind === "migrate" &&
+				resolution.requests[0].requiresFreshSession,
+			true,
+		);
+		assert.match(
+			resolution.kind === "migrate" ? resolution.targetCwd : "",
+			/\/workspace$/,
+		);
+		const metadata = await readMetadata(
+			join(resolution.kind === "migrate" ? resolution.targetCwd : "", ".."),
+		);
+		assert.equal(metadata.materialized, false);
+		assert.equal(
+			metadata.workspacePath,
+			resolution.kind === "migrate" ? resolution.targetCwd : "",
+		);
+	} finally {
+		if (previousTempRoot === undefined)
+			delete process.env.PI_EVANESCENT_TEMP_ROOT;
+		else process.env.PI_EVANESCENT_TEMP_ROOT = previousTempRoot;
+		resetStartupCwdRequestsForTests();
+	}
 });
 
 test("evanescent workspace migration removes created session file when switch is cancelled", async () => {
@@ -130,6 +183,41 @@ async function assertMaterializationRolledBack(
 	assert.equal(metadata.workspacePath, run.workspace);
 }
 
+test("materialize outside an evanescent workspace reports guidance without migrating", async () => {
+	const notifications: Array<{ message: string; level?: string }> = [];
+	let switchCalled = false;
+
+	await materializeCurrentRun(
+		{
+			cwd: "/tmp/not-evanescent",
+			sessionManager: {
+				getSessionFile: () => undefined,
+				getEntries: () => [],
+			},
+			ui: {
+				notify: (message: string, level?: string) =>
+					notifications.push({ message, level }),
+			},
+			waitForIdle: async () => {},
+			switchSession: async () => {
+				switchCalled = true;
+				return { cancelled: false };
+			},
+		},
+		"/tmp/cradle",
+		"kept",
+	);
+
+	assert.equal(switchCalled, false);
+	assert.deepEqual(notifications, [
+		{
+			message:
+				"/materialize only works inside an Evanescent workspace. Launch with --evanescent first.",
+			level: "error",
+		},
+	]);
+});
+
 test("materialize command rolls back the move when session migration is cancelled", async () => {
 	const { root, run, notifications } = await withMaterializedRollbackScenario(
 		async () => ({ cancelled: true }),
@@ -140,6 +228,58 @@ test("materialize command rolls back the move when session migration is cancelle
 		"Evanescent workspace migration cancelled.",
 		"Materialization cancelled; restored Evanescent run in temporary storage.",
 	]);
+});
+
+test("before agent start adds temporary workspace context only for unmaterialized evanescent runs", async () => {
+	const root = await tempRoot();
+	const run = await createEvanescentRun({
+		tempRoot: join(root, "temp"),
+		id: "run-a",
+		pid: 1,
+	});
+	let beforeAgentStart:
+		| ((event: { systemPrompt: string }, ctx: { cwd: string }) => Promise<any>)
+		| undefined;
+
+	await evanescentExtension({
+		registerFlag: () => {},
+		getFlag: () => false,
+		on: (event: string, callback: typeof beforeAgentStart) => {
+			if (event === "before_agent_start") beforeAgentStart = callback;
+		},
+		registerCommand: () => {},
+		registerTool: () => {},
+	} as any);
+	assert.ok(beforeAgentStart);
+
+	const activeResult = await beforeAgentStart(
+		{ systemPrompt: "base prompt" },
+		{ cwd: run.workspace },
+	);
+	assert.match(activeResult.systemPrompt, /base prompt/);
+	assert.match(activeResult.systemPrompt, /Evanescent mode/);
+	assert.match(activeResult.systemPrompt, /\/materialize \[name\]/);
+
+	assert.equal(
+		await beforeAgentStart(
+			{ systemPrompt: "base prompt" },
+			{ cwd: "/tmp/not-evanescent" },
+		),
+		undefined,
+	);
+
+	await writeMetadata(run.root, {
+		...run.metadata,
+		materialized: true,
+		materializedPath: join(root, "cradle", "run-a"),
+	});
+	assert.equal(
+		await beforeAgentStart(
+			{ systemPrompt: "base prompt" },
+			{ cwd: run.workspace },
+		),
+		undefined,
+	);
 });
 
 test("model materialize tool confirms before returning command guidance", async () => {
