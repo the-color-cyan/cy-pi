@@ -14,6 +14,7 @@ export type StartupCwdResolution =
 export class StartupCwdCoordinator {
 	private phase: "collecting" | "consumed" = "collecting";
 	private readonly requests: StartupCwdRequest[] = [];
+	private failureMessage: string | undefined;
 
 	request(
 		requester: string,
@@ -33,6 +34,14 @@ export class StartupCwdCoordinator {
 
 	wasConsumed(): boolean {
 		return this.phase === "consumed";
+	}
+
+	fail(message: string): void {
+		this.failureMessage = message;
+	}
+
+	failure(): string | undefined {
+		return this.failureMessage;
 	}
 
 	consume(): StartupCwdResolution {
@@ -61,24 +70,43 @@ export class StartupCwdCoordinator {
 	}
 }
 
-let startupCwdCoordinator = new StartupCwdCoordinator();
+const STARTUP_CWD_COORDINATOR_KEY = Symbol.for("cy-pi.cd-startup-coordinator");
+
+type StartupCwdGlobal = typeof globalThis & {
+	[STARTUP_CWD_COORDINATOR_KEY]?: StartupCwdCoordinator;
+};
+
+function getStartupCwdCoordinator(): StartupCwdCoordinator {
+	const shared = globalThis as StartupCwdGlobal;
+	shared[STARTUP_CWD_COORDINATOR_KEY] ??= new StartupCwdCoordinator();
+	return shared[STARTUP_CWD_COORDINATOR_KEY];
+}
 
 export function requestStartupCwd(
 	requester: string,
 	targetCwd: string,
 	options: { requiresFreshSession?: boolean } = {},
 ): void {
-	startupCwdCoordinator.request(requester, targetCwd, options);
+	getStartupCwdCoordinator().request(requester, targetCwd, options);
 }
 
 export function consumeStartupCwdRequests(): StartupCwdResolution {
-	return startupCwdCoordinator.consume();
+	return getStartupCwdCoordinator().consume();
 }
 
 export function startupCwdRequestsWereConsumed(): boolean {
-	return startupCwdCoordinator.wasConsumed();
+	return getStartupCwdCoordinator().wasConsumed();
+}
+
+export function markStartupCwdMigrationFailed(message: string): void {
+	getStartupCwdCoordinator().fail(message);
+}
+
+export function getStartupCwdMigrationFailure(): string | undefined {
+	return getStartupCwdCoordinator().failure();
 }
 
 export function resetStartupCwdRequestsForTests(): void {
-	startupCwdCoordinator = new StartupCwdCoordinator();
+	(globalThis as StartupCwdGlobal)[STARTUP_CWD_COORDINATOR_KEY] =
+		new StartupCwdCoordinator();
 }

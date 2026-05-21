@@ -88,6 +88,73 @@ test("conflicting startup cwd requests prompt with UI and migrate to selected ta
 	assert.ok(migratedSessionFile);
 });
 
+test("startup cwd migration fails closed when event context lacks session controls", async () => {
+	resetStartupCwdRequestsForTests();
+	const sentMessages: string[] = [];
+	const notifications: Array<{ message: string; level: string | undefined }> =
+		[];
+	let shutdownCalled = false;
+	let handler: ((event: any, ctx: any) => Promise<void>) | undefined;
+	let inputHandler: ((event: any, ctx: any) => Promise<any>) | undefined;
+	try {
+		requestStartupCwd("test", "/tmp/target", { requiresFreshSession: true });
+		cdExtension({
+			on: (event: string, callback: any) => {
+				if (event === "session_start") handler = callback;
+				if (event === "input") inputHandler = callback;
+			},
+			registerCommand: () => {},
+			sendUserMessage: (message: string) => sentMessages.push(message),
+		} as any);
+		assert.ok(handler);
+		assert.ok(inputHandler);
+
+		await assert.rejects(
+			handler(
+				{ reason: "startup" },
+				{
+					cwd: "/tmp/source",
+					hasUI: false,
+					ui: {
+						notify: (message: string, level?: string) =>
+							notifications.push({ message, level }),
+					},
+					shutdown: () => {
+						shutdownCalled = true;
+					},
+					sessionManager: {
+						getSessionFile: () => undefined,
+						getEntries: () => [],
+					},
+				},
+			),
+			/Startup cwd migration cannot run from this pi startup context/,
+		);
+
+		assert.deepEqual(sentMessages, []);
+		assert.equal(shutdownCalled, true);
+		assert.deepEqual(notifications, [
+			{
+				message:
+					"Startup cwd migration cannot run from this pi startup context. Shutting down to avoid continuing in the wrong workspace. For Evanescent launches in this pi version, use scripts/pi-home.sh --evanescent so the workspace is selected before pi starts.",
+				level: "error",
+			},
+		]);
+		const inputResult = await inputHandler(
+			{ text: "cwd", source: "interactive" },
+			{
+				ui: {
+					notify: (message: string, level?: string) =>
+						notifications.push({ message, level: level ?? "info" }),
+				},
+			},
+		);
+		assert.deepEqual(inputResult, { action: "handled" });
+	} finally {
+		resetStartupCwdRequestsForTests();
+	}
+});
+
 test("startup cwd migration removes created session file when switch throws", async () => {
 	resetStartupCwdRequestsForTests();
 	const root = await tempRoot();

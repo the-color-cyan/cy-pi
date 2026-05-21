@@ -6,7 +6,12 @@ import {
 	createMigratedSessionFile,
 	removeFreshStartupSessionArtifact,
 } from "./lib/cd-migration.ts";
-import { consumeStartupCwdRequests } from "./lib/cd-startup.ts";
+import {
+	consumeStartupCwdRequests,
+	getStartupCwdMigrationFailure,
+	markStartupCwdMigrationFailed,
+	type StartupCwdRequest,
+} from "./lib/cd-startup.ts";
 let activeCwd = process.cwd();
 
 function usage(currentCwd: string): string {
@@ -71,11 +76,86 @@ type MigratingContext = {
 	): Promise<{ cancelled: boolean }>;
 };
 
+type PendingStartupMigration = {
+	targetCwd: string;
+	requests: StartupCwdRequest[];
+};
+
+function isMigratingContext(ctx: unknown): ctx is MigratingContext {
+	const candidate = ctx as Partial<MigratingContext>;
+	return (
+		typeof candidate.waitForIdle === "function" &&
+		typeof candidate.switchSession === "function"
+	);
+}
+
 function displayPath(path: string): string {
 	const home = homedir();
 	if (path === home) return "~";
 	if (path.startsWith(`${home}/`)) return `~/${path.slice(home.length + 1)}`;
 	return path;
+}
+
+async function runStartupMigration(
+	ctx: MigratingContext,
+	migration: PendingStartupMigration,
+): Promise<void> {
+	await ctx.waitForIdle();
+	if (
+		migration.requests.some((request) => request.requiresFreshSession) &&
+		ctx.sessionManager.getEntries().length > 0
+	) {
+		ctx.ui.notify(
+			"Startup cwd migration requires a fresh empty startup session.",
+			"error",
+		);
+		throw new Error(
+			"Startup cwd migration requires a fresh empty startup session.",
+		);
+	}
+	const startupSessionFile = ctx.sessionManager.getSessionFile();
+	const targetSessionFile = createMigratedSessionFile({
+		sessionManager: ctx.sessionManager,
+		targetCwd: migration.targetCwd,
+	});
+	let result: { cancelled: boolean };
+	try {
+		result = await ctx.switchSession(targetSessionFile, {
+			withSession: async (newCtx) => {
+				await newCtx.sendMessage({
+					customType: "cd.startup_cwd_changed",
+					content: `Startup migration changed cwd from ${ctx.cwd} to ${newCtx.cwd}.`,
+					display: false,
+					details: { previousCwd: ctx.cwd, cwd: newCtx.cwd },
+				});
+				newCtx.ui.notify(
+					`Startup migrated cwd to ${displayPath(newCtx.cwd)}.`,
+					"info",
+				);
+			},
+		});
+	} catch (error) {
+		try {
+			unlinkSync(targetSessionFile);
+		} catch {
+			// Ignore cleanup failures; the switch error is more useful.
+		}
+		throw error;
+	}
+	if (result.cancelled) {
+		try {
+			unlinkSync(targetSessionFile);
+		} catch {
+			// Ignore cleanup failures after cancellation.
+		}
+		ctx.ui.notify(
+			"Startup cwd migration cancelled by another extension.",
+			"warning",
+		);
+		return;
+	}
+	if (startupSessionFile)
+		await removeFreshStartupSessionArtifact(startupSessionFile);
 }
 
 export default function (pi: ExtensionAPI) {
@@ -108,63 +188,24 @@ export default function (pi: ExtensionAPI) {
 		}
 
 		if (targetCwd === ctx.cwd) return;
-		const migratingCtx = ctx as unknown as MigratingContext;
-		await migratingCtx.waitForIdle();
-		if (
-			resolution.requests.some((request) => request.requiresFreshSession) &&
-			migratingCtx.sessionManager.getEntries().length > 0
-		) {
-			ctx.ui.notify(
-				"Startup cwd migration requires a fresh empty startup session.",
-				"error",
-			);
-			throw new Error(
-				"Startup cwd migration requires a fresh empty startup session.",
-			);
+		const migration = { targetCwd, requests: resolution.requests };
+		if (!isMigratingContext(ctx)) {
+			const message =
+				"Startup cwd migration cannot run from this pi startup context. Shutting down to avoid continuing in the wrong workspace. For Evanescent launches in this pi version, use scripts/pi-home.sh --evanescent so the workspace is selected before pi starts.";
+			markStartupCwdMigrationFailed(message);
+			ctx.ui.notify(message, "error");
+			ctx.shutdown();
+			throw new Error(message);
 		}
-		const startupSessionFile = migratingCtx.sessionManager.getSessionFile();
-		const targetSessionFile = createMigratedSessionFile({
-			sessionManager: migratingCtx.sessionManager,
-			targetCwd,
-		});
-		let result: { cancelled: boolean };
-		try {
-			result = await migratingCtx.switchSession(targetSessionFile, {
-				withSession: async (newCtx) => {
-					await newCtx.sendMessage({
-						customType: "cd.startup_cwd_changed",
-						content: `Startup migration changed cwd from ${ctx.cwd} to ${newCtx.cwd}.`,
-						display: false,
-						details: { previousCwd: ctx.cwd, cwd: newCtx.cwd },
-					});
-					newCtx.ui.notify(
-						`Startup migrated cwd to ${displayPath(newCtx.cwd)}.`,
-						"info",
-					);
-				},
-			});
-		} catch (error) {
-			try {
-				unlinkSync(targetSessionFile);
-			} catch {
-				// Ignore cleanup failures; the switch error is more useful.
-			}
-			throw error;
-		}
-		if (result.cancelled) {
-			try {
-				unlinkSync(targetSessionFile);
-			} catch {
-				// Ignore cleanup failures after cancellation.
-			}
-			ctx.ui.notify(
-				"Startup cwd migration cancelled by another extension.",
-				"warning",
-			);
-			return;
-		}
-		if (startupSessionFile)
-			await removeFreshStartupSessionArtifact(startupSessionFile);
+
+		await runStartupMigration(ctx, migration);
+	});
+
+	pi.on("input", async (_event, ctx) => {
+		const failure = getStartupCwdMigrationFailure();
+		if (!failure) return;
+		ctx.ui.notify(failure, "error");
+		return { action: "handled" as const };
 	});
 
 	pi.registerCommand("cd", {

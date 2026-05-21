@@ -69,6 +69,27 @@ test("module-level startup cwd API shares requests across extensions", () => {
 	resetStartupCwdRequestsForTests();
 });
 
+test("module-level startup cwd API shares requests across module instances", async () => {
+	const firstModulePath = "../extensions/lib/cd-startup.ts?instance=one";
+	const secondModulePath = "../extensions/lib/cd-startup.ts?instance=two";
+	const first = await import(firstModulePath);
+	const second = await import(secondModulePath);
+	first.resetStartupCwdRequestsForTests();
+	first.requestStartupCwd("evanescent", "/tmp/work");
+	assert.deepEqual(second.consumeStartupCwdRequests(), {
+		kind: "migrate",
+		targetCwd: "/tmp/work",
+		requests: [
+			{
+				requester: "evanescent",
+				targetCwd: "/tmp/work",
+				requiresFreshSession: undefined,
+			},
+		],
+	});
+	resetStartupCwdRequestsForTests();
+});
+
 test("startup cwd requests are rejected after consumption", () => {
 	const coordinator = new StartupCwdCoordinator();
 	coordinator.consume();

@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import evanescentExtension, {
+	argvHasBooleanFlag,
 	materializeCurrentRun,
 	migrateToWorkspace,
 	shouldRunDirectStartupMigration,
@@ -44,6 +45,58 @@ test("evanescent direct startup migration waits for pending cd startup request",
 		}),
 		true,
 	);
+});
+
+test("evanescent argv flag prepares startup request when getFlag is unavailable during extension loading", async () => {
+	resetStartupCwdRequestsForTests();
+	const root = await tempRoot();
+	const previousTempRoot = process.env.PI_EVANESCENT_TEMP_ROOT;
+	const previousArgv = process.argv;
+	process.env.PI_EVANESCENT_TEMP_ROOT = join(root, "temp-runs");
+	process.argv = [previousArgv[0], previousArgv[1], "--evanescent"];
+	try {
+		await evanescentExtension({
+			registerFlag: () => {},
+			getFlag: () => false,
+			on: () => {},
+			registerCommand: () => {},
+			registerTool: () => {},
+		} as any);
+
+		const resolution = consumeStartupCwdRequests();
+		assert.equal(resolution.kind, "migrate");
+		assert.equal(
+			resolution.kind === "migrate" &&
+				resolution.requests[0].requiresFreshSession,
+			true,
+		);
+		assert.match(
+			resolution.kind === "migrate" ? resolution.targetCwd : "",
+			/\/workspace$/,
+		);
+	} finally {
+		process.argv = previousArgv;
+		if (previousTempRoot === undefined)
+			delete process.env.PI_EVANESCENT_TEMP_ROOT;
+		else process.env.PI_EVANESCENT_TEMP_ROOT = previousTempRoot;
+		resetStartupCwdRequestsForTests();
+	}
+});
+
+test("evanescent argv boolean flag parsing", () => {
+	assert.equal(
+		argvHasBooleanFlag(["node", "pi", "--evanescent"], "evanescent"),
+		true,
+	);
+	assert.equal(
+		argvHasBooleanFlag(["node", "pi", "--evanescent=false"], "evanescent"),
+		false,
+	);
+	assert.equal(
+		argvHasBooleanFlag(["node", "pi", "--no-evanescent"], "evanescent"),
+		false,
+	);
+	assert.equal(argvHasBooleanFlag(["node", "pi"], "evanescent"), false);
 });
 
 test("evanescent flag prepares a fresh run and startup cwd request during extension loading", async () => {
@@ -86,6 +139,72 @@ test("evanescent flag prepares a fresh run and startup cwd request during extens
 			metadata.workspacePath,
 			resolution.kind === "migrate" ? resolution.targetCwd : "",
 		);
+	} finally {
+		if (previousTempRoot === undefined)
+			delete process.env.PI_EVANESCENT_TEMP_ROOT;
+		else process.env.PI_EVANESCENT_TEMP_ROOT = previousTempRoot;
+		resetStartupCwdRequestsForTests();
+	}
+});
+
+test("evanescent startup fails closed when event context lacks session controls", async () => {
+	resetStartupCwdRequestsForTests();
+	const root = await tempRoot();
+	const previousTempRoot = process.env.PI_EVANESCENT_TEMP_ROOT;
+	process.env.PI_EVANESCENT_TEMP_ROOT = join(root, "temp-runs");
+	let flagAvailable = false;
+	let sessionStart:
+		| ((event: { reason: string }, ctx: any) => Promise<void>)
+		| undefined;
+	const sentMessages: string[] = [];
+	const notifications: Array<{ message: string; level?: string }> = [];
+	let shutdownCalled = false;
+	try {
+		await evanescentExtension({
+			registerFlag: () => {},
+			getFlag: (name: string) => name === "evanescent" && flagAvailable,
+			on: (event: string, callback: typeof sessionStart) => {
+				if (event === "session_start") sessionStart = callback;
+			},
+			registerCommand: () => {},
+			registerTool: () => {},
+			sendUserMessage: (message: string) => sentMessages.push(message),
+		} as any);
+		assert.ok(sessionStart);
+
+		flagAvailable = true;
+		await assert.rejects(
+			sessionStart(
+				{ reason: "startup" },
+				{
+					cwd: "/tmp/source",
+					sessionManager: {
+						getEntries: () => [],
+						getSessionFile: () => undefined,
+					},
+					ui: {
+						notify: (message: string, level?: string) =>
+							notifications.push({ message, level }),
+					},
+					shutdown: () => {
+						shutdownCalled = true;
+					},
+				},
+			),
+			/Evanescent startup migration cannot run from this pi startup context/,
+		);
+
+		assert.deepEqual(sentMessages, []);
+		assert.equal(shutdownCalled, true);
+		assert.deepEqual(notifications, [
+			{
+				message:
+					"Evanescent startup migration cannot run from this pi startup context. Shutting down to avoid continuing outside the temporary workspace. For this pi version, use scripts/pi-home.sh --evanescent so the workspace is selected before pi starts.",
+				level: "error",
+			},
+		]);
+		const runsRoot = join(root, "temp-runs");
+		assert.equal(existsSync(runsRoot), true);
 	} finally {
 		if (previousTempRoot === undefined)
 			delete process.env.PI_EVANESCENT_TEMP_ROOT;
