@@ -8,7 +8,7 @@
   ],
   "type": "module",
   "scripts": {
-    "test": "bash -n scripts/*.sh && npm exec tsc -- --noEmit"
+    "test": "bash -n scripts/*.sh && npm exec tsc -- --noEmit && node --test --experimental-strip-types tests/*.test.ts"
   },
   "files": [
     "AGENTS.md",
