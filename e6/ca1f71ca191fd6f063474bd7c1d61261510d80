@@ -1,0 +1,45 @@
+CONTEXT.md
+  s_8f45193cda3c6e::t_581163d6d7a566 61
+  s_8f45193cda3c6e::t_5c7c5d7f63be6a 62
+  s_8f45193cda3c6e::t_9254873f904993 66
+  s_8f45193cda3c6e::t_95bc0b363c17c3 60
+  s_8f45193cda3c6e::t_e21f7fcefc3333 63
+  s_8f45193cda3c6e::t_da5928e3386adc 65
+  s_8f45193cda3c6e::t_a02427ab77ef1f 68
+  s_8f45193cda3c6e::t_1d74575314237d 19-22,51,79
+  s_8f45193cda3c6e::t_eb0067d20b49da 1-14,47-49,69-77
+  s_8f45193cda3c6e::t_2df6486e02e96e 43-46,67
+  s_8f45193cda3c6e::t_b3a174ea099a61 56
+  s_8f45193cda3c6e::t_085d8a184baf2d 59
+  s_8f45193cda3c6e::t_77bb3055e31a0d 15,18,78
+  s_8f45193cda3c6e::t_3d416f6f1fb89d 64
+  s_8f45193cda3c6e::t_1a8715249312f7 23-26,52
+  s_8f45193cda3c6e::t_7cc016d455821d 27,29-31,33-34,55
+  s_8f45193cda3c6e::t_5ca6a0a30b53a6 32
+  s_8f45193cda3c6e::t_5c2e81857b3961 50
+  s_8f45193cda3c6e::t_473346c3db52b5 36
+  s_8f45193cda3c6e::t_683fbefce9c1db 40
+  s_8f45193cda3c6e::t_ab669de48637f5 54
+  s_8f45193cda3c6e::t_e8cf4e258d580f 28,53
+  s_8f45193cda3c6e::t_bf46a003319729 16-17
+  s_8f45193cda3c6e::t_daaa1a184fc2ce 35,37-39,41-42,58
+  s_8f45193cda3c6e::t_3841e590dd3722 57
+docs/adr/0001-evanescent-startup-migration.md
+  s_8f45193cda3c6e::t_cff69773c70ca2 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "e6ca1f71ca191fd6f063474bd7c1d61261510d80",
+  "prompts": {},
+  "sessions": {
+    "s_8f45193cda3c6e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e47a1-c571-77d1-beca-ffa72fe2da3a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
