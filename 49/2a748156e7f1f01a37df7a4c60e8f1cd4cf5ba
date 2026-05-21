@@ -1,0 +1,39 @@
+tests/evanescent-adapter.test.ts
+  s_f169da23b88a8b::t_876a544a92ef63 17-20,49-67,69-86,88-94
+  s_f169da23b88a8b::t_fd77958e6dd356 186-220
+  s_f169da23b88a8b::t_35a8362704aaa5 15,233-278,280-282
+extensions/cd.ts
+  s_11b47252f67910::t_5976e27b1db865 130-145,147-151,153
+  s_11b47252f67910::t_8336f206aa2d76 146,152
+.ralph/issue-13-tdd.md
+  s_f169da23b88a8b::t_f71b9c6a2854fb 1,3,20,26-32,36,38-43,46,48-53,55,70,76-82,92,96,100,102,104-105,107-114,116-120
+  s_f169da23b88a8b::t_edf297f9787a30 90-91,93-95,97-99,101,103
+  s_f169da23b88a8b::t_393fc5a4dcb321 2,4-19,21-25,33-35,37,44-45,47,54,56-69,71-75,83-89,106,115,121-126
+tests/cd-adapter.test.ts
+  s_f169da23b88a8b::t_63486ffece5c8a 3,31-89
+  s_11b47252f67910::t_0d4a980b302e27 1-2,4-18,20-30,90-97,99-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "492a748156e7f1f01a37df7a4c60e8f1cd4cf5ba",
+  "prompts": {},
+  "sessions": {
+    "s_11b47252f67910": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4900-4244-7702-a4e6-7065281a86fe",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_f169da23b88a8b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4905-d3eb-7445-97d4-cf513492d593",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
