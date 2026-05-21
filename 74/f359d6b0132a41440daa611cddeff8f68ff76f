@@ -1,0 +1,19 @@
+CONTEXT.md
+  s_46f4688a6efe47::t_ba3fdcd54cb4a3 80-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "74f359d6b0132a41440daa611cddeff8f68ff76f",
+  "prompts": {},
+  "sessions": {
+    "s_46f4688a6efe47": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4acc-f241-7f8c-bff4-d157aeb2f943",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
