@@ -1,0 +1,87 @@
+tests/evanescent-adapter.test.ts
+  s_ca8e7873473744::t_80f731c8e4a952 8,50-88,90-99
+  s_44057934876fc0::t_baa03375134208 151-159,162-175,192,195-196,206-215
+  s_92543e49214aa5::t_f12b7c74d3bdcb 202
+  s_347955df7fb8fb::t_1d78eef57779ea 150,160-161,197-201,203-205
+  s_ca6accb2f14b4c::t_61e69e3fea64bb 176-191,193-194
+extensions/evanescent.ts
+  s_44057934876fc0::t_787e6e1431e1a8 93-102,206-226,228-229,231,238,240-245,247-249
+  s_ca8e7873473744::t_7c5e1474595551 198-205
+  s_ca8e7873473744::t_85376ec48d902e 39-52
+  s_ca6accb2f14b4c::t_131ec19cd1f284 15,234
+  s_ca6accb2f14b4c::t_8ee46d7db9c067 232,235,237
+  s_92543e49214aa5::t_5e876fa4639a45 233
+  s_347955df7fb8fb::t_4b0174a8e1e343 236
+extensions/cd.ts
+  s_ca6accb2f14b4c::t_bab4d060d0a5a9 11-12,195,202-208
+  s_44057934876fc0::t_80b71ff694ab77 9-10,13-14,79-90
+  s_44057934876fc0::t_b6e45e692c1993 99-160
+  s_44057934876fc0::t_45ed4ebc01d8cc 191-192,200-201
+  s_347955df7fb8fb::t_373ef14fd62682 197
+  s_92543e49214aa5::t_a936daa8111905 194
+  s_ca6accb2f14b4c::t_4d55e5f169d5b4 193,196,198
+extensions/lib/cd-startup.ts
+  s_ca6accb2f14b4c::t_7b4451c35f6520 17,39-46,99-106
+  s_ca6accb2f14b4c::t_526bc329d195ed 75-83,90,94,98,110-111
+tests/cd-adapter.test.ts
+  s_44057934876fc0::t_3544b7fb937536 92-93,97,99,101,103,105-109,111,132-133,153-157
+  s_347955df7fb8fb::t_2423f4eea962b1 91,96,100,129,134-138,140-142
+  s_ca6accb2f14b4c::t_adca06d755c52a 94-95
+  s_ca6accb2f14b4c::t_2dd753f92cb119 112-128,130-131
+  s_ca6accb2f14b4c::t_445aff1fd62bf8 148
+  s_92543e49214aa5::t_b64bf0fd450d4e 139
+  s_ca6accb2f14b4c::t_e7294d20259843 98,102,104,110,143-147,149-152
+scripts/pi-home.sh
+  s_ca6accb2f14b4c::t_c86d1887157bac 7-47
+tests/cd-startup.test.ts
+  s_ca6accb2f14b4c::t_6bc4cc55d8b2ed 72,77-92
+  s_ca6accb2f14b4c::t_43eeb27d617970 73-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "360e397cd6740772d90ef6e6cd74a801439c2514",
+  "prompts": {},
+  "sessions": {
+    "s_347955df7fb8fb": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4af0-4a65-74f4-8a28-9a0a67361790",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_44057934876fc0": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4ae6-5b96-71a7-b076-bdd38420b571",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_92543e49214aa5": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4b0e-6220-7f52-8c81-6ff18ab8794f",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_ca6accb2f14b4c": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4b00-7540-79a5-8066-ba9f175ac282",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_ca8e7873473744": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4afc-a354-7453-b519-55f3785cda4c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
