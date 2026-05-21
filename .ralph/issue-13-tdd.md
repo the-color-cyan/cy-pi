@@ -1,6 +1,6 @@
-# TDD Issue Loop: ISSUE_NUMBER
+# TDD Issue Loop: `$RALPH_ISSUE_NUMBER`
 
-Target GitHub issue: ISSUE_NUMBER
+Target GitHub issue: read from environment variable `RALPH_ISSUE_NUMBER`.
 
 ## Operating mode
 
@@ -8,7 +8,7 @@ Use `skill:tdd` for every implementation slice.
 
 Work in small vertical tracer-bullet slices. Each iteration should:
 
-1. Inspect the current issue state (`github_work view`).
+1. Resolve the target issue number from `RALPH_ISSUE_NUMBER` and inspect it (`github_work start "$RALPH_ISSUE_NUMBER"`, then `github_work view`).
 2. Pick exactly one thin TDD slice from the remaining issue acceptance criteria or review gaps.
 3. Write or update one behavior-focused failing test through a public interface.
 4. Run the focused test and confirm RED.
@@ -23,7 +23,8 @@ Continue until the issue acceptance criteria are satisfied and no serious review
 
 ## Startup checklist
 
-- [ ] Run `github_work start ISSUE_NUMBER` or confirm ISSUE_NUMBER is already active
+- [ ] Verify `RALPH_ISSUE_NUMBER` is set to a GitHub issue number, e.g. `bash -lc 'test -n "$RALPH_ISSUE_NUMBER" && echo "$RALPH_ISSUE_NUMBER"'`
+- [ ] Run `github_work start "$RALPH_ISSUE_NUMBER"` or confirm that issue is already active
 - [ ] Run `github_work view`
 - [ ] Read the issue problem statement, acceptance criteria, comments, and linked docs
 - [ ] Read `skill:tdd` guidance
@@ -33,8 +34,9 @@ Continue until the issue acceptance criteria are satisfied and no serious review
 
 ## Current issue state summary
 
-Fill this in after `github_work view`:
+Fill this in after resolving `RALPH_ISSUE_NUMBER` and running `github_work view`:
 
+- Issue number from `RALPH_ISSUE_NUMBER`:
 - State:
 - Labels/stage:
 - Key acceptance criteria:
