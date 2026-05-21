@@ -1,0 +1,37 @@
+package.json
+  s_95fe0ed3a9ae48::t_52a537cec8c942 11
+extensions/lib/evanescent.ts
+  s_95fe0ed3a9ae48::t_009c8d09a7a9c5 13
+  s_95fe0ed3a9ae48::t_3627288c8029ef 1-2,12,14-45,52-54,60-73,77-78,88-99,107-124,129-130,134-146,152-154,162-165,170,173-175,185-186,189-191,196-198,205-207
+  ai_agent 3-11,46-51,55-59,74-76,79-87,100-106,125-128,131-133,147-151,155-161,166-169,171-172,176-184,187-188,192-195,199-204
+tests/cd-startup.test.ts
+  s_95fe0ed3a9ae48::t_d9b1f50cfbdfbd 8,28
+  s_95fe0ed3a9ae48::t_da76bbd7545fb5 1-7,9-27,29-43
+tests/evanescent.test.ts
+  s_95fe0ed3a9ae48::t_fae15ba5c618dd 1,3-6,17-23,30-45,83-90,95-98,120-126,132-134,139-149
+  s_95fe0ed3a9ae48::t_3a6e5f25d89a8a 2
+  ai_agent 7-16,24-29,46-82,91-94,99-119,127-131,135-138
+extensions/lib/cd-startup.ts
+  ai_agent 32-34
+  s_95fe0ed3a9ae48::t_bc3049b7eecf3e 1-24,26-31,35-49
+  s_95fe0ed3a9ae48::t_51c339f028fc13 25
+tsconfig.json
+  s_95fe0ed3a9ae48::t_16016626d1ca42 9-10
+  s_95fe0ed3a9ae48::t_f236ea392512ba 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "f5c1a0c47a57cf23e58611c27830cbb9a6f566fa",
+  "prompts": {},
+  "sessions": {
+    "s_95fe0ed3a9ae48": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e4821-1d85-7ed6-a977-286ddb97f328",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
