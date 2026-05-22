@@ -1,22 +1,70 @@
 import { spawn } from "node:child_process";
-import { appendFileSync, closeSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from "node:fs";
+import {
+	appendFileSync,
+	closeSync,
+	mkdirSync,
+	openSync,
+	readFileSync,
+	writeFileSync,
+	writeSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { StringEnum } from "@mariozechner/pi-ai";
-import type { ExtensionAPI, ExtensionContext, Theme } from "@mariozechner/pi-coding-agent";
-import type { AutocompleteItem, Component, OverlayHandle, TUI } from "@mariozechner/pi-tui";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+	Theme,
+} from "@mariozechner/pi-coding-agent";
+import type {
+	AutocompleteItem,
+	Component,
+	OverlayHandle,
+	TUI,
+} from "@mariozechner/pi-tui";
 import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { Type } from "typebox";
 
 const CONFIG_VERSION = 1;
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "github-tracker.json");
 const RUNS_DIR = join(homedir(), ".pi", "agent", "github-tracker-runs");
-const WORKTREES_DIR = join(homedir(), ".pi", "agent", "github-tracker-worktrees");
-const STAGES = ["backlog", "planned", "in-progress", "review", "blocked", "done"] as const;
+const WORKTREES_DIR = join(
+	homedir(),
+	".pi",
+	"agent",
+	"github-tracker-worktrees",
+);
+const STAGES = [
+	"backlog",
+	"planned",
+	"in-progress",
+	"review",
+	"blocked",
+	"done",
+] as const;
 const STAGE_LABELS = STAGES.map((stage) => `stage:${stage}`);
 const WORKFLOW_ACTIONS = ["status", "enable", "disable"] as const;
-const WORK_ACTIONS = ["status", "start", "view", "inspect", "run", "spawn", "stop", "review", "done", "comment"] as const;
-const ISSUE_ACTIONS = ["list", "create", "view", "stage", "comment", "close"] as const;
+const WORK_ACTIONS = [
+	"status",
+	"start",
+	"view",
+	"inspect",
+	"run",
+	"spawn",
+	"stop",
+	"review",
+	"done",
+	"comment",
+] as const;
+const ISSUE_ACTIONS = [
+	"list",
+	"create",
+	"view",
+	"stage",
+	"comment",
+	"close",
+] as const;
+const PR_ACTIONS = ["list", "create", "view", "comment", "close"] as const;
 
 type CompletionEntry = {
 	value: string;
@@ -25,7 +73,10 @@ type CompletionEntry = {
 };
 
 const GH_TRACK_COMPLETIONS: CompletionEntry[] = [
-	{ value: "status", description: "Show whether GitHub issue tracking is enabled" },
+	{
+		value: "status",
+		description: "Show whether GitHub issue tracking is enabled",
+	},
 	{ value: "enable", description: "Enable tracking for this repository" },
 	{ value: "disable", description: "Disable tracking for this repository" },
 	{ value: "help", description: "Show GitHub tracker command help" },
@@ -38,6 +89,15 @@ const GH_ISSUE_COMPLETIONS: CompletionEntry[] = [
 	{ value: "stage", description: "Move an issue to a stage label" },
 	{ value: "comment", description: "Comment on an issue" },
 	{ value: "close", description: "Close an issue" },
+	{ value: "help", description: "Show GitHub tracker command help" },
+];
+
+const GH_PR_COMPLETIONS: CompletionEntry[] = [
+	{ value: "list", description: "List open pull requests" },
+	{ value: "create", description: "Create a pull request" },
+	{ value: "view", description: "View a pull request by number" },
+	{ value: "comment", description: "Comment on a pull request" },
+	{ value: "close", description: "Close a pull request" },
 	{ value: "help", description: "Show GitHub tracker command help" },
 ];
 
@@ -77,6 +137,7 @@ type Stage = (typeof STAGES)[number];
 type WorkflowAction = (typeof WORKFLOW_ACTIONS)[number];
 type WorkAction = (typeof WORK_ACTIONS)[number];
 type IssueAction = (typeof ISSUE_ACTIONS)[number];
+type PrAction = (typeof PR_ACTIONS)[number];
 type WorkerRun = {
 	issue: number;
 	pid: number;
@@ -90,8 +151,18 @@ type WorkerRun = {
 	branchLinked?: boolean;
 	branchLinkStatus?: string;
 };
-type WorkerWorktree = { path: string; branch: string; base: string; branchLinked: boolean; branchLinkStatus: string };
-type RepoConfig = { enabled: boolean; activeIssue?: number; lastRun?: WorkerRun };
+type WorkerWorktree = {
+	path: string;
+	branch: string;
+	base: string;
+	branchLinked: boolean;
+	branchLinkStatus: string;
+};
+type RepoConfig = {
+	enabled: boolean;
+	activeIssue?: number;
+	lastRun?: WorkerRun;
+};
 type Config = { version: 1; repos: Record<string, RepoConfig> };
 type CommandResult = { ok: boolean; text: string; details?: unknown };
 
@@ -116,6 +187,18 @@ type GithubIssueParams = {
 	args?: string;
 };
 
+type GithubPrParams = {
+	action: PrAction;
+	number?: number;
+	title?: string;
+	body?: string;
+	base?: string;
+	head?: string;
+	draft?: boolean;
+	text?: string;
+	args?: string;
+};
+
 type IssueSummary = {
 	number?: number;
 	title?: string;
@@ -124,7 +207,9 @@ type IssueSummary = {
 	assignees?: Array<{ login?: string }>;
 };
 
-type IssueSummaryResult = { ok: true; issues: IssueSummary[] } | { ok: false; text: string };
+type IssueSummaryResult =
+	| { ok: true; issues: IssueSummary[] }
+	| { ok: false; text: string };
 
 function defaultConfig(): Config {
 	return { version: CONFIG_VERSION, repos: {} };
@@ -133,7 +218,11 @@ function defaultConfig(): Config {
 function loadConfig(): Config {
 	try {
 		const parsed = JSON.parse(readFileSync(CONFIG_PATH, "utf8"));
-		if (parsed?.version === CONFIG_VERSION && typeof parsed?.repos === "object" && parsed.repos !== null) {
+		if (
+			parsed?.version === CONFIG_VERSION &&
+			typeof parsed?.repos === "object" &&
+			parsed.repos !== null
+		) {
 			return parsed as Config;
 		}
 	} catch {
@@ -193,22 +282,34 @@ function splitArgs(input: string): string[] {
 	return args;
 }
 
-function completionState(argumentPrefix: string): { tokens: string[]; current: string; endsWithSpace: boolean } {
+function completionState(argumentPrefix: string): {
+	tokens: string[];
+	current: string;
+	endsWithSpace: boolean;
+} {
 	const endsWithSpace = /\s$/.test(argumentPrefix);
 	const tokens = splitArgs(argumentPrefix);
 	return {
 		tokens,
-		current: endsWithSpace ? "" : tokens[tokens.length - 1] ?? "",
+		current: endsWithSpace ? "" : (tokens[tokens.length - 1] ?? ""),
 		endsWithSpace,
 	};
 }
 
-function completionItems(entries: CompletionEntry[], query: string, valuePrefix?: string): AutocompleteItem[] | null {
+function completionItems(
+	entries: CompletionEntry[],
+	query: string,
+	valuePrefix?: string,
+): AutocompleteItem[] | null {
 	const normalized = query.toLowerCase();
 	const filtered = entries.filter((entry) => {
 		const value = entry.value.toLowerCase();
 		const label = entry.label?.toLowerCase() ?? "";
-		return !normalized || value.startsWith(normalized) || label.startsWith(normalized);
+		return (
+			!normalized ||
+			value.startsWith(normalized) ||
+			label.startsWith(normalized)
+		);
 	});
 	if (filtered.length === 0) return null;
 	return filtered.map((entry) => ({
@@ -218,7 +319,10 @@ function completionItems(entries: CompletionEntry[], query: string, valuePrefix?
 	}));
 }
 
-function completeFirstArg(argumentPrefix: string, entries: CompletionEntry[]): AutocompleteItem[] | null {
+function completeFirstArg(
+	argumentPrefix: string,
+	entries: CompletionEntry[],
+): AutocompleteItem[] | null {
 	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
 	if (tokens.length === 0 || (tokens.length === 1 && !endsWithSpace)) {
 		return completionItems(entries, current);
@@ -226,17 +330,29 @@ function completeFirstArg(argumentPrefix: string, entries: CompletionEntry[]): A
 	return null;
 }
 
-function completeGhIssueArgs(argumentPrefix: string): AutocompleteItem[] | null {
+function completeGhIssueArgs(
+	argumentPrefix: string,
+): AutocompleteItem[] | null {
 	const firstArg = completeFirstArg(argumentPrefix, GH_ISSUE_COMPLETIONS);
 	if (firstArg) return firstArg;
 
 	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
-	if (tokens[0] === "stage" && ((tokens.length === 2 && endsWithSpace) || (tokens.length === 3 && !endsWithSpace))) {
-		const valuePrefix = endsWithSpace ? tokens.join(" ") : tokens.slice(0, -1).join(" ");
+	if (
+		tokens[0] === "stage" &&
+		((tokens.length === 2 && endsWithSpace) ||
+			(tokens.length === 3 && !endsWithSpace))
+	) {
+		const valuePrefix = endsWithSpace
+			? tokens.join(" ")
+			: tokens.slice(0, -1).join(" ");
 		return completionItems(STAGE_COMPLETIONS, current, valuePrefix);
 	}
 
 	return null;
+}
+
+function completeGhPrArgs(argumentPrefix: string): AutocompleteItem[] | null {
+	return completeFirstArg(argumentPrefix, GH_PR_COMPLETIONS);
 }
 
 function completeGhWorkArgs(argumentPrefix: string): AutocompleteItem[] | null {
@@ -245,22 +361,99 @@ function completeGhWorkArgs(argumentPrefix: string): AutocompleteItem[] | null {
 
 	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
 	const action = tokens[0];
-	if (action === "pane" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
+	if (
+		action === "pane" &&
+		((tokens.length === 1 && endsWithSpace) ||
+			(tokens.length === 2 && !endsWithSpace))
+	) {
 		return completionItems(GH_WORK_PANE_COMPLETIONS, current, "pane");
 	}
-	if (action === "done" && ((tokens.length === 1 && endsWithSpace) || (tokens.length === 2 && !endsWithSpace))) {
-		return completionItems([{ value: "--close", description: "Also close the GitHub issue" }], current, "done");
+	if (
+		action === "done" &&
+		((tokens.length === 1 && endsWithSpace) ||
+			(tokens.length === 2 && !endsWithSpace))
+	) {
+		return completionItems(
+			[{ value: "--close", description: "Also close the GitHub issue" }],
+			current,
+			"done",
+		);
 	}
 
 	return null;
 }
 
-function parseCreateArgs(args: string): { title: string; body: string } | undefined {
+function parseCreatePrArgs(
+	args: string,
+):
+	| {
+			title: string;
+			body: string;
+			base?: string;
+			head?: string;
+			draft?: boolean;
+	  }
+	| undefined {
+	const tokens = splitArgs(args);
+	const titleParts: string[] = [];
+	const bodyParts: string[] = [];
+	const parsed: { base?: string; head?: string; draft?: boolean } = {};
+	let collectingBody = false;
+
+	for (let i = 0; i < tokens.length; i++) {
+		const token = tokens[i];
+		if (token === "--body") {
+			collectingBody = true;
+			continue;
+		}
+		if (token === "--base") {
+			parsed.base = tokens[++i];
+			collectingBody = false;
+			continue;
+		}
+		if (token === "--head") {
+			parsed.head = tokens[++i];
+			collectingBody = false;
+			continue;
+		}
+		if (token === "--draft") {
+			parsed.draft = true;
+			collectingBody = false;
+			continue;
+		}
+		if (collectingBody) bodyParts.push(token);
+		else titleParts.push(token);
+	}
+
+	const title = titleParts
+		.join(" ")
+		.trim()
+		.replace(/^['"]|['"]$/g, "");
+	return title
+		? {
+				title,
+				body: bodyParts.join(" ").trim(),
+				base: parsed.base,
+				head: parsed.head,
+				draft: parsed.draft,
+			}
+		: undefined;
+}
+
+function parseCreateArgs(
+	args: string,
+): { title: string; body: string } | undefined {
 	const marker = " --body ";
 	const markerIndex = args.indexOf(marker);
 	if (markerIndex >= 0) {
-		const title = args.slice(0, markerIndex).trim().replace(/^['\"]|['\"]$/g, "");
-		const body = args.slice(markerIndex + marker.length).trim().replace(/^['\"]|['\"]$/g, "");
+		const title = args
+			.slice(0, markerIndex)
+			.trim()
+			.replace(/^['"]|['"]$/g, "");
+		const body = args
+			.slice(markerIndex + marker.length)
+			.trim()
+			.replace(/^['"]|['"]$/g, "");
 		if (title) return { title, body };
 	}
 
@@ -268,56 +461,130 @@ function parseCreateArgs(args: string): { title: string; body: string } | undefi
 	const bodyIndex = parts.indexOf("--body");
 	if (bodyIndex >= 0) {
 		const title = parts.slice(0, bodyIndex).join(" ").trim();
-		const body = parts.slice(bodyIndex + 1).join(" ").trim();
+		const body = parts
+			.slice(bodyIndex + 1)
+			.join(" ")
+			.trim();
 		if (title) return { title, body };
 	}
 
-	const title = args.trim().replace(/^['\"]|['\"]$/g, "");
+	const title = args.trim().replace(/^['"]|['"]$/g, "");
 	return title ? { title, body: "" } : undefined;
 }
 
-function formatExecFailure(command: string, code: number, stderr: string, stdout = ""): string {
+function formatExecFailure(
+	command: string,
+	code: number,
+	stderr: string,
+	stdout = "",
+): string {
 	const output = (stderr || stdout || "unknown error").trim();
-	const hint = command === "gh" ? "\nHint: install GitHub CLI and run `gh auth login`." : "";
+	const hint =
+		command === "gh"
+			? "\nHint: install GitHub CLI and run `gh auth login`."
+			: "";
 	return `${command} failed with exit code ${code}: ${output}${hint}`;
 }
 
-async function exec(pi: ExtensionAPI, command: string, args: string[], cwd: string) {
+async function exec(
+	pi: ExtensionAPI,
+	command: string,
+	args: string[],
+	cwd: string,
+) {
 	return pi.exec(command, args, { cwd, timeout: 30_000 });
 }
 
-async function getRepoRoot(pi: ExtensionAPI, cwd: string): Promise<string | undefined> {
+async function getRepoRoot(
+	pi: ExtensionAPI,
+	cwd: string,
+): Promise<string | undefined> {
 	const result = await exec(pi, "git", ["rev-parse", "--show-toplevel"], cwd);
 	return result.code === 0 ? result.stdout.trim() : undefined;
 }
 
-async function getGhRepo(pi: ExtensionAPI, root: string): Promise<string | undefined> {
-	const result = await exec(pi, "gh", ["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"], root);
+async function getGhRepo(
+	pi: ExtensionAPI,
+	root: string,
+): Promise<string | undefined> {
+	const result = await exec(
+		pi,
+		"gh",
+		["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"],
+		root,
+	);
 	return result.code === 0 ? result.stdout.trim() : undefined;
 }
 
-async function getDefaultBranch(pi: ExtensionAPI, root: string): Promise<string | undefined> {
-	const result = await exec(pi, "gh", ["repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"], root);
+async function getDefaultBranch(
+	pi: ExtensionAPI,
+	root: string,
+): Promise<string | undefined> {
+	const result = await exec(
+		pi,
+		"gh",
+		[
+			"repo",
+			"view",
+			"--json",
+			"defaultBranchRef",
+			"--jq",
+			".defaultBranchRef.name",
+		],
+		root,
+	);
 	return result.code === 0 ? result.stdout.trim() || undefined : undefined;
 }
 
-async function getCurrentBranch(pi: ExtensionAPI, root: string): Promise<string | undefined> {
+async function getCurrentBranch(
+	pi: ExtensionAPI,
+	root: string,
+): Promise<string | undefined> {
 	const result = await exec(pi, "git", ["branch", "--show-current"], root);
 	return result.code === 0 ? result.stdout.trim() || undefined : undefined;
 }
 
-async function getWorktreeBase(pi: ExtensionAPI, root: string): Promise<string> {
-	return (await getCurrentBranch(pi, root)) ?? (await getDefaultBranch(pi, root)) ?? "HEAD";
+async function getWorktreeBase(
+	pi: ExtensionAPI,
+	root: string,
+): Promise<string> {
+	return (
+		(await getCurrentBranch(pi, root)) ??
+		(await getDefaultBranch(pi, root)) ??
+		"HEAD"
+	);
 }
 
 function shortExecReason(result: { stderr: string; stdout: string }): string {
-	return (result.stderr || result.stdout || "unknown error").trim().replace(/\s+/g, " ") || "unknown error";
+	return (
+		(result.stderr || result.stdout || "unknown error")
+			.trim()
+			.replace(/\s+/g, " ") || "unknown error"
+	);
 }
 
-async function createLinkedIssueBranch(pi: ExtensionAPI, root: string, issueNumber: number, branch: string, base: string): Promise<{ linked: boolean; status: string }> {
-	const result = await exec(pi, "gh", ["issue", "develop", String(issueNumber), "--name", branch, "--base", base], root);
-	if (result.code === 0) return { linked: true, status: `Linked branch ${branch} to issue #${issueNumber} via gh issue develop.` };
-	return { linked: false, status: `Could not link branch ${branch} to issue #${issueNumber} via gh issue develop: ${shortExecReason(result)}` };
+async function createLinkedIssueBranch(
+	pi: ExtensionAPI,
+	root: string,
+	issueNumber: number,
+	branch: string,
+	base: string,
+): Promise<{ linked: boolean; status: string }> {
+	const result = await exec(
+		pi,
+		"gh",
+		["issue", "develop", String(issueNumber), "--name", branch, "--base", base],
+		root,
+	);
+	if (result.code === 0)
+		return {
+			linked: true,
+			status: `Linked branch ${branch} to issue #${issueNumber} via gh issue develop.`,
+		};
+	return {
+		linked: false,
+		status: `Could not link branch ${branch} to issue #${issueNumber} via gh issue develop: ${shortExecReason(result)}`,
+	};
 }
 
 function getRepoConfig(root: string): RepoConfig {
@@ -336,7 +603,10 @@ function getActiveIssue(root: string): number | undefined {
 
 function setActiveIssue(root: string, number?: number) {
 	const config = loadConfig();
-	config.repos[root] = { ...(config.repos[root] ?? { enabled: false }), activeIssue: number };
+	config.repos[root] = {
+		...(config.repos[root] ?? { enabled: false }),
+		activeIssue: number,
+	};
 	saveConfig(config);
 }
 
@@ -349,7 +619,10 @@ function clearActiveIssue(root: string) {
 
 function setLastRun(root: string, run: WorkerRun) {
 	const config = loadConfig();
-	config.repos[root] = { ...(config.repos[root] ?? { enabled: false }), lastRun: run };
+	config.repos[root] = {
+		...(config.repos[root] ?? { enabled: false }),
+		lastRun: run,
+	};
 	saveConfig(config);
 }
 
@@ -359,7 +632,11 @@ function getLastRun(root: string): WorkerRun | undefined {
 
 function isWorkerRun(value: unknown): value is WorkerRun {
 	const raw = value as Partial<WorkerRun> | undefined;
-	return typeof raw?.issue === "number" && typeof raw.pid === "number" && typeof raw.logPath === "string";
+	return (
+		typeof raw?.issue === "number" &&
+		typeof raw.pid === "number" &&
+		typeof raw.logPath === "string"
+	);
 }
 
 function isProcessAlive(pid: number): boolean {
@@ -380,9 +657,14 @@ function tailFile(path: string, maxLines: number, maxChars = 24_000): string[] {
 	try {
 		const raw = readFileSync(path, "utf8");
 		const text = raw.length > maxChars ? raw.slice(-maxChars) : raw;
-		return text.split(/\r?\n/).filter((line) => line.trim().length > 0).slice(-maxLines);
+		return text
+			.split(/\r?\n/)
+			.filter((line) => line.trim().length > 0)
+			.slice(-maxLines);
 	} catch (error) {
-		return [`Log unavailable: ${error instanceof Error ? error.message : String(error)}`];
+		return [
+			`Log unavailable: ${error instanceof Error ? error.message : String(error)}`,
+		];
 	}
 }
 
@@ -412,20 +694,50 @@ class WorkerPane implements Component {
 		const border = (text: string) => th.fg("border", text);
 		const pad = (text: string) => {
 			const truncated = truncateToWidth(text, inner, "…", true);
-			return truncated + " ".repeat(Math.max(0, inner - visibleWidth(truncated)));
+			return (
+				truncated + " ".repeat(Math.max(0, inner - visibleWidth(truncated)))
+			);
 		};
-		const status = isProcessAlive(this.run.pid) ? th.fg("accent", "running") : th.fg("warning", "stopped");
+		const status = isProcessAlive(this.run.pid)
+			? th.fg("accent", "running")
+			: th.fg("warning", "stopped");
 		const logLines = tailFile(this.run.logPath, 12);
-		const linkText = this.run.branchLinked === undefined ? undefined : `issue link ${this.run.branchLinked ? "yes" : "no"}`;
+		const linkText =
+			this.run.branchLinked === undefined
+				? undefined
+				: `issue link ${this.run.branchLinked ? "yes" : "no"}`;
 		const lines = [
 			border(`╭${"─".repeat(inner)}╮`),
-			border("│") + pad(`${th.fg("accent", `Worker #${this.run.issue}`)} pid ${this.run.pid} · ${status}`) + border("│"),
-			border("│") + pad([this.run.branch ? `branch ${this.run.branch}` : "no isolated branch recorded", linkText].filter(Boolean).join(" · ")) + border("│"),
-			border("│") + pad(this.run.worktreePath ? `tree ${this.run.worktreePath}` : "same working tree") + border("│"),
+			border("│") +
+				pad(
+					`${th.fg("accent", `Worker #${this.run.issue}`)} pid ${this.run.pid} · ${status}`,
+				) +
+				border("│"),
+			border("│") +
+				pad(
+					[
+						this.run.branch
+							? `branch ${this.run.branch}`
+							: "no isolated branch recorded",
+						linkText,
+					]
+						.filter(Boolean)
+						.join(" · "),
+				) +
+				border("│"),
+			border("│") +
+				pad(
+					this.run.worktreePath
+						? `tree ${this.run.worktreePath}`
+						: "same working tree",
+				) +
+				border("│"),
 			border("├") + border("─".repeat(inner)) + border("┤"),
 			...logLines.map((line) => border("│") + pad(line) + border("│")),
 			border("├") + border("─".repeat(inner)) + border("┤"),
-			border("│") + pad(th.fg("dim", "/gh-work pane hide · tail -f log for full output")) + border("│"),
+			border("│") +
+				pad(th.fg("dim", "/gh-work pane hide · tail -f log for full output")) +
+				border("│"),
 			border(`╰${"─".repeat(inner)}╯`),
 		];
 
@@ -435,7 +747,11 @@ class WorkerPane implements Component {
 	}
 }
 
-async function workflowAction(pi: ExtensionAPI, ctx: ExtensionContext, action: GithubWorkflowParams["action"]): Promise<CommandResult> {
+async function workflowAction(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	action: GithubWorkflowParams["action"],
+): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
 
@@ -445,7 +761,9 @@ async function workflowAction(pi: ExtensionAPI, ctx: ExtensionContext, action: G
 
 	const enabled = getRepoConfig(root).enabled;
 	const ghRepo = await getGhRepo(pi, root);
-	const ghText = ghRepo ? `GitHub repo: ${ghRepo}` : "GitHub repo: unavailable (run `gh auth login` and ensure this repo has a GitHub remote).";
+	const ghText = ghRepo
+		? `GitHub repo: ${ghRepo}`
+		: "GitHub repo: unavailable (run `gh auth login` and ensure this repo has a GitHub remote).";
 	return {
 		ok: true,
 		text: `GitHub tracking is ${enabled ? "enabled" : "disabled"} for ${root}.\n${ghText}\nConfig: ${CONFIG_PATH}`,
@@ -453,17 +771,43 @@ async function workflowAction(pi: ExtensionAPI, ctx: ExtensionContext, action: G
 	};
 }
 
-async function listIssues(pi: ExtensionAPI, root: string, args?: string): Promise<CommandResult> {
-	const ghArgs = ["issue", "list", ...(args ? splitArgs(args) : ["--limit", "20"])] ;
+async function listIssues(
+	pi: ExtensionAPI,
+	root: string,
+	args?: string,
+): Promise<CommandResult> {
+	const ghArgs = [
+		"issue",
+		"list",
+		...(args ? splitArgs(args) : ["--limit", "20"]),
+	];
 	const result = await exec(pi, "gh", ghArgs, root);
-	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
 	return { ok: true, text: result.stdout.trim() || "No issues found." };
 }
 
-async function createIssue(pi: ExtensionAPI, root: string, title?: string, body?: string): Promise<CommandResult> {
+async function createIssue(
+	pi: ExtensionAPI,
+	root: string,
+	title?: string,
+	body?: string,
+): Promise<CommandResult> {
 	if (!title?.trim()) return { ok: false, text: "Issue title is required." };
-	const result = await exec(pi, "gh", ["issue", "create", "--title", title.trim(), "--body", body?.trim() || ""], root);
-	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
+	const result = await exec(
+		pi,
+		"gh",
+		["issue", "create", "--title", title.trim(), "--body", body?.trim() || ""],
+		root,
+	);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
 	return { ok: true, text: result.stdout.trim() || `Created issue: ${title}` };
 }
 
@@ -477,11 +821,23 @@ function formatIssueView(raw: string): string {
 		author?: { login?: string };
 		labels?: Array<{ name?: string }>;
 		assignees?: Array<{ login?: string }>;
-		comments?: Array<{ author?: { login?: string }; body?: string; createdAt?: string }>;
+		comments?: Array<{
+			author?: { login?: string };
+			body?: string;
+			createdAt?: string;
+		}>;
 	};
 
-	const labels = issue.labels?.map((label) => label.name).filter(Boolean).join(", ") || "none";
-	const assignees = issue.assignees?.map((assignee) => assignee.login).filter(Boolean).join(", ") || "none";
+	const labels =
+		issue.labels
+			?.map((label) => label.name)
+			.filter(Boolean)
+			.join(", ") || "none";
+	const assignees =
+		issue.assignees
+			?.map((assignee) => assignee.login)
+			.filter(Boolean)
+			.join(", ") || "none";
 	const lines = [
 		`#${issue.number ?? "?"} ${issue.title ?? "(untitled)"}`,
 		`State: ${issue.state ?? "unknown"}`,
@@ -497,7 +853,9 @@ function formatIssueView(raw: string): string {
 	if (comments.length > 0) {
 		lines.push("", `Comments (${comments.length}):`);
 		for (const comment of comments) {
-			const byline = [comment.author?.login ?? "unknown", comment.createdAt].filter(Boolean).join(" · ");
+			const byline = [comment.author?.login ?? "unknown", comment.createdAt]
+				.filter(Boolean)
+				.join(" · ");
 			lines.push(`- ${byline}: ${comment.body?.trim() || "(empty)"}`);
 		}
 	}
@@ -505,19 +863,33 @@ function formatIssueView(raw: string): string {
 	return lines.join("\n");
 }
 
-async function viewIssue(pi: ExtensionAPI, root: string, number?: number): Promise<CommandResult> {
-	if (!isIssueNumber(number)) return { ok: false, text: "Issue number is required." };
+async function viewIssue(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Issue number is required." };
 	// Avoid `gh issue view --comments` because some gh/GitHub combinations query the
 	// deprecated Projects Classic `projectCards` GraphQL field and fail before showing
 	// the issue. Explicit JSON fields omit projectCards while preserving comments.
-	const result = await exec(pi, "gh", [
-		"issue",
-		"view",
-		String(number),
-		"--json",
-		"number,title,state,author,labels,assignees,body,url,comments",
-	], root);
-	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
+	const result = await exec(
+		pi,
+		"gh",
+		[
+			"issue",
+			"view",
+			String(number),
+			"--json",
+			"number,title,state,author,labels,assignees,body,url,comments",
+		],
+		root,
+	);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
 	try {
 		return { ok: true, text: formatIssueView(result.stdout) };
 	} catch {
@@ -528,14 +900,21 @@ async function viewIssue(pi: ExtensionAPI, root: string, number?: number): Promi
 function formatIssueSummary(issue: IssueSummary): string {
 	const labels = issue.labels?.map((label) => label.name).filter(Boolean) ?? [];
 	const stage = labels.find((label) => label?.startsWith("stage:"));
-	const assignees = issue.assignees?.map((assignee) => assignee.login).filter(Boolean).join(", ");
+	const assignees = issue.assignees
+		?.map((assignee) => assignee.login)
+		.filter(Boolean)
+		.join(", ");
 	const state = issue.state?.toLowerCase() ?? "unknown";
 	const meta = [state, stage].filter(Boolean).join(" · ");
 	const suffix = assignees ? ` — ${assignees}` : "";
 	return `#${issue.number ?? "?"} [${meta}] ${issue.title ?? "(untitled)"}${suffix}`;
 }
 
-async function listIssueSummaries(pi: ExtensionAPI, root: string, args?: string): Promise<IssueSummaryResult> {
+async function listIssueSummaries(
+	pi: ExtensionAPI,
+	root: string,
+	args?: string,
+): Promise<IssueSummaryResult> {
 	const ghArgs = [
 		"issue",
 		"list",
@@ -548,48 +927,338 @@ async function listIssueSummaries(pi: ExtensionAPI, root: string, args?: string)
 		...(args ? splitArgs(args) : []),
 	];
 	const result = await exec(pi, "gh", ghArgs, root);
-	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
 	try {
 		return { ok: true, issues: JSON.parse(result.stdout) as IssueSummary[] };
 	} catch {
-		return { ok: false, text: `Failed to parse gh issue list output: ${result.stdout.trim() || "empty output"}` };
+		return {
+			ok: false,
+			text: `Failed to parse gh issue list output: ${result.stdout.trim() || "empty output"}`,
+		};
 	}
 }
 
-async function setIssueStage(pi: ExtensionAPI, root: string, number?: number, stage?: string): Promise<CommandResult> {
-	if (!isIssueNumber(number)) return { ok: false, text: "Issue number is required." };
-	if (!isStage(stage)) return { ok: false, text: `Stage must be one of: ${STAGES.join(", ")}.` };
+async function setIssueStage(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+	stage?: string,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Issue number is required." };
+	if (!isStage(stage))
+		return { ok: false, text: `Stage must be one of: ${STAGES.join(", ")}.` };
 
 	const warnings: string[] = [];
 	for (const label of STAGE_LABELS) {
-		const result = await exec(pi, "gh", ["issue", "edit", String(number), "--remove-label", label], root);
-		if (result.code !== 0 && !/not found|does not have|missing/i.test(result.stderr)) {
-			warnings.push(`Could not remove ${label}: ${(result.stderr || result.stdout).trim()}`);
+		const result = await exec(
+			pi,
+			"gh",
+			["issue", "edit", String(number), "--remove-label", label],
+			root,
+		);
+		if (
+			result.code !== 0 &&
+			!/not found|does not have|missing/i.test(result.stderr)
+		) {
+			warnings.push(
+				`Could not remove ${label}: ${(result.stderr || result.stdout).trim()}`,
+			);
 		}
 	}
 
-	const add = await exec(pi, "gh", ["issue", "edit", String(number), "--add-label", `stage:${stage}`], root);
-	if (add.code !== 0) return { ok: false, text: formatExecFailure("gh", add.code, add.stderr, add.stdout) };
-	return { ok: true, text: [`Issue #${number} moved to stage:${stage}.`, ...warnings].join("\n") };
+	const add = await exec(
+		pi,
+		"gh",
+		["issue", "edit", String(number), "--add-label", `stage:${stage}`],
+		root,
+	);
+	if (add.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", add.code, add.stderr, add.stdout),
+		};
+	return {
+		ok: true,
+		text: [`Issue #${number} moved to stage:${stage}.`, ...warnings].join("\n"),
+	};
 }
 
-async function commentIssue(pi: ExtensionAPI, root: string, number?: number, text?: string): Promise<CommandResult> {
-	if (!isIssueNumber(number)) return { ok: false, text: "Issue number is required." };
+async function commentIssue(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+	text?: string,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Issue number is required." };
 	if (!text?.trim()) return { ok: false, text: "Comment text is required." };
-	const result = await exec(pi, "gh", ["issue", "comment", String(number), "--body", text.trim()], root);
-	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
-	return { ok: true, text: result.stdout.trim() || `Commented on issue #${number}.` };
+	const result = await exec(
+		pi,
+		"gh",
+		["issue", "comment", String(number), "--body", text.trim()],
+		root,
+	);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
+	return {
+		ok: true,
+		text: result.stdout.trim() || `Commented on issue #${number}.`,
+	};
 }
 
-async function closeIssue(pi: ExtensionAPI, root: string, number?: number): Promise<CommandResult> {
-	if (!isIssueNumber(number)) return { ok: false, text: "Issue number is required." };
+async function closeIssue(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Issue number is required." };
 	const result = await exec(pi, "gh", ["issue", "close", String(number)], root);
-	if (result.code !== 0) return { ok: false, text: formatExecFailure("gh", result.code, result.stderr, result.stdout) };
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
 	return { ok: true, text: result.stdout.trim() || `Closed issue #${number}.` };
 }
 
-async function startIssueWork(pi: ExtensionAPI, root: string, number?: number): Promise<CommandResult> {
-	if (!isIssueNumber(number)) return { ok: false, text: "Issue number is required for start." };
+async function listPrs(
+	pi: ExtensionAPI,
+	root: string,
+	args?: string,
+): Promise<CommandResult> {
+	const ghArgs = [
+		"pr",
+		"list",
+		...(args ? splitArgs(args) : ["--state", "open", "--limit", "20"]),
+	];
+	const result = await exec(pi, "gh", ghArgs, root);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
+	return { ok: true, text: result.stdout.trim() || "No pull requests found." };
+}
+
+async function createPr(
+	pi: ExtensionAPI,
+	root: string,
+	title?: string,
+	body?: string,
+	base?: string,
+	head?: string,
+	draft?: boolean,
+): Promise<CommandResult> {
+	if (!title?.trim())
+		return { ok: false, text: "Pull request title is required." };
+	if (!base?.trim())
+		return {
+			ok: false,
+			text: "Base branch is required. Confirm it with the user, then pass --base <branch>.",
+		};
+
+	const resolvedHead = head ?? (await getCurrentBranch(pi, root));
+	if (resolvedHead === base.trim())
+		return { ok: false, text: "Head and base branches must be different." };
+	if (resolvedHead) {
+		const existing = await exec(
+			pi,
+			"gh",
+			[
+				"pr",
+				"list",
+				"--state",
+				"open",
+				"--head",
+				resolvedHead,
+				"--json",
+				"number,title,url",
+			],
+			root,
+		);
+		if (existing.code === 0) {
+			try {
+				const prs = JSON.parse(existing.stdout) as Array<{
+					number?: number;
+					title?: string;
+					url?: string;
+				}>;
+				if (prs.length > 0) {
+					const pr = prs[0];
+					return {
+						ok: false,
+						text: [
+							`An open pull request already exists from ${resolvedHead}: #${pr.number ?? "?"} ${pr.title ?? ""}`,
+							pr.url,
+						]
+							.filter(Boolean)
+							.join("\n"),
+					};
+				}
+			} catch {
+				// Ignore malformed output and let gh handle creation errors.
+			}
+		}
+	}
+
+	const ghArgs = [
+		"pr",
+		"create",
+		"--title",
+		title.trim(),
+		"--body",
+		body?.trim() || "",
+		"--base",
+		base.trim(),
+	];
+	if (resolvedHead?.trim()) ghArgs.push("--head", resolvedHead.trim());
+	if (draft) ghArgs.push("--draft");
+	const result = await exec(pi, "gh", ghArgs, root);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
+	return {
+		ok: true,
+		text: result.stdout.trim() || `Created pull request: ${title}`,
+	};
+}
+
+function formatPrView(raw: string): string {
+	const pr = JSON.parse(raw) as {
+		number?: number;
+		title?: string;
+		state?: string;
+		url?: string;
+		body?: string;
+		author?: { login?: string };
+		headRefName?: string;
+		baseRefName?: string;
+		isDraft?: boolean;
+		mergeStateStatus?: string;
+		comments?: Array<{
+			author?: { login?: string };
+			body?: string;
+			createdAt?: string;
+		}>;
+	};
+	const lines = [
+		`#${pr.number ?? "?"} ${pr.title ?? "(untitled)"}`,
+		`State: ${pr.state ?? "unknown"}`,
+		`Author: ${pr.author?.login ?? "unknown"}`,
+		`Head/Base: ${pr.headRefName ?? "unknown"} -> ${pr.baseRefName ?? "unknown"}`,
+		`Draft: ${pr.isDraft ? "yes" : "no"}`,
+		pr.mergeStateStatus ? `Merge status: ${pr.mergeStateStatus}` : undefined,
+		pr.url ? `URL: ${pr.url}` : undefined,
+		"",
+		pr.body?.trim() ? pr.body.trim() : "(no body)",
+	].filter((line): line is string => typeof line === "string");
+	const comments = pr.comments ?? [];
+	if (comments.length > 0) {
+		lines.push("", `Comments (${comments.length}):`);
+		for (const comment of comments) {
+			const byline = [comment.author?.login ?? "unknown", comment.createdAt]
+				.filter(Boolean)
+				.join(" · ");
+			lines.push(`- ${byline}: ${comment.body?.trim() || "(empty)"}`);
+		}
+	}
+	return lines.join("\n");
+}
+
+async function viewPr(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Pull request number is required." };
+	const result = await exec(
+		pi,
+		"gh",
+		[
+			"pr",
+			"view",
+			String(number),
+			"--json",
+			"number,title,state,author,url,body,headRefName,baseRefName,isDraft,mergeStateStatus,comments",
+		],
+		root,
+	);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
+	try {
+		return { ok: true, text: formatPrView(result.stdout) };
+	} catch {
+		return { ok: true, text: result.stdout.trim() };
+	}
+}
+
+async function commentPr(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+	text?: string,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Pull request number is required." };
+	if (!text?.trim()) return { ok: false, text: "Comment text is required." };
+	const result = await exec(
+		pi,
+		"gh",
+		["pr", "comment", String(number), "--body", text.trim()],
+		root,
+	);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
+	return {
+		ok: true,
+		text: result.stdout.trim() || `Commented on pull request #${number}.`,
+	};
+}
+
+async function closePr(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Pull request number is required." };
+	const result = await exec(pi, "gh", ["pr", "close", String(number)], root);
+	if (result.code !== 0)
+		return {
+			ok: false,
+			text: formatExecFailure("gh", result.code, result.stderr, result.stdout),
+		};
+	return {
+		ok: true,
+		text: result.stdout.trim() || `Closed pull request #${number}.`,
+	};
+}
+
+async function startIssueWork(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Issue number is required for start." };
 
 	const view = await viewIssue(pi, root, number);
 	if (!view.ok) return view;
@@ -600,30 +1269,52 @@ async function startIssueWork(pi: ExtensionAPI, root: string, number?: number): 
 	setActiveIssue(root, number);
 	return {
 		ok: true,
-		text: [`Started work on issue #${number}.`, view.text, stage.text].join("\n"),
+		text: [`Started work on issue #${number}.`, view.text, stage.text].join(
+			"\n",
+		),
 		details: { issue: number, stage: "in-progress" },
 	};
 }
 
-async function selectIssueAction(pi: ExtensionAPI, ctx: ExtensionContext, args?: string): Promise<CommandResult> {
+async function selectIssueAction(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	args?: string,
+): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
-	if (!getRepoConfig(root).enabled) return { ok: false, text: "GitHub tracking is disabled for this repo. Run /gh-track enable first." };
-	if (!ctx.hasUI) return { ok: false, text: "Interactive issue selection requires the TUI. Use /gh-issue list and /gh-work start <number> instead." };
+	if (!getRepoConfig(root).enabled)
+		return {
+			ok: false,
+			text: "GitHub tracking is disabled for this repo. Run /gh-track enable first.",
+		};
+	if (!ctx.hasUI)
+		return {
+			ok: false,
+			text: "Interactive issue selection requires the TUI. Use /gh-issue list and /gh-work start <number> instead.",
+		};
 
 	const listed = await listIssueSummaries(pi, root, args);
 	if (!listed.ok) return listed;
-	if (listed.issues.length === 0) return { ok: true, text: "No matching open issues found." };
+	if (listed.issues.length === 0)
+		return { ok: true, text: "No matching open issues found." };
 
 	const choices = listed.issues.map(formatIssueSummary);
-	const selected = await ctx.ui.select("Select GitHub issue to start work on:", choices);
+	const selected = await ctx.ui.select(
+		"Select GitHub issue to start work on:",
+		choices,
+	);
 	if (!selected) return { ok: true, text: "No issue selected." };
 
 	const selectedIssue = listed.issues[choices.indexOf(selected)];
 	return startIssueWork(pi, root, selectedIssue?.number);
 }
 
-function buildWorkerPrompt(issueNumber: number, issueText: string, extraInstructions?: string): string {
+function buildWorkerPrompt(
+	issueNumber: number,
+	issueText: string,
+	extraInstructions?: string,
+): string {
 	return [
 		`Autonomously work on GitHub issue #${issueNumber} in this repository.`,
 		"",
@@ -635,16 +1326,31 @@ function buildWorkerPrompt(issueNumber: number, issueText: string, extraInstruct
 		"5. When the change is ready for human review, move the issue to stage:review with github_work review.",
 		"6. Do not close the issue unless the user explicitly requested closure.",
 		"7. Do not spawn another background worker from this worker.",
-		extraInstructions?.trim() ? `\nExtra user instructions:\n${extraInstructions.trim()}` : undefined,
+		extraInstructions?.trim()
+			? `\nExtra user instructions:\n${extraInstructions.trim()}`
+			: undefined,
 		"",
 		"Current issue snapshot:",
 		truncateForPrompt(issueText),
-	].filter((part): part is string => typeof part === "string").join("\n");
+	]
+		.filter((part): part is string => typeof part === "string")
+		.join("\n");
 }
 
-async function createWorkerWorktree(pi: ExtensionAPI, root: string, issueNumber: number, runDir: string, stamp: string): Promise<WorkerWorktree> {
-	const safeRepo = root.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "repo";
-	const worktreePath = join(WORKTREES_DIR, safeRepo, `issue-${issueNumber}-${stamp}`);
+async function createWorkerWorktree(
+	pi: ExtensionAPI,
+	root: string,
+	issueNumber: number,
+	runDir: string,
+	stamp: string,
+): Promise<WorkerWorktree> {
+	const safeRepo =
+		root.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "repo";
+	const worktreePath = join(
+		WORKTREES_DIR,
+		safeRepo,
+		`issue-${issueNumber}-${stamp}`,
+	);
 	const branch = `pi-gh-issue-${issueNumber}-${stamp}`;
 	const base = await getWorktreeBase(pi, root);
 	mkdirSync(join(WORKTREES_DIR, safeRepo), { recursive: true });
@@ -652,34 +1358,101 @@ async function createWorkerWorktree(pi: ExtensionAPI, root: string, issueNumber:
 	let link = await createLinkedIssueBranch(pi, root, issueNumber, branch, base);
 	let result = link.linked
 		? await exec(pi, "git", ["worktree", "add", worktreePath, branch], root)
-		: await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, base], root);
+		: await exec(
+				pi,
+				"git",
+				["worktree", "add", "-b", branch, worktreePath, base],
+				root,
+			);
 
 	if (result.code !== 0 && link.linked) {
 		const linkedCheckoutFailure = shortExecReason(result);
 		await exec(pi, "git", ["fetch", "origin", `${branch}:${branch}`], root);
-		result = await exec(pi, "git", ["worktree", "add", worktreePath, branch], root);
+		result = await exec(
+			pi,
+			"git",
+			["worktree", "add", worktreePath, branch],
+			root,
+		);
 		if (result.code !== 0) {
-			result = await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, base], root);
-			if (result.code === 0) link.status += ` Local worktree branch was created from ${base} after linked branch checkout failed: ${linkedCheckoutFailure}`;
+			result = await exec(
+				pi,
+				"git",
+				["worktree", "add", "-b", branch, worktreePath, base],
+				root,
+			);
+			if (result.code === 0)
+				link.status += ` Local worktree branch was created from ${base} after linked branch checkout failed: ${linkedCheckoutFailure}`;
 		}
 	}
 	if (result.code !== 0 && base !== "HEAD") {
-		result = await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, "HEAD"], root);
+		result = await exec(
+			pi,
+			"git",
+			["worktree", "add", "-b", branch, worktreePath, "HEAD"],
+			root,
+		);
 	}
 	if (result.code !== 0) {
-		throw new Error(formatExecFailure("git", result.code, result.stderr, result.stdout));
+		throw new Error(
+			formatExecFailure("git", result.code, result.stderr, result.stdout),
+		);
 	}
 	if (!link.linked) {
-		const retry = await createLinkedIssueBranch(pi, root, issueNumber, branch, base);
-		link = retry.linked ? retry : { linked: false, status: `${link.status}; retry after local branch creation failed: ${retry.status}` };
+		const retry = await createLinkedIssueBranch(
+			pi,
+			root,
+			issueNumber,
+			branch,
+			base,
+		);
+		link = retry.linked
+			? retry
+			: {
+					linked: false,
+					status: `${link.status}; retry after local branch creation failed: ${retry.status}`,
+				};
 	}
 
-	writeFileSync(join(runDir, "worktree.txt"), `${worktreePath}\n${branch}\nbase=${base}\nissue-linked=${link.linked ? "true" : "false"}\nissue-link-status=${link.status}\n`, "utf8");
-	return { path: worktreePath, branch, base, branchLinked: link.linked, branchLinkStatus: link.status };
+	writeFileSync(
+		join(runDir, "worktree.txt"),
+		`${worktreePath}\n${branch}\nbase=${base}\nissue-linked=${link.linked ? "true" : "false"}\nissue-link-status=${link.status}\n`,
+		"utf8",
+	);
+	return {
+		path: worktreePath,
+		branch,
+		base,
+		branchLinked: link.linked,
+		branchLinkStatus: link.status,
+	};
 }
 
-function spawnPiWorker(root: string, issueNumber: number, prompt: string, options: { cwd: string; worktreePath?: string; branch?: string; branchBase?: string; branchLinked?: boolean; branchLinkStatus?: string; runDir: string; startedAt: string }): WorkerRun {
-	const { cwd, worktreePath, branch, branchBase, branchLinked, branchLinkStatus, runDir, startedAt } = options;
+function spawnPiWorker(
+	root: string,
+	issueNumber: number,
+	prompt: string,
+	options: {
+		cwd: string;
+		worktreePath?: string;
+		branch?: string;
+		branchBase?: string;
+		branchLinked?: boolean;
+		branchLinkStatus?: string;
+		runDir: string;
+		startedAt: string;
+	},
+): WorkerRun {
+	const {
+		cwd,
+		worktreePath,
+		branch,
+		branchBase,
+		branchLinked,
+		branchLinkStatus,
+		runDir,
+		startedAt,
+	} = options;
 	const sessionDir = join(runDir, "sessions");
 	const logPath = join(runDir, "worker.log");
 	mkdirSync(sessionDir, { recursive: true });
@@ -687,45 +1460,79 @@ function spawnPiWorker(root: string, issueNumber: number, prompt: string, option
 	const piBin = process.env.PI_BIN?.trim() || "pi";
 	const args = ["--session-dir", sessionDir, "-p", prompt];
 	const logFd = openSync(logPath, "a");
-	writeSync(logFd, [
-		`# GitHub tracker worker`,
-		`startedAt=${startedAt}`,
-		`sourceRoot=${root}`,
-		`cwd=${cwd}`,
-		worktreePath ? `worktree=${worktreePath}` : undefined,
-		branch ? `branch=${branch}` : undefined,
-		branchBase ? `branchBase=${branchBase}` : undefined,
-		branchLinked !== undefined ? `branchLinked=${branchLinked}` : undefined,
-		branchLinkStatus ? `branchLinkStatus=${branchLinkStatus}` : undefined,
-		`issue=#${issueNumber}`,
-		`command=${piBin} ${args.slice(0, 3).join(" ")} <prompt>`,
-		"",
-	].filter((line): line is string => typeof line === "string").join("\n"));
+	writeSync(
+		logFd,
+		[
+			`# GitHub tracker worker`,
+			`startedAt=${startedAt}`,
+			`sourceRoot=${root}`,
+			`cwd=${cwd}`,
+			worktreePath ? `worktree=${worktreePath}` : undefined,
+			branch ? `branch=${branch}` : undefined,
+			branchBase ? `branchBase=${branchBase}` : undefined,
+			branchLinked !== undefined ? `branchLinked=${branchLinked}` : undefined,
+			branchLinkStatus ? `branchLinkStatus=${branchLinkStatus}` : undefined,
+			`issue=#${issueNumber}`,
+			`command=${piBin} ${args.slice(0, 3).join(" ")} <prompt>`,
+			"",
+		]
+			.filter((line): line is string => typeof line === "string")
+			.join("\n"),
+	);
 
 	try {
 		const child = spawn(piBin, args, {
 			cwd,
 			detached: true,
 			stdio: ["ignore", logFd, logFd],
-			env: { ...process.env, PI_GITHUB_TRACKER_WORKER: "1", PI_GITHUB_TRACKER_ISSUE: String(issueNumber) },
+			env: {
+				...process.env,
+				PI_GITHUB_TRACKER_WORKER: "1",
+				PI_GITHUB_TRACKER_ISSUE: String(issueNumber),
+			},
 		});
 		child.unref();
 		if (!child.pid) throw new Error("pi worker did not report a PID");
-		return { issue: issueNumber, pid: child.pid, startedAt, runDir, logPath, sessionDir, worktreePath, branch, branchBase, branchLinked, branchLinkStatus };
+		return {
+			issue: issueNumber,
+			pid: child.pid,
+			startedAt,
+			runDir,
+			logPath,
+			sessionDir,
+			worktreePath,
+			branch,
+			branchBase,
+			branchLinked,
+			branchLinkStatus,
+		};
 	} finally {
 		closeSync(logFd);
 	}
 }
 
-async function spawnWorkAction(pi: ExtensionAPI, ctx: ExtensionContext, number?: number, extraInstructions?: string): Promise<CommandResult> {
+async function spawnWorkAction(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	number?: number,
+	extraInstructions?: string,
+): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
 
 	const repoConfig = getRepoConfig(root);
-	if (!repoConfig.enabled) return { ok: false, text: "GitHub tracking is disabled for this repo. Run /gh-track enable first." };
+	if (!repoConfig.enabled)
+		return {
+			ok: false,
+			text: "GitHub tracking is disabled for this repo. Run /gh-track enable first.",
+		};
 
 	const issueNumber = number ?? getActiveIssue(root);
-	if (!isIssueNumber(issueNumber)) return { ok: false, text: "Issue number is required, or start an active issue first with /gh-work start <number>." };
+	if (!isIssueNumber(issueNumber))
+		return {
+			ok: false,
+			text: "Issue number is required, or start an active issue first with /gh-work start <number>.",
+		};
 
 	const view = await viewIssue(pi, root, issueNumber);
 	if (!view.ok) return view;
@@ -738,11 +1545,18 @@ async function spawnWorkAction(pi: ExtensionAPI, ctx: ExtensionContext, number?:
 	try {
 		const startedAt = new Date().toISOString();
 		const stamp = startedAt.replace(/[:.]/g, "-");
-		const safeRoot = root.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "repo";
+		const safeRoot =
+			root.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "repo";
 		const runDir = join(RUNS_DIR, `${safeRoot}-issue-${issueNumber}-${stamp}`);
 		mkdirSync(runDir, { recursive: true });
 
-		const worktree = await createWorkerWorktree(pi, root, issueNumber, runDir, stamp);
+		const worktree = await createWorkerWorktree(
+			pi,
+			root,
+			issueNumber,
+			runDir,
+			stamp,
+		);
 		setRepoEnabled(worktree.path, true);
 		setActiveIssue(worktree.path, issueNumber);
 
@@ -771,15 +1585,24 @@ async function spawnWorkAction(pi: ExtensionAPI, ctx: ExtensionContext, number?:
 				`Log: ${run.logPath}`,
 				`Session dir: ${run.sessionDir}`,
 				stage.text,
-			].filter((line): line is string => typeof line === "string").join("\n"),
+			]
+				.filter((line): line is string => typeof line === "string")
+				.join("\n"),
 			details: run,
 		};
 	} catch (error) {
-		return { ok: false, text: `Failed to spawn isolated pi worker: ${error instanceof Error ? error.message : String(error)}` };
+		return {
+			ok: false,
+			text: `Failed to spawn isolated pi worker: ${error instanceof Error ? error.message : String(error)}`,
+		};
 	}
 }
 
-async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: GithubWorkParams): Promise<CommandResult> {
+async function workAction(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	params: GithubWorkParams,
+): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
 
@@ -795,43 +1618,70 @@ async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: Githu
 				`Tracking: ${repoConfig.enabled ? "enabled" : "disabled"}`,
 				`Active issue: ${activeIssue !== undefined ? `#${activeIssue}` : "none"}`,
 				ghRepo ? `GitHub repo: ${ghRepo}` : "GitHub repo: unavailable",
-				lastRun ? `Last worker: issue #${lastRun.issue}, pid ${lastRun.pid} (${isProcessAlive(lastRun.pid) ? "running" : "not running"})` : undefined,
-				lastRun?.worktreePath ? `Last worker worktree: ${lastRun.worktreePath}` : undefined,
+				lastRun
+					? `Last worker: issue #${lastRun.issue}, pid ${lastRun.pid} (${isProcessAlive(lastRun.pid) ? "running" : "not running"})`
+					: undefined,
+				lastRun?.worktreePath
+					? `Last worker worktree: ${lastRun.worktreePath}`
+					: undefined,
 				lastRun?.branch ? `Last worker branch: ${lastRun.branch}` : undefined,
-				lastRun?.branchBase ? `Last worker branch base: ${lastRun.branchBase}` : undefined,
-				lastRun?.branchLinked !== undefined ? `Last worker branch linked: ${lastRun.branchLinked ? "yes" : "no"}` : undefined,
-				lastRun?.branchLinkStatus ? `Last worker branch link status: ${lastRun.branchLinkStatus}` : undefined,
+				lastRun?.branchBase
+					? `Last worker branch base: ${lastRun.branchBase}`
+					: undefined,
+				lastRun?.branchLinked !== undefined
+					? `Last worker branch linked: ${lastRun.branchLinked ? "yes" : "no"}`
+					: undefined,
+				lastRun?.branchLinkStatus
+					? `Last worker branch link status: ${lastRun.branchLinkStatus}`
+					: undefined,
 				lastRun ? `Last worker log: ${lastRun.logPath}` : undefined,
 			].filter((line): line is string => typeof line === "string");
 			return { ok: true, text: lines.join("\n") };
 		}
 
 		case "start": {
-			if (!repoConfig.enabled) return { ok: false, text: "GitHub tracking is disabled for this repo. Run /gh-track enable first." };
+			if (!repoConfig.enabled)
+				return {
+					ok: false,
+					text: "GitHub tracking is disabled for this repo. Run /gh-track enable first.",
+				};
 			return startIssueWork(pi, root, params.number);
 		}
 
 		case "view":
 		case "inspect": {
 			const issueNumber = params.number ?? activeIssue;
-			if (!isIssueNumber(issueNumber)) return { ok: false, text: "Issue number is required, or start an active issue first with /gh-work start <number>." };
+			if (!isIssueNumber(issueNumber))
+				return {
+					ok: false,
+					text: "Issue number is required, or start an active issue first with /gh-work start <number>.",
+				};
 			return viewIssue(pi, root, issueNumber);
 		}
 
 		case "stop": {
-			if (activeIssue === undefined) return { ok: false, text: "No active issue to stop." };
+			if (activeIssue === undefined)
+				return { ok: false, text: "No active issue to stop." };
 			clearActiveIssue(root);
 			return { ok: true, text: `Stopped work on issue #${activeIssue}.` };
 		}
 
 		case "review": {
-			if (activeIssue === undefined) return { ok: false, text: "No active issue. Use /gh-work start <number> first." };
+			if (activeIssue === undefined)
+				return {
+					ok: false,
+					text: "No active issue. Use /gh-work start <number> first.",
+				};
 			const stage = await setIssueStage(pi, root, activeIssue, "review");
 			return { ok: stage.ok, text: stage.text };
 		}
 
 		case "done": {
-			if (activeIssue === undefined) return { ok: false, text: "No active issue. Use /gh-work start <number> first." };
+			if (activeIssue === undefined)
+				return {
+					ok: false,
+					text: "No active issue. Use /gh-work start <number> first.",
+				};
 			const stage = await setIssueStage(pi, root, activeIssue, "done");
 			let closeText = "";
 			if (params.close) {
@@ -839,36 +1689,101 @@ async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: Githu
 				closeText = close.text;
 			}
 			clearActiveIssue(root);
-			return { ok: stage.ok, text: [stage.text, closeText, `Cleared active issue #${activeIssue}.`].filter(Boolean).join("\n") };
+			return {
+				ok: stage.ok,
+				text: [stage.text, closeText, `Cleared active issue #${activeIssue}.`]
+					.filter(Boolean)
+					.join("\n"),
+			};
 		}
 
 		case "comment": {
-			if (activeIssue === undefined) return { ok: false, text: "No active issue. Use /gh-work start <number> first." };
-			if (!params.text?.trim()) return { ok: false, text: "Comment text is required." };
+			if (activeIssue === undefined)
+				return {
+					ok: false,
+					text: "No active issue. Use /gh-work start <number> first.",
+				};
+			if (!params.text?.trim())
+				return { ok: false, text: "Comment text is required." };
 			return commentIssue(pi, root, activeIssue, params.text.trim());
 		}
 
 		default:
-			return { ok: false, text: `Unknown work action: ${(params as { action: string }).action}` };
+			return {
+				ok: false,
+				text: `Unknown work action: ${(params as { action: string }).action}`,
+			};
 	}
 }
 
-async function issueAction(pi: ExtensionAPI, ctx: ExtensionContext, params: GithubIssueParams): Promise<CommandResult> {
+async function issueAction(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	params: GithubIssueParams,
+): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
 
 	switch (params.action) {
-		case "list": return listIssues(pi, root, params.args);
-		case "create": return createIssue(pi, root, params.title, params.body);
-		case "view": return viewIssue(pi, root, params.number);
-		case "stage": return setIssueStage(pi, root, params.number, params.stage);
-		case "comment": return commentIssue(pi, root, params.number, params.text ?? params.body);
-		case "close": return closeIssue(pi, root, params.number);
-		default: return { ok: false, text: `Unknown issue action: ${(params as { action: string }).action}` };
+		case "list":
+			return listIssues(pi, root, params.args);
+		case "create":
+			return createIssue(pi, root, params.title, params.body);
+		case "view":
+			return viewIssue(pi, root, params.number);
+		case "stage":
+			return setIssueStage(pi, root, params.number, params.stage);
+		case "comment":
+			return commentIssue(pi, root, params.number, params.text ?? params.body);
+		case "close":
+			return closeIssue(pi, root, params.number);
+		default:
+			return {
+				ok: false,
+				text: `Unknown issue action: ${(params as { action: string }).action}`,
+			};
 	}
 }
 
-async function initLabels(pi: ExtensionAPI, ctx: ExtensionContext): Promise<CommandResult> {
+async function prAction(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+	params: GithubPrParams,
+): Promise<CommandResult> {
+	const root = await getRepoRoot(pi, ctx.cwd);
+	if (!root) return { ok: false, text: "Not inside a git repository." };
+
+	switch (params.action) {
+		case "list":
+			return listPrs(pi, root, params.args);
+		case "create":
+			return createPr(
+				pi,
+				root,
+				params.title,
+				params.body,
+				params.base,
+				params.head,
+				params.draft,
+			);
+		case "view":
+			return viewPr(pi, root, params.number);
+		case "comment":
+			return commentPr(pi, root, params.number, params.text ?? params.body);
+		case "close":
+			return closePr(pi, root, params.number);
+		default:
+			return {
+				ok: false,
+				text: `Unknown PR action: ${(params as { action: string }).action}`,
+			};
+	}
+}
+
+async function initLabels(
+	pi: ExtensionAPI,
+	ctx: ExtensionContext,
+): Promise<CommandResult> {
 	const root = await getRepoRoot(pi, ctx.cwd);
 	if (!root) return { ok: false, text: "Not inside a git repository." };
 
@@ -889,10 +1804,17 @@ async function initLabels(pi: ExtensionAPI, ctx: ExtensionContext): Promise<Comm
 
 	const lines: string[] = [];
 	for (const [name, color, description] of labels) {
-		const result = await exec(pi, "gh", ["label", "create", name, "--color", color, "--description", description], root);
+		const result = await exec(
+			pi,
+			"gh",
+			["label", "create", name, "--color", color, "--description", description],
+			root,
+		);
 		if (result.code === 0) lines.push(`created ${name}`);
-		else if (/already exists/i.test(result.stderr)) lines.push(`exists ${name}`);
-		else lines.push(`failed ${name}: ${(result.stderr || result.stdout).trim()}`);
+		else if (/already exists/i.test(result.stderr))
+			lines.push(`exists ${name}`);
+		else
+			lines.push(`failed ${name}: ${(result.stderr || result.stdout).trim()}`);
 	}
 	return { ok: true, text: lines.join("\n") };
 }
@@ -907,6 +1829,11 @@ function helpText(): string {
 		"/gh-issue stage <number> <backlog|planned|in-progress|review|blocked|done>",
 		"/gh-issue comment <number> <text>",
 		"/gh-issue close <number>",
+		"/gh-pr list [gh pr list args]",
+		"/gh-pr create <title> --body <body> --base <branch> [--head <branch>] [--draft]",
+		"/gh-pr view <number>",
+		"/gh-pr comment <number> <text>",
+		"/gh-pr close <number>",
 		"/gh-work status",
 		"/gh-work select|pick [gh issue list args]",
 		"/gh-work start <number>",
@@ -928,17 +1855,20 @@ function notifyResult(ctx: ExtensionContext, result: CommandResult) {
 const WorkflowActionEnum = StringEnum(WORKFLOW_ACTIONS);
 const WorkActionEnum = StringEnum(WORK_ACTIONS);
 const IssueActionEnum = StringEnum(ISSUE_ACTIONS);
+const PrActionEnum = StringEnum(PR_ACTIONS);
 const StageEnum = StringEnum(STAGES);
 
 export default function (pi: ExtensionAPI) {
-	let paneState: {
-		token: number;
-		handle?: OverlayHandle;
-		done?: () => void;
-		interval?: ReturnType<typeof setInterval>;
-		cleanup?: () => void;
-		component?: WorkerPane;
-	} | undefined;
+	let paneState:
+		| {
+				token: number;
+				handle?: OverlayHandle;
+				done?: () => void;
+				interval?: ReturnType<typeof setInterval>;
+				cleanup?: () => void;
+				component?: WorkerPane;
+		  }
+		| undefined;
 	let paneToken = 0;
 
 	const hideWorkerPane = (): boolean => {
@@ -954,43 +1884,59 @@ export default function (pi: ExtensionAPI) {
 		return true;
 	};
 
-	const showWorkerPane = (ctx: ExtensionContext, run: WorkerRun, cleanup?: () => void): boolean => {
+	const showWorkerPane = (
+		ctx: ExtensionContext,
+		run: WorkerRun,
+		cleanup?: () => void,
+	): boolean => {
 		if (!ctx.hasUI) return false;
 		hideWorkerPane();
 		const token = ++paneToken;
-		void ctx.ui.custom<void>((tui: TUI, theme, _kb, done) => {
-			const component = new WorkerPane(theme, run);
-			const interval = setInterval(() => {
-				component.refresh();
-				tui.requestRender();
-			}, 1500);
-			paneState = { token, done, interval, cleanup, component };
-			return component;
-		}, {
-			overlay: true,
-			overlayOptions: {
-				nonCapturing: true,
-				anchor: "top-right",
-				width: "42%",
-				minWidth: 52,
-				maxHeight: "45%",
-				margin: { top: 1, right: 1 },
-				visible: (termWidth, termHeight) => termWidth >= 100 && termHeight >= 24,
-			},
-			onHandle: (handle) => {
-				if (paneState?.token === token) paneState.handle = handle;
-			},
-		}).finally(() => {
-			if (paneState?.token !== token) return;
-			if (paneState.interval) clearInterval(paneState.interval);
-			paneState.cleanup?.();
-			paneState = undefined;
-		});
+		void ctx.ui
+			.custom<void>(
+				(tui: TUI, theme, _kb, done) => {
+					const component = new WorkerPane(theme, run);
+					const interval = setInterval(() => {
+						component.refresh();
+						tui.requestRender();
+					}, 1500);
+					paneState = { token, done, interval, cleanup, component };
+					return component;
+				},
+				{
+					overlay: true,
+					overlayOptions: {
+						nonCapturing: true,
+						anchor: "top-right",
+						width: "42%",
+						minWidth: 52,
+						maxHeight: "45%",
+						margin: { top: 1, right: 1 },
+						visible: (termWidth, termHeight) =>
+							termWidth >= 100 && termHeight >= 24,
+					},
+					onHandle: (handle) => {
+						if (paneState?.token === token) paneState.handle = handle;
+					},
+				},
+			)
+			.finally(() => {
+				if (paneState?.token !== token) return;
+				if (paneState.interval) clearInterval(paneState.interval);
+				paneState.cleanup?.();
+				paneState = undefined;
+			});
 		return true;
 	};
 
-	const showWorkerPaneTest = async (ctx: ExtensionContext): Promise<CommandResult> => {
-		if (!ctx.hasUI) return { ok: false, text: "Worker pane test requires the interactive TUI." };
+	const showWorkerPaneTest = async (
+		ctx: ExtensionContext,
+	): Promise<CommandResult> => {
+		if (!ctx.hasUI)
+			return {
+				ok: false,
+				text: "Worker pane test requires the interactive TUI.",
+			};
 
 		const root = await getRepoRoot(pi, ctx.cwd);
 		const startedAt = new Date().toISOString();
@@ -999,19 +1945,27 @@ export default function (pi: ExtensionAPI) {
 		const sessionDir = join(runDir, "sessions");
 		const logPath = join(runDir, "worker.log");
 		mkdirSync(sessionDir, { recursive: true });
-		writeFileSync(logPath, [
-			"# GitHub tracker worker pane test",
-			`startedAt=${startedAt}`,
-			`cwd=${root ?? ctx.cwd}`,
-			"This is a simulated issue-agent log. No pi worker was spawned.",
-			"The pane should update every second and stay non-capturing.",
-			"",
-		].join("\n"), "utf8");
+		writeFileSync(
+			logPath,
+			[
+				"# GitHub tracker worker pane test",
+				`startedAt=${startedAt}`,
+				`cwd=${root ?? ctx.cwd}`,
+				"This is a simulated issue-agent log. No pi worker was spawned.",
+				"The pane should update every second and stay non-capturing.",
+				"",
+			].join("\n"),
+			"utf8",
+		);
 
 		let tick = 0;
 		const logInterval = setInterval(() => {
 			tick += 1;
-			appendFileSync(logPath, `[${new Date().toISOString()}] simulated worker event ${tick}: ${tick % 2 === 0 ? "validating" : "editing"}\n`, "utf8");
+			appendFileSync(
+				logPath,
+				`[${new Date().toISOString()}] simulated worker event ${tick}: ${tick % 2 === 0 ? "validating" : "editing"}\n`,
+				"utf8",
+			);
 		}, 1000);
 
 		const run: WorkerRun = {
@@ -1029,19 +1983,33 @@ export default function (pi: ExtensionAPI) {
 		return { ok: true, text: `Worker pane test started. Log: ${logPath}` };
 	};
 
-	const workerPaneAction = async (ctx: ExtensionContext, mode: string): Promise<CommandResult> => {
+	const workerPaneAction = async (
+		ctx: ExtensionContext,
+		mode: string,
+	): Promise<CommandResult> => {
 		if (mode === "test" || mode === "smoke") return showWorkerPaneTest(ctx);
 		if (mode === "hide" || mode === "off") {
-			return { ok: true, text: hideWorkerPane() ? "Worker pane hidden." : "Worker pane was not visible." };
+			return {
+				ok: true,
+				text: hideWorkerPane()
+					? "Worker pane hidden."
+					: "Worker pane was not visible.",
+			};
 		}
 		if (mode === "toggle" && paneState) {
-			return { ok: true, text: hideWorkerPane() ? "Worker pane hidden." : "Worker pane was not visible." };
+			return {
+				ok: true,
+				text: hideWorkerPane()
+					? "Worker pane hidden."
+					: "Worker pane was not visible.",
+			};
 		}
 
 		const root = await getRepoRoot(pi, ctx.cwd);
 		if (!root) return { ok: false, text: "Not inside a git repository." };
 		const run = getLastRun(root);
-		if (!run) return { ok: false, text: "No worker run recorded for this repo." };
+		if (!run)
+			return { ok: false, text: "No worker run recorded for this repo." };
 		const shown = showWorkerPane(ctx, run);
 		return shown
 			? { ok: true, text: `Worker pane shown for issue #${run.issue}.` }
@@ -1058,35 +2026,51 @@ export default function (pi: ExtensionAPI) {
 			? `GitHub repository detected: ${ghRepo}.`
 			: "GitHub CLI/repository is not currently available. Tell the user if issue tracking is needed and suggest `gh auth login` or checking the GitHub remote.";
 
-		const activePrompt = activeIssue !== undefined
-			? `Active issue: #${activeIssue}. When doing work, inspect it with github_work view and prefer updating this active issue (stage, comment) via the github_work or github_issue tools rather than creating a new one unless the user explicitly asks for a separate issue.`
-			: "No active issue is set. When starting substantial work, use github_issue to find or create a tracking issue, then set it active with github_work start <number>.";
+		const activePrompt =
+			activeIssue !== undefined
+				? `Active issue: #${activeIssue}. When doing work, inspect it with github_work view and prefer updating this active issue (stage, comment) via the github_work or github_issue tools rather than creating a new one unless the user explicitly asks for a separate issue.`
+				: "No active issue is set. When starting substantial work, use github_issue to find or create a tracking issue, then set it active with github_work start <number>.";
 
 		return {
-			systemPrompt: `${event.systemPrompt}\n\nGitHub issue tracking workflow is enabled for this repository. ${ghStatus} ${activePrompt}\nWhen doing substantial repo work, use the github_issue tool or /gh-issue slash command workflow to: find or create a tracking issue, set it to stage:planned or stage:in-progress when work begins, comment with important decisions or blockers, move it to stage:review when changes are ready to validate, and move it to stage:done/close only after the user approves or the work is clearly complete. Keep trivial read-only questions out of GitHub unless the user asks to track them. If GitHub CLI/auth is unavailable, clearly mention that tracking could not be updated.`,
+			systemPrompt: `${event.systemPrompt}\n\nGitHub issue tracking workflow is enabled for this repository. ${ghStatus} ${activePrompt}\nWhen doing substantial repo work, use the github_issue tool or /gh-issue slash command workflow to: find or create a tracking issue, set it to stage:planned or stage:in-progress when work begins, comment with important decisions or blockers, move it to stage:review when changes are ready to validate, and move it to stage:done/close only after the user approves or the work is clearly complete. Keep trivial read-only questions out of GitHub unless the user asks to track them. For pull request work, use github_pr or /gh-pr to list/create/view/comment/close PRs, confirm the base branch before creating a PR, and include Closes/Related issue links in PR bodies when appropriate. If GitHub CLI/auth is unavailable, clearly mention that tracking could not be updated.`,
 		};
 	});
 
 	pi.registerTool({
 		name: "github_workflow",
 		label: "GitHub Workflow",
-		description: "Check or toggle per-repository GitHub issue tracking workflow state.",
-		promptSnippet: "github_workflow: check or toggle GitHub issue tracking for this repo",
-		promptGuidelines: ["Use github_workflow status before relying on GitHub tracking; enable/disable only when requested by the user."],
+		description:
+			"Check or toggle per-repository GitHub issue tracking workflow state.",
+		promptSnippet:
+			"github_workflow: check or toggle GitHub issue tracking for this repo",
+		promptGuidelines: [
+			"Use github_workflow status before relying on GitHub tracking; enable/disable only when requested by the user.",
+		],
 		parameters: Type.Object({
 			action: WorkflowActionEnum,
 		}),
-		async execute(_toolCallId, params: GithubWorkflowParams, _signal, _onUpdate, ctx) {
+		async execute(
+			_toolCallId,
+			params: GithubWorkflowParams,
+			_signal,
+			_onUpdate,
+			ctx,
+		) {
 			const result = await workflowAction(pi, ctx, params.action);
-			return { content: [{ type: "text", text: result.text }], details: result.details ?? result };
+			return {
+				content: [{ type: "text", text: result.text }],
+				details: result.details ?? result,
+			};
 		},
 	});
 
 	pi.registerTool({
 		name: "github_work",
 		label: "GitHub Work",
-		description: "Manage active GitHub issue workflow for the current repository. Actions: status, start, view, inspect, run, spawn, stop, review, done, comment.",
-		promptSnippet: "github_work: manage the active GitHub issue workflow (start/view/run/stop/review/done/comment)",
+		description:
+			"Manage active GitHub issue workflow for the current repository. Actions: status, start, view, inspect, run, spawn, stop, review, done, comment.",
+		promptSnippet:
+			"github_work: manage the active GitHub issue workflow (start/view/run/stop/review/done/comment)",
 		promptGuidelines: [
 			"Use github_work start <number> to set the active issue before beginning substantial work.",
 			"Use github_work view to inspect the active issue before making changes.",
@@ -1096,81 +2080,276 @@ export default function (pi: ExtensionAPI) {
 		],
 		parameters: Type.Object({
 			action: WorkActionEnum,
-			number: Type.Optional(Type.Number({ description: "Issue number for start/view/run" })),
-			text: Type.Optional(Type.String({ description: "Comment text for comment, or extra instructions for run/spawn" })),
-			close: Type.Optional(Type.Boolean({ description: "Close issue when marking done" })),
+			number: Type.Optional(
+				Type.Number({ description: "Issue number for start/view/run" }),
+			),
+			text: Type.Optional(
+				Type.String({
+					description:
+						"Comment text for comment, or extra instructions for run/spawn",
+				}),
+			),
+			close: Type.Optional(
+				Type.Boolean({ description: "Close issue when marking done" }),
+			),
 		}),
-		async execute(_toolCallId, params: GithubWorkParams, _signal, _onUpdate, ctx) {
-			const result = params.action === "run" || params.action === "spawn"
-				? await spawnWorkAction(pi, ctx, params.number, params.text)
-				: await workAction(pi, ctx, params);
-			if (result.ok && isWorkerRun(result.details)) showWorkerPane(ctx, result.details);
-			return { content: [{ type: "text", text: result.text }], details: result.details ?? result };
+		async execute(
+			_toolCallId,
+			params: GithubWorkParams,
+			_signal,
+			_onUpdate,
+			ctx,
+		) {
+			const result =
+				params.action === "run" || params.action === "spawn"
+					? await spawnWorkAction(pi, ctx, params.number, params.text)
+					: await workAction(pi, ctx, params);
+			if (result.ok && isWorkerRun(result.details))
+				showWorkerPane(ctx, result.details);
+			return {
+				content: [{ type: "text", text: result.text }],
+				details: result.details ?? result,
+			};
 		},
 	});
 
 	pi.registerTool({
 		name: "github_issue",
 		label: "GitHub Issue",
-		description: "Manage GitHub issues for the current repository with gh CLI. Actions: list, create, view, stage, comment, close.",
-		promptSnippet: "github_issue: list/create/view/stage/comment/close GitHub issues for this repo",
+		description:
+			"Manage GitHub issues for the current repository with gh CLI. Actions: list, create, view, stage, comment, close.",
+		promptSnippet:
+			"github_issue: list/create/view/stage/comment/close GitHub issues for this repo",
 		promptGuidelines: [
 			"When GitHub tracking is enabled, use github_issue to create/find a tracking issue for substantial implementation work.",
 			"Use stage labels stage:planned, stage:in-progress, stage:review, stage:blocked, and stage:done to reflect progress.",
 		],
 		parameters: Type.Object({
 			action: IssueActionEnum,
-			number: Type.Optional(Type.Number({ description: "Issue number for view/stage/comment/close" })),
-			title: Type.Optional(Type.String({ description: "Issue title for create" })),
-			body: Type.Optional(Type.String({ description: "Issue body for create, or comment fallback" })),
+			number: Type.Optional(
+				Type.Number({
+					description: "Issue number for view/stage/comment/close",
+				}),
+			),
+			title: Type.Optional(
+				Type.String({ description: "Issue title for create" }),
+			),
+			body: Type.Optional(
+				Type.String({
+					description: "Issue body for create, or comment fallback",
+				}),
+			),
 			stage: Type.Optional(StageEnum),
 			text: Type.Optional(Type.String({ description: "Comment text" })),
-			args: Type.Optional(Type.String({ description: "Extra gh issue list arguments for list action" })),
+			args: Type.Optional(
+				Type.String({
+					description: "Extra gh issue list arguments for list action",
+				}),
+			),
 		}),
-		async execute(_toolCallId, params: GithubIssueParams, _signal, _onUpdate, ctx) {
+		async execute(
+			_toolCallId,
+			params: GithubIssueParams,
+			_signal,
+			_onUpdate,
+			ctx,
+		) {
 			const result = await issueAction(pi, ctx, params);
-			return { content: [{ type: "text", text: result.text }], details: result.details ?? result };
+			return {
+				content: [{ type: "text", text: result.text }],
+				details: result.details ?? result,
+			};
+		},
+	});
+
+	pi.registerTool({
+		name: "github_pr",
+		label: "GitHub PR",
+		description:
+			"Manage GitHub pull requests for the current repository with gh CLI. Actions: list, create, view, comment, close. Creating a PR requires a confirmed base branch.",
+		promptSnippet:
+			"github_pr: list/create/view/comment/close GitHub pull requests for this repo",
+		promptGuidelines: [
+			"Use github_pr when the user asks to prepare, inspect, create, update, comment on, or close a PR.",
+			"Before github_pr create, confirm the base branch and check for an existing PR from the current branch to avoid duplicates.",
+			"Include Closes #N or Related to #N links in PR bodies when issue relationships are known.",
+		],
+		parameters: Type.Object({
+			action: PrActionEnum,
+			number: Type.Optional(
+				Type.Number({ description: "PR number for view/comment/close" }),
+			),
+			title: Type.Optional(Type.String({ description: "PR title for create" })),
+			body: Type.Optional(
+				Type.String({ description: "PR body for create, or comment fallback" }),
+			),
+			base: Type.Optional(
+				Type.String({
+					description:
+						"Confirmed base branch for create (required by action=create)",
+				}),
+			),
+			head: Type.Optional(
+				Type.String({ description: "Head branch for create" }),
+			),
+			draft: Type.Optional(Type.Boolean({ description: "Create PR as draft" })),
+			text: Type.Optional(Type.String({ description: "Comment text" })),
+			args: Type.Optional(
+				Type.String({
+					description: "Extra gh pr list arguments for list action",
+				}),
+			),
+		}),
+		async execute(
+			_toolCallId,
+			params: GithubPrParams,
+			_signal,
+			_onUpdate,
+			ctx,
+		) {
+			const result = await prAction(pi, ctx, params);
+			return {
+				content: [{ type: "text", text: result.text }],
+				details: result.details ?? result,
+			};
 		},
 	});
 
 	pi.registerCommand("gh-track", {
-		description: "Toggle or inspect GitHub issue tracking workflow for this repo",
-		getArgumentCompletions: (prefix: string) => completeFirstArg(prefix, GH_TRACK_COMPLETIONS),
+		description:
+			"Toggle or inspect GitHub issue tracking workflow for this repo",
+		getArgumentCompletions: (prefix: string) =>
+			completeFirstArg(prefix, GH_TRACK_COMPLETIONS),
 		handler: async (args, ctx) => {
 			const action = args.trim() || "status";
-			if (action === "help") return notifyResult(ctx, { ok: true, text: helpText() });
-			if (!["status", "enable", "disable"].includes(action)) return notifyResult(ctx, { ok: false, text: helpText() });
-			notifyResult(ctx, await workflowAction(pi, ctx, action as GithubWorkflowParams["action"]));
+			if (action === "help")
+				return notifyResult(ctx, { ok: true, text: helpText() });
+			if (!["status", "enable", "disable"].includes(action))
+				return notifyResult(ctx, { ok: false, text: helpText() });
+			notifyResult(
+				ctx,
+				await workflowAction(pi, ctx, action as GithubWorkflowParams["action"]),
+			);
 		},
 	});
 
 	pi.registerCommand("gh-issue", {
-		description: "List/create/view/stage/comment/close GitHub issues via gh CLI",
+		description:
+			"List/create/view/stage/comment/close GitHub issues via gh CLI",
 		getArgumentCompletions: completeGhIssueArgs,
 		handler: async (args, ctx) => {
 			const [action = "list", ...rest] = splitArgs(args);
 			const rawRest = args.trim().slice(action.length).trim();
 			let result: CommandResult;
 			switch (action) {
-				case "list": result = await issueAction(pi, ctx, { action: "list", args: rawRest }); break;
+				case "list":
+					result = await issueAction(pi, ctx, {
+						action: "list",
+						args: rawRest,
+					});
+					break;
 				case "create": {
 					const parsed = parseCreateArgs(rawRest);
-					result = parsed ? await issueAction(pi, ctx, { action: "create", ...parsed }) : { ok: false, text: "Usage: /gh-issue create <title> --body <body>" };
+					result = parsed
+						? await issueAction(pi, ctx, { action: "create", ...parsed })
+						: {
+								ok: false,
+								text: "Usage: /gh-issue create <title> --body <body>",
+							};
 					break;
 				}
-				case "view": result = await issueAction(pi, ctx, { action: "view", number: Number(rest[0]) }); break;
-				case "stage": result = await issueAction(pi, ctx, { action: "stage", number: Number(rest[0]), stage: rest[1] as Stage }); break;
-				case "comment": result = await issueAction(pi, ctx, { action: "comment", number: Number(rest[0]), text: rest.slice(1).join(" ") }); break;
-				case "close": result = await issueAction(pi, ctx, { action: "close", number: Number(rest[0]) }); break;
-				case "help": result = { ok: true, text: helpText() }; break;
-				default: result = { ok: false, text: helpText() }; break;
+				case "view":
+					result = await issueAction(pi, ctx, {
+						action: "view",
+						number: Number(rest[0]),
+					});
+					break;
+				case "stage":
+					result = await issueAction(pi, ctx, {
+						action: "stage",
+						number: Number(rest[0]),
+						stage: rest[1] as Stage,
+					});
+					break;
+				case "comment":
+					result = await issueAction(pi, ctx, {
+						action: "comment",
+						number: Number(rest[0]),
+						text: rest.slice(1).join(" "),
+					});
+					break;
+				case "close":
+					result = await issueAction(pi, ctx, {
+						action: "close",
+						number: Number(rest[0]),
+					});
+					break;
+				case "help":
+					result = { ok: true, text: helpText() };
+					break;
+				default:
+					result = { ok: false, text: helpText() };
+					break;
+			}
+			notifyResult(ctx, result);
+		},
+	});
+
+	pi.registerCommand("gh-pr", {
+		description:
+			"List/create/view/comment/close GitHub pull requests via gh CLI",
+		getArgumentCompletions: completeGhPrArgs,
+		handler: async (args, ctx) => {
+			const [action = "list", ...rest] = splitArgs(args);
+			const rawRest = args.trim().slice(action.length).trim();
+			let result: CommandResult;
+			switch (action) {
+				case "list":
+					result = await prAction(pi, ctx, { action: "list", args: rawRest });
+					break;
+				case "create": {
+					const parsed = parseCreatePrArgs(rawRest);
+					result = parsed
+						? await prAction(pi, ctx, { action: "create", ...parsed })
+						: {
+								ok: false,
+								text: "Usage: /gh-pr create <title> --body <body> --base <branch> [--head <branch>] [--draft]",
+							};
+					break;
+				}
+				case "view":
+					result = await prAction(pi, ctx, {
+						action: "view",
+						number: Number(rest[0]),
+					});
+					break;
+				case "comment":
+					result = await prAction(pi, ctx, {
+						action: "comment",
+						number: Number(rest[0]),
+						text: rest.slice(1).join(" "),
+					});
+					break;
+				case "close":
+					result = await prAction(pi, ctx, {
+						action: "close",
+						number: Number(rest[0]),
+					});
+					break;
+				case "help":
+					result = { ok: true, text: helpText() };
+					break;
+				default:
+					result = { ok: false, text: helpText() };
+					break;
 			}
 			notifyResult(ctx, result);
 		},
 	});
 
 	pi.registerCommand("gh-work", {
-		description: "Select, inspect, start, stop, spawn, review, or finish work on the active GitHub issue",
+		description:
+			"Select, inspect, start, stop, spawn, review, or finish work on the active GitHub issue",
 		getArgumentCompletions: completeGhWorkArgs,
 		handler: async (args, ctx) => {
 			const [action = "status", ...rest] = splitArgs(args);
@@ -1185,20 +2364,29 @@ export default function (pi: ExtensionAPI) {
 					result = await selectIssueAction(pi, ctx, rawRest);
 					break;
 				case "start":
-					result = await workAction(pi, ctx, { action: "start", number: Number(rest[0]) });
+					result = await workAction(pi, ctx, {
+						action: "start",
+						number: Number(rest[0]),
+					});
 					break;
 				case "view":
 				case "inspect":
-					result = await workAction(pi, ctx, { action, number: rest[0] ? Number(rest[0]) : undefined });
+					result = await workAction(pi, ctx, {
+						action,
+						number: rest[0] ? Number(rest[0]) : undefined,
+					});
 					break;
 				case "do":
 				case "run":
 				case "spawn": {
 					const hasIssueNumber = /^\d+$/.test(rest[0] ?? "");
 					const number = hasIssueNumber ? Number(rest[0]) : undefined;
-					const extraInstructions = (hasIssueNumber ? rest.slice(1) : rest).join(" ");
+					const extraInstructions = (
+						hasIssueNumber ? rest.slice(1) : rest
+					).join(" ");
 					result = await spawnWorkAction(pi, ctx, number, extraInstructions);
-					if (result.ok && isWorkerRun(result.details)) showWorkerPane(ctx, result.details);
+					if (result.ok && isWorkerRun(result.details))
+						showWorkerPane(ctx, result.details);
 					break;
 				}
 				case "pane":
@@ -1212,11 +2400,17 @@ export default function (pi: ExtensionAPI) {
 					break;
 				case "done": {
 					const shouldClose = rest.includes("--close");
-					result = await workAction(pi, ctx, { action: "done", close: shouldClose });
+					result = await workAction(pi, ctx, {
+						action: "done",
+						close: shouldClose,
+					});
 					break;
 				}
 				case "comment":
-					result = await workAction(pi, ctx, { action: "comment", text: rest.join(" ") });
+					result = await workAction(pi, ctx, {
+						action: "comment",
+						text: rest.join(" "),
+					});
 					break;
 				case "help":
 					result = { ok: true, text: helpText() };
@@ -1230,10 +2424,18 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.registerCommand("gh-labels", {
-		description: "Initialize standard GitHub tracking labels in the current repo",
-		getArgumentCompletions: (prefix: string) => completeFirstArg(prefix, [{ value: "init", description: "Create/update standard tracking labels" }]),
+		description:
+			"Initialize standard GitHub tracking labels in the current repo",
+		getArgumentCompletions: (prefix: string) =>
+			completeFirstArg(prefix, [
+				{
+					value: "init",
+					description: "Create/update standard tracking labels",
+				},
+			]),
 		handler: async (args, ctx) => {
-			if ((args.trim() || "init") !== "init") return notifyResult(ctx, { ok: false, text: "Usage: /gh-labels init" });
+			if ((args.trim() || "init") !== "init")
+				return notifyResult(ctx, { ok: false, text: "Usage: /gh-labels init" });
 			notifyResult(ctx, await initLabels(pi, ctx));
 		},
 	});
