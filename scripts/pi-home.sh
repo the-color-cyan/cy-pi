@@ -44,4 +44,9 @@ JSON
 	cd "$workspace"
 fi
 
-exec pi "${args[@]}"
+pi_executable="$repo_root/bin/pi"
+if [ ! -x "$pi_executable" ]; then
+	pi_executable="pi"
+fi
+
+exec "$pi_executable" "${args[@]}"

@@ -7,6 +7,7 @@ This repo is intended to be used directly as a Pi agent home: clone it and run p
 ## Contents
 
 - `extensions/` — pi TypeScript extensions
+  - `agent-home-update.ts` — notifies on startup when tracked agent-home commits are available
   - `cd.ts` — adds `/cd <path>` to migrate the active session to a new working directory
   - `sh.ts` — adds `/sh <command>` to run a shell command in pi's current working directory
   - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
@@ -38,11 +39,15 @@ cd ~/pi/cy-pi
 ./scripts/pi-home.sh
 ```
 
-`pi-home.sh` is just a convenience wrapper for:
+`pi-home.sh` is a convenience wrapper for:
 
 ```bash
 PI_CODING_AGENT_DIR="$PWD" pi
 ```
+
+`init-agent-home.sh` also creates `./bin/pi`. This wrapper integrates with `pi update` so your agent-home git repo is checked and fast-forward pulled (when safe) before normal package update behavior runs. `pi-home.sh` uses this wrapper automatically; to get the same behavior from plain `pi update`, put this checkout's `bin/` before the system `pi` on `PATH`.
+
+At startup, the loaded extension checks whether this repo has remote commits not yet pulled and notifies you in the session UI. It respects `PI_OFFLINE=1`.
 
 This keeps resources editable in place: `extensions/`, `skills/`, `prompts/`, `themes/`, `agents/`, `APPEND_SYSTEM.md`, and the top-level prompt/playbook files are all loaded from the checkout. Runtime state such as `auth.json`, `settings.json`, sessions, run history, tracker state, and generated worktrees is ignored by git.
 
