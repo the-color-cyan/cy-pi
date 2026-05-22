@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, realpathSync, statSync } from "node:fs";
+import { delimiter, join } from "node:path";
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
@@ -12,7 +12,7 @@ type AgentHomeStatus = {
 	reason?: string;
 };
 
-function parseAgentHomeStatus(output: string): AgentHomeStatus {
+export function parseAgentHomeStatus(output: string): AgentHomeStatus {
 	const status: AgentHomeStatus = { status: "unknown" };
 	for (const raw of output.split("\n")) {
 		const line = raw.trim();
@@ -49,6 +49,48 @@ function commitMessage(count: number): string {
 	return count === 1 ? "1 commit" : `${count} commits`;
 }
 
+function isExecutable(path: string): boolean {
+	try {
+		const stat = statSync(path);
+		return stat.isFile() && (stat.mode & 0o111) !== 0;
+	} catch {
+		return false;
+	}
+}
+
+function sameRealPath(a: string, b: string): boolean {
+	try {
+		return realpathSync(a) === realpathSync(b);
+	} catch {
+		return false;
+	}
+}
+
+function findPiOnPath(pathEnv = process.env.PATH || ""): string | undefined {
+	for (const entry of pathEnv.split(delimiter)) {
+		if (!entry) continue;
+		const candidate = join(entry, "pi");
+		if (isExecutable(candidate)) return candidate;
+	}
+	return undefined;
+}
+
+export function recommendedAgentHomeUpdateCommand(
+	repoRoot: string,
+	pathEnv = process.env.PATH || "",
+): string {
+	const wrapper = join(repoRoot, "bin", "pi");
+	const updateScript = join(repoRoot, "scripts", "update-agent-home.sh");
+	const activePi = findPiOnPath(pathEnv);
+
+	if (isExecutable(wrapper)) {
+		if (activePi && sameRealPath(activePi, wrapper)) return "pi update";
+		return `"${wrapper}" update`;
+	}
+
+	return `"${updateScript}" --pull`;
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (event, ctx) => {
 		if (event.reason !== "startup" || !ctx.hasUI) return;
@@ -76,8 +118,9 @@ export default function (pi: ExtensionAPI) {
 
 			if (parsed.status === "behind" && Number.isFinite(behind) && behind > 0) {
 				const source = parsed.upstream || parsed.branch || "origin";
+				const updateCommand = recommendedAgentHomeUpdateCommand(repoRoot);
 				ctx.ui.notify(
-					`Agent home has ${commitMessage(behind)} available on ${source}. Run "pi update" to pull the latest agent-home changes.`,
+					`Agent home has ${commitMessage(behind)} available on ${source}. Run ${updateCommand} to pull the latest agent-home changes.`,
 					"warning",
 				);
 				return;
