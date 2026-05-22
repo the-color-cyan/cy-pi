@@ -32,6 +32,87 @@ path.write_text(text)
 PY
 }
 
+managed_shell_path() {
+	local bin_path="$repo_root/bin"
+	if [[ -n "${HOME:-}" && "$bin_path" == "$HOME"/* ]]; then
+		printf '$HOME/%s' "${bin_path#"$HOME"/}"
+	else
+		printf '%s' "$bin_path"
+	fi
+}
+
+write_managed_block() {
+	local path="$1"
+	local start_marker="$2"
+	local end_marker="$3"
+	local block="$4"
+	mkdir -p "$(dirname "$path")"
+	python3 - "$path" "$start_marker" "$end_marker" "$block" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+start = sys.argv[2]
+end = sys.argv[3]
+block = sys.argv[4].rstrip() + "\n"
+text = path.read_text() if path.exists() else ""
+start_index = text.find(start)
+if start_index != -1:
+    end_index = text.find(end, start_index)
+    if end_index != -1:
+        end_index = text.find("\n", end_index)
+        if end_index == -1:
+            text = text[:start_index] + block
+        else:
+            text = text[:start_index] + block + text[end_index + 1:]
+    else:
+        text = text.rstrip() + "\n" + block
+else:
+    separator = "" if not text or text.endswith("\n") else "\n"
+    text = text + separator + block
+path.write_text(text)
+PY
+}
+
+setup_shell_path() {
+	local shell_bin_path
+	shell_bin_path="$(managed_shell_path)"
+	local posix_start="# >>> cy-pi agent-home PATH >>>"
+	local posix_end="# <<< cy-pi agent-home PATH <<<"
+	local fish_start="# >>> cy-pi agent-home PATH >>>"
+	local fish_end="# <<< cy-pi agent-home PATH <<<"
+	local posix_block
+	local fish_block
+
+	posix_block="$(
+		cat <<EOF
+$posix_start
+if [ -d "$shell_bin_path" ]; then
+	case ":\$PATH:" in
+		*":$shell_bin_path:"*) ;;
+		*) export PATH="$shell_bin_path:\$PATH" ;;
+	esac
+fi
+$posix_end
+EOF
+	)"
+	fish_block="$(
+		cat <<EOF
+$fish_start
+if test -d "$shell_bin_path"
+	fish_add_path --prepend "$shell_bin_path"
+end
+$fish_end
+EOF
+	)"
+
+	write_managed_block "${HOME:?HOME is required}/.zshrc" "$posix_start" "$posix_end" "$posix_block"
+	write_managed_block "$HOME/.bashrc" "$posix_start" "$posix_end" "$posix_block"
+	write_managed_block "$HOME/.bash_profile" "$posix_start" "$posix_end" "$posix_block"
+	write_managed_block "$HOME/.config/fish/conf.d/cy-pi.fish" "$fish_start" "$fish_end" "$fish_block"
+	log "Configured shell PATH for bash, zsh, and fish"
+}
+
 mkdir -p \
 	"$repo_root/sessions" \
 	"$repo_root/sessions/subagent" \
@@ -100,6 +181,7 @@ PY
 }
 
 setup_agent_home_pi_wrapper
+setup_shell_path
 if [ ! -f "$settings_dst" ]; then
 	if [ -f "$settings_src" ]; then
 		cp "$settings_src" "$settings_dst"
@@ -143,6 +225,7 @@ Reference setup applied:
   - settings paths were materialized for this checkout
   - package dependencies in npm/package-lock.json were installed when npm is available
   - update wrapper is configured at bin/pi to run a safe agent-home pull on \`pi update\`
-  - pi-home.sh uses bin/pi automatically; put "$repo_root/bin" first on PATH for plain \`pi update\`
+  - bash, zsh, and fish startup files were configured to put "$repo_root/bin" first on PATH
+  - restart your shell or run \`exec \$SHELL\`; for fish, \`exec fish\` is also fine
   - startup update checker is available via the \`agent-home-update.ts\` extension
 EOF
