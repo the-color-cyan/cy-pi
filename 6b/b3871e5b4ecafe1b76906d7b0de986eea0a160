@@ -1,0 +1,26 @@
+extensions/github-tracker.ts
+  s_ad5ee8f2523499::t_0b215741de427a 753-755,768-770,774
+  s_ad5ee8f2523499::t_e777f23158268e 658,661-664,666
+  s_ad5ee8f2523499::t_c2f4ed8a9fa757 299-322
+  s_ad5ee8f2523499::t_583991e0a407ba 801-803
+  s_ad5ee8f2523499::t_7530379dde7f50 89-91,93
+  s_ad5ee8f2523499::t_4c028b6cd8e411 423
+  s_ad5ee8f2523499::t_6a094c89d1b6b1 697-699,714
+  s_ad5ee8f2523499::t_e1b9505dde18e5 645,649,652-657,659-660,665,667-668,672-675,677-678,681-682
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "6bb3871e5b4ecafe1b76906d7b0de986eea0a160",
+  "prompts": {},
+  "sessions": {
+    "s_ad5ee8f2523499": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e508d-4a4d-7e2e-bc5e-a4913ba7c19d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
