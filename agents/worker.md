@@ -1,7 +1,7 @@
 ---
 name: worker
 description: Implementation agent for normal tasks and approved oracle handoffs
-model: GPT-5.3-Codex-Spark
+model: openai-codex/gpt-5.3-codex-spark
 thinking: medium
 systemPromptMode: replace
 inheritProjectContext: true
