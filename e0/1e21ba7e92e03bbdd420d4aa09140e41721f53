@@ -1,0 +1,21 @@
+extensions/agent-home-update.ts
+  s_f3177b4ca63462::t_c27c34f6ae8a6f 1-2,15,52-93,121,123
+tests/agent-home-update.test.ts
+  s_f3177b4ca63462::t_f9b790c624ea7a 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "e01e21ba7e92e03bbdd420d4aa09140e41721f53",
+  "prompts": {},
+  "sessions": {
+    "s_f3177b4ca63462": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e514c-32a0-7175-be86-5ffa0d80d875",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
