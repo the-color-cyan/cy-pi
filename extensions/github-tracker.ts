@@ -86,7 +86,11 @@ type WorkerRun = {
 	sessionDir: string;
 	worktreePath?: string;
 	branch?: string;
+	branchBase?: string;
+	branchLinked?: boolean;
+	branchLinkStatus?: string;
 };
+type WorkerWorktree = { path: string; branch: string; base: string; branchLinked: boolean; branchLinkStatus: string };
 type RepoConfig = { enabled: boolean; activeIssue?: number; lastRun?: WorkerRun };
 type Config = { version: 1; repos: Record<string, RepoConfig> };
 type CommandResult = { ok: boolean; text: string; details?: unknown };
@@ -292,6 +296,30 @@ async function getGhRepo(pi: ExtensionAPI, root: string): Promise<string | undef
 	return result.code === 0 ? result.stdout.trim() : undefined;
 }
 
+async function getDefaultBranch(pi: ExtensionAPI, root: string): Promise<string | undefined> {
+	const result = await exec(pi, "gh", ["repo", "view", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"], root);
+	return result.code === 0 ? result.stdout.trim() || undefined : undefined;
+}
+
+async function getCurrentBranch(pi: ExtensionAPI, root: string): Promise<string | undefined> {
+	const result = await exec(pi, "git", ["branch", "--show-current"], root);
+	return result.code === 0 ? result.stdout.trim() || undefined : undefined;
+}
+
+async function getWorktreeBase(pi: ExtensionAPI, root: string): Promise<string> {
+	return (await getCurrentBranch(pi, root)) ?? (await getDefaultBranch(pi, root)) ?? "HEAD";
+}
+
+function shortExecReason(result: { stderr: string; stdout: string }): string {
+	return (result.stderr || result.stdout || "unknown error").trim().replace(/\s+/g, " ") || "unknown error";
+}
+
+async function createLinkedIssueBranch(pi: ExtensionAPI, root: string, issueNumber: number, branch: string, base: string): Promise<{ linked: boolean; status: string }> {
+	const result = await exec(pi, "gh", ["issue", "develop", String(issueNumber), "--name", branch, "--base", base], root);
+	if (result.code === 0) return { linked: true, status: `Linked branch ${branch} to issue #${issueNumber} via gh issue develop.` };
+	return { linked: false, status: `Could not link branch ${branch} to issue #${issueNumber} via gh issue develop: ${shortExecReason(result)}` };
+}
+
 function getRepoConfig(root: string): RepoConfig {
 	return loadConfig().repos[root] ?? { enabled: false };
 }
@@ -388,10 +416,11 @@ class WorkerPane implements Component {
 		};
 		const status = isProcessAlive(this.run.pid) ? th.fg("accent", "running") : th.fg("warning", "stopped");
 		const logLines = tailFile(this.run.logPath, 12);
+		const linkText = this.run.branchLinked === undefined ? undefined : `issue link ${this.run.branchLinked ? "yes" : "no"}`;
 		const lines = [
 			border(`╭${"─".repeat(inner)}╮`),
 			border("│") + pad(`${th.fg("accent", `Worker #${this.run.issue}`)} pid ${this.run.pid} · ${status}`) + border("│"),
-			border("│") + pad(this.run.branch ? `branch ${this.run.branch}` : "no isolated branch recorded") + border("│"),
+			border("│") + pad([this.run.branch ? `branch ${this.run.branch}` : "no isolated branch recorded", linkText].filter(Boolean).join(" · ")) + border("│"),
 			border("│") + pad(this.run.worktreePath ? `tree ${this.run.worktreePath}` : "same working tree") + border("│"),
 			border("├") + border("─".repeat(inner)) + border("┤"),
 			...logLines.map((line) => border("│") + pad(line) + border("│")),
@@ -613,23 +642,44 @@ function buildWorkerPrompt(issueNumber: number, issueText: string, extraInstruct
 	].filter((part): part is string => typeof part === "string").join("\n");
 }
 
-async function createWorkerWorktree(pi: ExtensionAPI, root: string, issueNumber: number, runDir: string, stamp: string): Promise<{ path: string; branch: string }> {
+async function createWorkerWorktree(pi: ExtensionAPI, root: string, issueNumber: number, runDir: string, stamp: string): Promise<WorkerWorktree> {
 	const safeRepo = root.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "repo";
 	const worktreePath = join(WORKTREES_DIR, safeRepo, `issue-${issueNumber}-${stamp}`);
 	const branch = `pi-gh-issue-${issueNumber}-${stamp}`;
+	const base = await getWorktreeBase(pi, root);
 	mkdirSync(join(WORKTREES_DIR, safeRepo), { recursive: true });
 
-	const result = await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, "HEAD"], root);
+	let link = await createLinkedIssueBranch(pi, root, issueNumber, branch, base);
+	let result = link.linked
+		? await exec(pi, "git", ["worktree", "add", worktreePath, branch], root)
+		: await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, base], root);
+
+	if (result.code !== 0 && link.linked) {
+		const linkedCheckoutFailure = shortExecReason(result);
+		await exec(pi, "git", ["fetch", "origin", `${branch}:${branch}`], root);
+		result = await exec(pi, "git", ["worktree", "add", worktreePath, branch], root);
+		if (result.code !== 0) {
+			result = await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, base], root);
+			if (result.code === 0) link.status += ` Local worktree branch was created from ${base} after linked branch checkout failed: ${linkedCheckoutFailure}`;
+		}
+	}
+	if (result.code !== 0 && base !== "HEAD") {
+		result = await exec(pi, "git", ["worktree", "add", "-b", branch, worktreePath, "HEAD"], root);
+	}
 	if (result.code !== 0) {
 		throw new Error(formatExecFailure("git", result.code, result.stderr, result.stdout));
 	}
+	if (!link.linked) {
+		const retry = await createLinkedIssueBranch(pi, root, issueNumber, branch, base);
+		link = retry.linked ? retry : { linked: false, status: `${link.status}; retry after local branch creation failed: ${retry.status}` };
+	}
 
-	writeFileSync(join(runDir, "worktree.txt"), `${worktreePath}\n${branch}\n`, "utf8");
-	return { path: worktreePath, branch };
+	writeFileSync(join(runDir, "worktree.txt"), `${worktreePath}\n${branch}\nbase=${base}\nissue-linked=${link.linked ? "true" : "false"}\nissue-link-status=${link.status}\n`, "utf8");
+	return { path: worktreePath, branch, base, branchLinked: link.linked, branchLinkStatus: link.status };
 }
 
-function spawnPiWorker(root: string, issueNumber: number, prompt: string, options: { cwd: string; worktreePath?: string; branch?: string; runDir: string; startedAt: string }): WorkerRun {
-	const { cwd, worktreePath, branch, runDir, startedAt } = options;
+function spawnPiWorker(root: string, issueNumber: number, prompt: string, options: { cwd: string; worktreePath?: string; branch?: string; branchBase?: string; branchLinked?: boolean; branchLinkStatus?: string; runDir: string; startedAt: string }): WorkerRun {
+	const { cwd, worktreePath, branch, branchBase, branchLinked, branchLinkStatus, runDir, startedAt } = options;
 	const sessionDir = join(runDir, "sessions");
 	const logPath = join(runDir, "worker.log");
 	mkdirSync(sessionDir, { recursive: true });
@@ -644,6 +694,9 @@ function spawnPiWorker(root: string, issueNumber: number, prompt: string, option
 		`cwd=${cwd}`,
 		worktreePath ? `worktree=${worktreePath}` : undefined,
 		branch ? `branch=${branch}` : undefined,
+		branchBase ? `branchBase=${branchBase}` : undefined,
+		branchLinked !== undefined ? `branchLinked=${branchLinked}` : undefined,
+		branchLinkStatus ? `branchLinkStatus=${branchLinkStatus}` : undefined,
 		`issue=#${issueNumber}`,
 		`command=${piBin} ${args.slice(0, 3).join(" ")} <prompt>`,
 		"",
@@ -658,7 +711,7 @@ function spawnPiWorker(root: string, issueNumber: number, prompt: string, option
 		});
 		child.unref();
 		if (!child.pid) throw new Error("pi worker did not report a PID");
-		return { issue: issueNumber, pid: child.pid, startedAt, runDir, logPath, sessionDir, worktreePath, branch };
+		return { issue: issueNumber, pid: child.pid, startedAt, runDir, logPath, sessionDir, worktreePath, branch, branchBase, branchLinked, branchLinkStatus };
 	} finally {
 		closeSync(logFd);
 	}
@@ -697,6 +750,9 @@ async function spawnWorkAction(pi: ExtensionAPI, ctx: ExtensionContext, number?:
 			cwd: worktree.path,
 			worktreePath: worktree.path,
 			branch: worktree.branch,
+			branchBase: worktree.base,
+			branchLinked: worktree.branchLinked,
+			branchLinkStatus: worktree.branchLinkStatus,
 			runDir,
 			startedAt,
 		});
@@ -709,10 +765,13 @@ async function spawnWorkAction(pi: ExtensionAPI, ctx: ExtensionContext, number?:
 				`PID: ${run.pid}`,
 				`Worktree: ${run.worktreePath}`,
 				`Branch: ${run.branch}`,
+				run.branchBase ? `Branch base: ${run.branchBase}` : undefined,
+				`Branch link: ${run.branchLinked ? "linked" : "not linked"}`,
+				run.branchLinkStatus,
 				`Log: ${run.logPath}`,
 				`Session dir: ${run.sessionDir}`,
 				stage.text,
-			].join("\n"),
+			].filter((line): line is string => typeof line === "string").join("\n"),
 			details: run,
 		};
 	} catch (error) {
@@ -739,6 +798,9 @@ async function workAction(pi: ExtensionAPI, ctx: ExtensionContext, params: Githu
 				lastRun ? `Last worker: issue #${lastRun.issue}, pid ${lastRun.pid} (${isProcessAlive(lastRun.pid) ? "running" : "not running"})` : undefined,
 				lastRun?.worktreePath ? `Last worker worktree: ${lastRun.worktreePath}` : undefined,
 				lastRun?.branch ? `Last worker branch: ${lastRun.branch}` : undefined,
+				lastRun?.branchBase ? `Last worker branch base: ${lastRun.branchBase}` : undefined,
+				lastRun?.branchLinked !== undefined ? `Last worker branch linked: ${lastRun.branchLinked ? "yes" : "no"}` : undefined,
+				lastRun?.branchLinkStatus ? `Last worker branch link status: ${lastRun.branchLinkStatus}` : undefined,
 				lastRun ? `Last worker log: ${lastRun.logPath}` : undefined,
 			].filter((line): line is string => typeof line === "string");
 			return { ok: true, text: lines.join("\n") };
