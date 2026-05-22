@@ -1,0 +1,20 @@
+scripts/init-agent-home.sh
+  s_f3177b4ca63462::t_3436b38e2eb9bf 35-37,39-86,89-115,184,228-229
+  s_f3177b4ca63462::t_d4356b6d13a7b7 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "b352049726ed3572ed863ce3a684d4128ae363f1",
+  "prompts": {},
+  "sessions": {
+    "s_f3177b4ca63462": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e514c-32a0-7175-be86-5ffa0d80d875",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
