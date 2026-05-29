@@ -1,0 +1,19 @@
+skills/engineering/thermo-nuclear-code-quality-review/SKILL.md
+  s_a38fc705d829be::t_7ce654d977b4a8 1-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "ae8c8830632976efb7c227a6d84c6ac0efaed7c3",
+  "prompts": {},
+  "sessions": {
+    "s_a38fc705d829be": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e7259-ab4b-7cd3-a700-09817c0c7b40",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
