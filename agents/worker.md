@@ -1,7 +1,7 @@
 ---
 name: worker
 description: Implementation agent for normal tasks and approved oracle handoffs
-model: openai-codex/gpt-5.3-codex-spark
+model: kimi-coding/kimi-for-coding
 thinking: medium
 systemPromptMode: replace
 inheritProjectContext: true

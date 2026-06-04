@@ -1,7 +1,7 @@
 ---
 name: delegate
 description: Lightweight subagent for tiny, local, low-risk edits or quick investigations
-model: openai-codex/gpt-5.3-codex-spark
+model: kimi-coding/kimi-for-coding
 systemPromptMode: append
 inheritProjectContext: true
 inheritSkills: false
