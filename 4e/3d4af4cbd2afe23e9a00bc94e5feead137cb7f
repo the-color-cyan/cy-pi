@@ -1,0 +1,21 @@
+agents/worker.md
+  s_ceafe013b5a255::t_837f7e5d27fbef 4
+agents/delegate.md
+  s_ceafe013b5a255::t_39d9a4d85ae974 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "4e3d4af4cbd2afe23e9a00bc94e5feead137cb7f",
+  "prompts": {},
+  "sessions": {
+    "s_ceafe013b5a255": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e942c-c7fb-7f68-8749-43868599235a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
