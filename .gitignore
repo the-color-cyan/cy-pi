@@ -29,3 +29,4 @@ logs/
 *.swp
 /.pi-lens/cache
 /.pi-lens
+/trust.json
