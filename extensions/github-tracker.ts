@@ -43,7 +43,13 @@ const STAGES = [
 	"done",
 ] as const;
 const STAGE_LABELS = STAGES.map((stage) => `stage:${stage}`);
-const WORKFLOW_ACTIONS = ["status", "enable", "disable"] as const;
+const WORKFLOW_ACTIONS = [
+	"status",
+	"enable",
+	"disable",
+	"projects-enable",
+	"projects-disable",
+] as const;
 const WORK_ACTIONS = [
 	"status",
 	"start",
@@ -79,7 +85,22 @@ const GH_TRACK_COMPLETIONS: CompletionEntry[] = [
 	},
 	{ value: "enable", description: "Enable tracking for this repository" },
 	{ value: "disable", description: "Disable tracking for this repository" },
+	{
+		value: "projects",
+		description: "Manage automatic project/stage updates",
+	},
 	{ value: "help", description: "Show GitHub tracker command help" },
+];
+
+const GH_TRACK_PROJECT_COMPLETIONS: CompletionEntry[] = [
+	{
+		value: "status",
+		description: "Show whether project/stage updates are enabled",
+	},
+	{ value: "enable", description: "Enable automatic project/stage updates" },
+	{ value: "disable", description: "Disable automatic project/stage updates" },
+	{ value: "on", description: "Alias for enable" },
+	{ value: "off", description: "Alias for disable" },
 ];
 
 const GH_ISSUE_COMPLETIONS: CompletionEntry[] = [
@@ -160,6 +181,7 @@ type WorkerWorktree = {
 };
 type RepoConfig = {
 	enabled: boolean;
+	projectUpdates?: boolean;
 	activeIssue?: number;
 	lastRun?: WorkerRun;
 };
@@ -330,6 +352,54 @@ function completeFirstArg(
 	return null;
 }
 
+function isCompletingNextToken(state: {
+	tokens: string[];
+	endsWithSpace: boolean;
+}): boolean {
+	return (
+		(state.tokens.length === 1 && state.endsWithSpace) ||
+		(state.tokens.length === 2 && !state.endsWithSpace)
+	);
+}
+
+function completeGhTrackArgs(
+	argumentPrefix: string,
+): AutocompleteItem[] | null {
+	const firstArg = completeFirstArg(argumentPrefix, GH_TRACK_COMPLETIONS);
+	if (firstArg) return firstArg;
+
+	const { tokens, current, endsWithSpace } = completionState(argumentPrefix);
+	if (
+		tokens[0] === "projects" &&
+		isCompletingNextToken({ tokens, endsWithSpace })
+	) {
+		const valuePrefix = endsWithSpace
+			? tokens.join(" ")
+			: tokens.slice(0, -1).join(" ");
+		return completionItems(GH_TRACK_PROJECT_COMPLETIONS, current, valuePrefix);
+	}
+
+	return null;
+}
+
+function parseGhTrackAction(args: string): {
+	action: GithubWorkflowParams["action"] | "help";
+	ok: boolean;
+} {
+	const [first, second] = splitArgs(args);
+	if (!first || first === "status") return { action: "status", ok: true };
+	if (first === "enable" || first === "disable")
+		return { action: first, ok: true };
+	if (first === "help") return { action: "help", ok: true };
+	if (first !== "projects") return { action: "help", ok: false };
+	if (!second || second === "status") return { action: "status", ok: true };
+	if (second === "enable" || second === "on")
+		return { action: "projects-enable", ok: true };
+	if (second === "disable" || second === "off")
+		return { action: "projects-disable", ok: true };
+	return { action: "help", ok: false };
+}
+
 function completeGhIssueArgs(
 	argumentPrefix: string,
 ): AutocompleteItem[] | null {
@@ -383,9 +453,7 @@ function completeGhWorkArgs(argumentPrefix: string): AutocompleteItem[] | null {
 	return null;
 }
 
-function parseCreatePrArgs(
-	args: string,
-):
+function parseCreatePrArgs(args: string):
 	| {
 			title: string;
 			body: string;
@@ -597,6 +665,19 @@ function setRepoEnabled(root: string, enabled: boolean) {
 	saveConfig(config);
 }
 
+function getProjectUpdatesEnabled(root: string): boolean {
+	return loadConfig().repos[root]?.projectUpdates ?? true;
+}
+
+function setProjectUpdatesEnabled(root: string, enabled: boolean) {
+	const config = loadConfig();
+	config.repos[root] = {
+		...(config.repos[root] ?? { enabled: false }),
+		projectUpdates: enabled,
+	};
+	saveConfig(config);
+}
+
 function getActiveIssue(root: string): number | undefined {
 	return loadConfig().repos[root]?.activeIssue;
 }
@@ -758,16 +839,25 @@ async function workflowAction(
 	if (action === "enable" || action === "disable") {
 		setRepoEnabled(root, action === "enable");
 	}
+	if (action === "projects-enable" || action === "projects-disable") {
+		setProjectUpdatesEnabled(root, action === "projects-enable");
+	}
 
 	const enabled = getRepoConfig(root).enabled;
+	const projectUpdates = getProjectUpdatesEnabled(root);
 	const ghRepo = await getGhRepo(pi, root);
 	const ghText = ghRepo
 		? `GitHub repo: ${ghRepo}`
 		: "GitHub repo: unavailable (run `gh auth login` and ensure this repo has a GitHub remote).";
 	return {
 		ok: true,
-		text: `GitHub tracking is ${enabled ? "enabled" : "disabled"} for ${root}.\n${ghText}\nConfig: ${CONFIG_PATH}`,
-		details: { root, enabled, ghRepo, configPath: CONFIG_PATH },
+		text: [
+			`GitHub tracking is ${enabled ? "enabled" : "disabled"} for ${root}.`,
+			`Project/stage updates: ${projectUpdates ? "enabled" : "disabled"}.`,
+			ghText,
+			`Config: ${CONFIG_PATH}`,
+		].join("\n"),
+		details: { root, enabled, projectUpdates, ghRepo, configPath: CONFIG_PATH },
 	};
 }
 
@@ -986,6 +1076,26 @@ async function setIssueStage(
 		ok: true,
 		text: [`Issue #${number} moved to stage:${stage}.`, ...warnings].join("\n"),
 	};
+}
+
+async function maybeSetIssueStage(
+	pi: ExtensionAPI,
+	root: string,
+	number?: number,
+	stage?: string,
+	skipIfDisabled = false,
+): Promise<CommandResult> {
+	if (!isIssueNumber(number))
+		return { ok: false, text: "Issue number is required." };
+	if (!isStage(stage))
+		return { ok: false, text: `Stage must be one of: ${STAGES.join(", ")}.` };
+	if (skipIfDisabled && !getProjectUpdatesEnabled(root)) {
+		return {
+			ok: true,
+			text: `Project/stage updates are disabled; skipped moving issue #${number} to stage:${stage}.`,
+		};
+	}
+	return await setIssueStage(pi, root, number, stage);
 }
 
 async function commentIssue(
@@ -1263,7 +1373,7 @@ async function startIssueWork(
 	const view = await viewIssue(pi, root, number);
 	if (!view.ok) return view;
 
-	const stage = await setIssueStage(pi, root, number, "in-progress");
+	const stage = await maybeSetIssueStage(pi, root, number, "in-progress", true);
 	if (!stage.ok) return stage;
 
 	setActiveIssue(root, number);
@@ -1313,8 +1423,11 @@ async function selectIssueAction(
 function buildWorkerPrompt(
 	issueNumber: number,
 	issueText: string,
-	extraInstructions?: string,
+	options: { projectUpdates: boolean; extraInstructions?: string },
 ): string {
+	const reviewStep = options.projectUpdates
+		? "5. When the change is ready for human review, move the issue to stage:review with github_work review."
+		: "5. Do not move the issue to any stage:* label or call github_work review/done. Project/stage updates are disabled in this repo; use comments to report readiness for review or completion.";
 	return [
 		`Autonomously work on GitHub issue #${issueNumber} in this repository.`,
 		"",
@@ -1323,11 +1436,11 @@ function buildWorkerPrompt(
 		"2. Keep changes focused on this issue.",
 		"3. Run relevant validation commands.",
 		"4. Comment on the issue with progress, blockers, and the validation result.",
-		"5. When the change is ready for human review, move the issue to stage:review with github_work review.",
+		reviewStep,
 		"6. Do not close the issue unless the user explicitly requested closure.",
 		"7. Do not spawn another background worker from this worker.",
-		extraInstructions?.trim()
-			? `\nExtra user instructions:\n${extraInstructions.trim()}`
+		options.extraInstructions?.trim()
+			? `\nExtra user instructions:\n${options.extraInstructions.trim()}`
 			: undefined,
 		"",
 		"Current issue snapshot:",
@@ -1521,6 +1634,7 @@ async function spawnWorkAction(
 	if (!root) return { ok: false, text: "Not inside a git repository." };
 
 	const repoConfig = getRepoConfig(root);
+	const projectUpdates = getProjectUpdatesEnabled(root);
 	if (!repoConfig.enabled)
 		return {
 			ok: false,
@@ -1537,11 +1651,20 @@ async function spawnWorkAction(
 	const view = await viewIssue(pi, root, issueNumber);
 	if (!view.ok) return view;
 
-	const stage = await setIssueStage(pi, root, issueNumber, "in-progress");
+	const stage = await maybeSetIssueStage(
+		pi,
+		root,
+		issueNumber,
+		"in-progress",
+		true,
+	);
 	if (!stage.ok) return stage;
 
 	setActiveIssue(root, issueNumber);
-	const prompt = buildWorkerPrompt(issueNumber, view.text, extraInstructions);
+	const prompt = buildWorkerPrompt(issueNumber, view.text, {
+		projectUpdates,
+		extraInstructions,
+	});
 	try {
 		const startedAt = new Date().toISOString();
 		const stamp = startedAt.replace(/[:.]/g, "-");
@@ -1558,6 +1681,7 @@ async function spawnWorkAction(
 			stamp,
 		);
 		setRepoEnabled(worktree.path, true);
+		setProjectUpdatesEnabled(worktree.path, projectUpdates);
 		setActiveIssue(worktree.path, issueNumber);
 
 		const run = spawnPiWorker(root, issueNumber, prompt, {
@@ -1616,6 +1740,7 @@ async function workAction(
 			const lines = [
 				`Repo: ${root}`,
 				`Tracking: ${repoConfig.enabled ? "enabled" : "disabled"}`,
+				`Project/stage updates: ${getProjectUpdatesEnabled(root) ? "enabled" : "disabled"}`,
 				`Active issue: ${activeIssue !== undefined ? `#${activeIssue}` : "none"}`,
 				ghRepo ? `GitHub repo: ${ghRepo}` : "GitHub repo: unavailable",
 				lastRun
@@ -1672,7 +1797,13 @@ async function workAction(
 					ok: false,
 					text: "No active issue. Use /gh-work start <number> first.",
 				};
-			const stage = await setIssueStage(pi, root, activeIssue, "review");
+			const stage = await maybeSetIssueStage(
+				pi,
+				root,
+				activeIssue,
+				"review",
+				true,
+			);
 			return { ok: stage.ok, text: stage.text };
 		}
 
@@ -1682,7 +1813,13 @@ async function workAction(
 					ok: false,
 					text: "No active issue. Use /gh-work start <number> first.",
 				};
-			const stage = await setIssueStage(pi, root, activeIssue, "done");
+			const stage = await maybeSetIssueStage(
+				pi,
+				root,
+				activeIssue,
+				"done",
+				true,
+			);
 			let closeText = "";
 			if (params.close) {
 				const close = await closeIssue(pi, root, activeIssue);
@@ -1822,7 +1959,7 @@ async function initLabels(
 function helpText(): string {
 	return [
 		"GitHub tracker commands:",
-		"/gh-track help|status|enable|disable",
+		"/gh-track help|status|enable|disable|projects status|enable|disable|on|off",
 		"/gh-issue list [gh issue list args]",
 		"/gh-issue create <title> --body <body>",
 		"/gh-issue view <number>",
@@ -2022,17 +2159,26 @@ export default function (pi: ExtensionAPI) {
 
 		const ghRepo = await getGhRepo(pi, root);
 		const activeIssue = getActiveIssue(root);
+		const projectUpdates = getProjectUpdatesEnabled(root);
 		const ghStatus = ghRepo
 			? `GitHub repository detected: ${ghRepo}.`
 			: "GitHub CLI/repository is not currently available. Tell the user if issue tracking is needed and suggest `gh auth login` or checking the GitHub remote.";
 
 		const activePrompt =
 			activeIssue !== undefined
-				? `Active issue: #${activeIssue}. When doing work, inspect it with github_work view and prefer updating this active issue (stage, comment) via the github_work or github_issue tools rather than creating a new one unless the user explicitly asks for a separate issue.`
-				: "No active issue is set. When starting substantial work, use github_issue to find or create a tracking issue, then set it active with github_work start <number>.";
+				? projectUpdates
+					? `Active issue: #${activeIssue}. When doing work, inspect it with github_work view and prefer updating this active issue (stage, comment) via the github_work or github_issue tools rather than creating a new one unless the user explicitly asks for a separate issue.`
+					: `Active issue: #${activeIssue}. When doing work, inspect it with github_work view and comment on it with github_work comment or github_issue comment. Do not update stage labels automatically because project/stage updates are disabled.`
+				: projectUpdates
+					? "No active issue is set. When starting substantial work, use github_issue to find or create a tracking issue, then set it active with github_work start <number>."
+					: "No active issue is set. When starting substantial work, use github_issue to find or create a tracking issue, then set it active with github_work start <number>. Do not update stage labels automatically because project/stage updates are disabled.";
+
+		const projectUpdateGuidance = projectUpdates
+			? "When doing substantial repo work, use the github_issue tool or /gh-issue slash command workflow to: find or create a tracking issue, set it to stage:planned or stage:in-progress when work begins, comment with important decisions or blockers, move it to stage:review when changes are ready to validate, and move it to stage:done/close only after the user approves or the work is clearly complete."
+			: "Automatic project/stage updates are disabled for this repository. Do not move issues to stage:* labels automatically. Continue to use github_issue or /gh-issue to create, view, and comment on tracking issues as needed, and use github_pr or /gh-pr for pull requests. Only change stage labels when the user explicitly asks.";
 
 		return {
-			systemPrompt: `${event.systemPrompt}\n\nGitHub issue tracking workflow is enabled for this repository. ${ghStatus} ${activePrompt}\nWhen doing substantial repo work, use the github_issue tool or /gh-issue slash command workflow to: find or create a tracking issue, set it to stage:planned or stage:in-progress when work begins, comment with important decisions or blockers, move it to stage:review when changes are ready to validate, and move it to stage:done/close only after the user approves or the work is clearly complete. Keep trivial read-only questions out of GitHub unless the user asks to track them. For pull request work, use github_pr or /gh-pr to list/create/view/comment/close PRs, confirm the base branch before creating a PR, and include Closes/Related issue links in PR bodies when appropriate. If GitHub CLI/auth is unavailable, clearly mention that tracking could not be updated.`,
+			systemPrompt: `${event.systemPrompt}\n\nGitHub issue tracking workflow is enabled for this repository. ${ghStatus} ${activePrompt}\n${projectUpdateGuidance} Keep trivial read-only questions out of GitHub unless the user asks to track them. For pull request work, use github_pr or /gh-pr to list/create/view/comment/close PRs, confirm the base branch before creating a PR, and include Closes/Related issue links in PR bodies when appropriate. If GitHub CLI/auth is unavailable, clearly mention that tracking could not be updated.`,
 		};
 	});
 
@@ -2040,11 +2186,12 @@ export default function (pi: ExtensionAPI) {
 		name: "github_workflow",
 		label: "GitHub Workflow",
 		description:
-			"Check or toggle per-repository GitHub issue tracking workflow state.",
+			"Check or toggle per-repository GitHub issue tracking workflow state and automatic project/stage updates.",
 		promptSnippet:
-			"github_workflow: check or toggle GitHub issue tracking for this repo",
+			"github_workflow: check or toggle GitHub issue tracking and project/stage updates for this repo",
 		promptGuidelines: [
 			"Use github_workflow status before relying on GitHub tracking; enable/disable only when requested by the user.",
+			"Use github_workflow projects-enable or projects-disable to control automatic stage label updates.",
 		],
 		parameters: Type.Object({
 			action: WorkflowActionEnum,
@@ -2075,7 +2222,7 @@ export default function (pi: ExtensionAPI) {
 			"Use github_work start <number> to set the active issue before beginning substantial work.",
 			"Use github_work view to inspect the active issue before making changes.",
 			"Use github_work run only when the user asks to spawn an async worker for an issue.",
-			"Use github_work review/done/comment to update the active issue as work progresses.",
+			"Use github_work review/done/comment to update the active issue as work progresses, respecting the repo's project/stage update setting.",
 			"If there is no active issue, use github_issue first to find or create one.",
 		],
 		parameters: Type.Object({
@@ -2122,7 +2269,7 @@ export default function (pi: ExtensionAPI) {
 			"github_issue: list/create/view/stage/comment/close GitHub issues for this repo",
 		promptGuidelines: [
 			"When GitHub tracking is enabled, use github_issue to create/find a tracking issue for substantial implementation work.",
-			"Use stage labels stage:planned, stage:in-progress, stage:review, stage:blocked, and stage:done to reflect progress.",
+			"Use github_issue stage only when project/stage updates are enabled or the user explicitly asks to change stage labels.",
 		],
 		parameters: Type.Object({
 			action: IssueActionEnum,
@@ -2218,18 +2365,11 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("gh-track", {
 		description:
 			"Toggle or inspect GitHub issue tracking workflow for this repo",
-		getArgumentCompletions: (prefix: string) =>
-			completeFirstArg(prefix, GH_TRACK_COMPLETIONS),
+		getArgumentCompletions: completeGhTrackArgs,
 		handler: async (args, ctx) => {
-			const action = args.trim() || "status";
-			if (action === "help")
-				return notifyResult(ctx, { ok: true, text: helpText() });
-			if (!["status", "enable", "disable"].includes(action))
-				return notifyResult(ctx, { ok: false, text: helpText() });
-			notifyResult(
-				ctx,
-				await workflowAction(pi, ctx, action as GithubWorkflowParams["action"]),
-			);
+			const { action, ok } = parseGhTrackAction(args);
+			if (action === "help") return notifyResult(ctx, { ok, text: helpText() });
+			notifyResult(ctx, await workflowAction(pi, ctx, action));
 		},
 	});
 
