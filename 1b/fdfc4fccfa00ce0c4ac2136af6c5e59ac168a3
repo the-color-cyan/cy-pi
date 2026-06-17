@@ -1,0 +1,30 @@
+extensions/github-tracker.ts
+  s_4b52217bb34d3b::t_35d1f22b066332 46-52,88-91,184,668-674,676-680,842-844,847,854-860,1081-1097,1376,1429-1430,1439,1637,1654-1660,1665-1666,1684,1743,1800-1806,1816-1822,2162,2169-2178,2181,2189,2191,2194,2368,2372
+  s_f5401d65b9c3c4::t_dde8a2a6e7f747 363-364,383-400,1098,1426,1428,1442-1443,1664,1667,2370-2371
+  s_f5401d65b9c3c4::t_4593736e4d52c1 355-362,372-375
+  s_f5401d65b9c3c4::t_fbc6f08e07cb89 95-105,365-371,376-381,675,1962,2225,2272
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "1bfdfc4fccfa00ce0c4ac2136af6c5e59ac168a3",
+  "prompts": {},
+  "sessions": {
+    "s_4b52217bb34d3b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed5d1-3236-7b2b-aa10-e12b8721adc3",
+        "model": "kimi-for-coding"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_f5401d65b9c3c4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed5d0-1973-7d6f-8785-c6ed6d732963",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
