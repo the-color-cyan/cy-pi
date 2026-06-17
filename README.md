@@ -92,7 +92,7 @@ When active, a small dashboard widget is rendered above the editor. All LLM-faci
 
 ## GitHub tracker extension
 
-`extensions/github-tracker.ts` exposes tab completion for `/gh-track`, `/gh-issue`, `/gh-work`, and `/gh-labels` subcommands. It also completes `/gh-issue stage <number> <stage>`, `/gh-work pane <mode>`, and `/gh-work done --close`.
+`extensions/github-tracker.ts` exposes tab completion for `/gh-track`, `/gh-issue`, `/gh-work`, and `/gh-labels` subcommands. It also completes `/gh-track projects <status|enable|disable|on|off>`, `/gh-issue stage <number> <stage>`, `/gh-work pane <mode>`, and `/gh-work done --close`.
 
 ## git-ai extension
 
