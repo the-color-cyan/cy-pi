@@ -1,0 +1,19 @@
+README.md
+  s_f5401d65b9c3c4::t_f2064780b7e0da 95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "41a7dbef254083e6654cdb9c1bb403b6381a243d",
+  "prompts": {},
+  "sessions": {
+    "s_f5401d65b9c3c4": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019ed5d0-1973-7d6f-8785-c6ed6d732963",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
