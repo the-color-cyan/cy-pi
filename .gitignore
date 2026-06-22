@@ -30,3 +30,4 @@ logs/
 /.pi-lens/cache
 /.pi-lens
 /trust.json
+/subagent-log-bundles

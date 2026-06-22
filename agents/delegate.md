@@ -1,7 +1,7 @@
 ---
 name: delegate
 description: Lightweight subagent for tiny, local, low-risk edits or quick investigations
-model: kimi-coding/kimi-for-coding
+model: openai-codex/gpt-5.5
 systemPromptMode: append
 inheritProjectContext: true
 inheritSkills: false
