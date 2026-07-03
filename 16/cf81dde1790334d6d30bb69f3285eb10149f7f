@@ -1,0 +1,19 @@
+packages.cyan.json
+  s_623b27b0ed5194::t_eacbf2f25e307e 9-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "16cf81dde1790334d6d30bb69f3285eb10149f7f",
+  "prompts": {},
+  "sessions": {
+    "s_623b27b0ed5194": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f26b5-4ec1-7a87-ad50-27497255540d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
