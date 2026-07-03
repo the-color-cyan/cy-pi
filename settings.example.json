@@ -7,6 +7,8 @@
     "npm:pi-ask-user",
     "npm:@tmustier/pi-ralph-wiggum",
     "npm:pi-subagents",
+    "npm:pi-intercom",
+    "npm:pi-prompt-template-model",
     "npm:@haispeed/pi-obsidian"
   ],
   "defaultProvider": "openai-codex",
