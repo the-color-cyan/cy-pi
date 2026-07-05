@@ -1,0 +1,19 @@
+agents/worker.md
+  s_c5d85a2c3d3249::t_163288c32c2ead 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3ac715ec46b7cfd43c91463039276bb13671d18d",
+  "prompts": {},
+  "sessions": {
+    "s_c5d85a2c3d3249": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f343f-6e48-70f4-b02a-096f59cdef16",
+        "model": "gpt-5.5"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
