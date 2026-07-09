@@ -17,7 +17,6 @@ extensions/think.ts
         "model": "gpt-5.5"
       },
       "human_author": "cyan",
-      "messages": [],
       "total_additions": 23,
       "total_deletions": 2,
       "accepted_lines": 23,
