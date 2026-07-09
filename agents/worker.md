@@ -1,8 +1,8 @@
 ---
 name: worker
 description: Implementation agent for normal tasks and approved oracle handoffs
-model: kimi-coding/kimi-for-coding
-thinking: medium
+model: openai-codex/gpt-5.6-terra
+thinking: high
 systemPromptMode: replace
 inheritProjectContext: true
 inheritSkills: false
