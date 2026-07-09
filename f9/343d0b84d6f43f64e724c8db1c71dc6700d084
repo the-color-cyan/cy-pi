@@ -1,0 +1,71 @@
+skills/engineering/README.md
+  s_00a2ac4fd6a2a1::t_af74ccf6cf01b4 5-25,27-29
+skills/engineering/ask-matt/SKILL.md
+  s_00a2ac4fd6a2a1::t_cb1af0e0876de7 1-76
+skills/engineering/code-review/SKILL.md
+  s_00a2ac4fd6a2a1::t_a4b18856aa4337 1-89
+skills/engineering/codebase-design/DEEPENING.md
+  s_00a2ac4fd6a2a1::t_71cd74bdaa7819 3
+skills/engineering/codebase-design/DESIGN-IT-TWICE.md
+  s_00a2ac4fd6a2a1::t_fb2cb9c101f0b2 1,5,30
+skills/engineering/codebase-design/SKILL.md
+  s_00a2ac4fd6a2a1::t_95d0650898bd1c 1-4,6,8,10,12,14,16,18,20,22,24-58,63,67-96,110-114
+skills/engineering/diagnosing-bugs/SKILL.md
+  s_00a2ac4fd6a2a1::t_604208f7138d0e 2-3,6,10,14,33,35,41,51,53,55-64,72-80
+skills/engineering/domain-modeling/SKILL.md
+  s_00a2ac4fd6a2a1::t_a46b2a77f63e1b 1-74
+skills/engineering/grill-with-docs/SKILL.md
+  s_00a2ac4fd6a2a1::t_1606df34840244 3-4,7
+skills/engineering/implement/SKILL.md
+  s_00a2ac4fd6a2a1::t_1317fb8e29daa7 2-3,7-15
+skills/engineering/improve-codebase-architecture/HTML-REPORT.md
+  s_00a2ac4fd6a2a1::t_fd34c3a548f88c 42,108,123
+skills/engineering/improve-codebase-architecture/SKILL.md
+  s_00a2ac4fd6a2a1::t_645cae18d42380 3-4,11,13-14,20,38,49,59,61,63,65-66
+skills/engineering/prototype/SKILL.md
+  s_00a2ac4fd6a2a1::t_239c2db55e56f6 3
+skills/engineering/research/SKILL.md
+  s_00a2ac4fd6a2a1::t_89a4172d921803 1-12
+skills/engineering/setup-matt-pocock-skills/SKILL.md
+  s_00a2ac4fd6a2a1::t_df8fe99b7a9354 3,38,47-52,69,104
+skills/engineering/setup-matt-pocock-skills/domain.md
+  s_00a2ac4fd6a2a1::t_f10fb0c3087b2a 11,45
+skills/engineering/setup-matt-pocock-skills/issue-tracker-github.md
+  s_00a2ac4fd6a2a1::t_e91a4db85a3ce2 16-27,35-45
+skills/engineering/setup-matt-pocock-skills/issue-tracker-gitlab.md
+  s_00a2ac4fd6a2a1::t_7017926c5384b9 17-28,36-46
+skills/engineering/setup-matt-pocock-skills/issue-tracker-local.md
+  s_00a2ac4fd6a2a1::t_1840cbb59a673e 20-30
+skills/engineering/tdd/SKILL.md
+  s_00a2ac4fd6a2a1::t_d4d9937e696ab4 3,8,10,12,14,18,20,22,24,26,28-30,32,34-36
+skills/engineering/tdd/tests.md
+  s_00a2ac4fd6a2a1::t_69f01b7b8f536c 62-77
+skills/engineering/to-spec/SKILL.md
+  s_00a2ac4fd6a2a1::t_2623edda7ade5a 2-4,7,13,15,19,21,69,75
+skills/engineering/to-tickets/SKILL.md
+  s_00a2ac4fd6a2a1::t_4564d2cb9bd5b3 2-4,7,9,17,21,23,25,27,30-31,33-35,38-41,44,47-48,53-54,58-69,71,73-88,91,94,98,107,111-114
+skills/engineering/triage/AGENT-BRIEF.md
+  s_00a2ac4fd6a2a1::t_e0f93f2b29690f 3-5,148-184
+skills/engineering/triage/OUT-OF-SCOPE.md
+  s_00a2ac4fd6a2a1::t_24f8b6cfd99679 86-90
+skills/engineering/triage/SKILL.md
+  s_00a2ac4fd6a2a1::t_1a368fb1c37092 3-4,11-12,39-40,52,64-66,68,70,72,74,76,82-85,112
+skills/engineering/wayfinder/SKILL.md
+  s_00a2ac4fd6a2a1::t_c4f9c4796b3d81 1-127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f9343d0b84d6f43f64e724c8db1c71dc6700d084",
+  "prompts": {},
+  "sessions": {
+    "s_00a2ac4fd6a2a1": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f453c-1dea-79ce-a027-5b9316dfc8cb",
+        "model": "kimi-for-coding"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
