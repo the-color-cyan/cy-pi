@@ -1,0 +1,31 @@
+skills/productivity/README.md
+  s_00a2ac4fd6a2a1::t_af74ccf6cf01b4 5-8,12-18
+skills/productivity/grill-me/SKILL.md
+  s_00a2ac4fd6a2a1::t_b71c1d46985aae 3-4,7
+skills/productivity/grilling/SKILL.md
+  s_00a2ac4fd6a2a1::t_909d61d7384a47 1-12
+skills/productivity/handoff/SKILL.md
+  s_00a2ac4fd6a2a1::t_c1ec7a72001dad 5,12
+skills/productivity/teach/SKILL.md
+  s_00a2ac4fd6a2a1::t_b5b0ba0f5e4307 19,63-70
+skills/productivity/writing-great-skills/GLOSSARY.md
+  s_00a2ac4fd6a2a1::t_8a15acc4cb058f 1-201
+skills/productivity/writing-great-skills/SKILL.md
+  s_00a2ac4fd6a2a1::t_74559d139f9971 1-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1d7c236f182772da756152088aef6192d54fdd03",
+  "prompts": {},
+  "sessions": {
+    "s_00a2ac4fd6a2a1": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f453c-1dea-79ce-a027-5b9316dfc8cb",
+        "model": "kimi-for-coding"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
