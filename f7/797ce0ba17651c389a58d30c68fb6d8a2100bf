@@ -1,0 +1,21 @@
+agents/worker.md
+  s_eb65c7e9d96acc::t_fae710be819ab2 4-5
+agents/delegate.md
+  s_eb65c7e9d96acc::t_96f7ab83427d4b 4-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f7797ce0ba17651c389a58d30c68fb6d8a2100bf",
+  "prompts": {},
+  "sessions": {
+    "s_eb65c7e9d96acc": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f48c6-7e2d-7008-b898-61465dfb6be5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
