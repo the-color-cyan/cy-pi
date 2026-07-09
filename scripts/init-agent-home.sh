@@ -195,16 +195,29 @@ else
 	log "Keeping existing $settings_dst"
 fi
 
-if [ -f "$package_dir/package-lock.json" ]; then
-	if command -v npm >/dev/null 2>&1; then
-		(
-			cd "$package_dir"
-			npm ci
-		)
-	else
+install_package_dependencies() {
+	if ! command -v npm >/dev/null 2>&1; then
 		log "npm was not found; skipping package install for $package_dir"
+		return
 	fi
-fi
+
+	if [ ! -f "$package_dir/package.json" ]; then
+		return
+	fi
+
+	(
+		cd "$package_dir"
+		if [ -f package-lock.json ]; then
+			if npm ci; then
+				return
+			fi
+			log "npm ci failed for $package_dir; refreshing package-lock.json with npm install"
+		fi
+		npm install
+	)
+}
+
+install_package_dependencies
 
 cat <<EOF
 
@@ -223,7 +236,7 @@ Reference setup applied:
   - runtime directories exist under this checkout
   - settings.json was created from settings.example.json when missing
   - settings paths were materialized for this checkout
-  - package dependencies in npm/package-lock.json were installed when npm is available
+  - package dependencies in npm/package.json were installed when npm is available
   - update wrapper is configured at bin/pi to run a safe agent-home pull on \`pi update\`
   - bash, zsh, and fish startup files were configured to put "$repo_root/bin" first on PATH
   - restart your shell or run \`exec \$SHELL\`; for fish, \`exec fish\` is also fine
