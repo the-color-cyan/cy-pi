@@ -1,0 +1,19 @@
+.pi/npm/.gitignore
+  s_2d582ea5854232::t_c38a92d0c72846 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "0367e2b095b38da380630dbc8533e13677d1fd03",
+  "prompts": {},
+  "sessions": {
+    "s_2d582ea5854232": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f4da8-23c4-70b5-9d0a-393b61df05f1",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
