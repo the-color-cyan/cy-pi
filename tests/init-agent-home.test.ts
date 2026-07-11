@@ -21,7 +21,11 @@ async function executable(path: string, content: string) {
 	await chmod(path, 0o755);
 }
 
-test("the extension package lock is committed as initializer input", async () => {
+test("the extension package manifest and lock are committed initializer inputs", async () => {
+	const manifest = await readFile(
+		join(sourceRoot, "npm", "package.json"),
+		"utf8",
+	);
 	const lock = await readFile(
 		join(sourceRoot, "npm", "package-lock.json"),
 		"utf8",
@@ -31,7 +35,12 @@ test("the extension package lock is committed as initializer input", async () =>
 		"utf8",
 	);
 
+	assert.match(manifest, /"pi-intercom": "\^0\.6\.0"/);
+	assert.match(manifest, /"pi-prompt-template-model": "\^0\.10\.0"/);
 	assert.match(lock, /"lockfileVersion": 3/);
+	assert.match(lock, /"pi-intercom": "\^0\.6\.0"/);
+	assert.match(lock, /"pi-prompt-template-model": "\^0\.10\.0"/);
+	assert.match(ignoreRules, /^!package\.json$/m);
 	assert.match(ignoreRules, /^!package-lock\.json$/m);
 });
 
