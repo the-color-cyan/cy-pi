@@ -1,42 +1,27 @@
 {
-  "packages": [
-    "npm:@zenobius/pi-rose-pine",
-    "npm:pi-lens",
-    "npm:pi-web-access",
-    "npm:pi-btw",
-    "npm:pi-ask-user",
-    "npm:@tmustier/pi-ralph-wiggum",
-    "npm:pi-subagents",
-    "npm:pi-prompt-template-model",
-    "npm:@haispeed/pi-obsidian"
-  ],
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.5",
-  "enabledModels": [
-    "openai-codex/gpt-5.3-codex-spark",
-    "kimi-coding/kimi-for-coding",
-    "openai-codex/gpt-5.5",
-    "openai-codex/gpt-5.4-mini"
-  ],
-  "defaultThinkingLevel": "low",
+  "defaultModel": "gpt-5.6-terra",
+  "defaultThinkingLevel": "medium",
   "theme": "rose-pine",
-  "hideThinkingBlock": false,
-  "compaction": {
-    "enabled": false
-  },
-  "doubleEscapeAction": "tree",
-  "quietStartup": true,
   "subagents": {
     "asyncByDefault": true,
     "forceTopLevelAsync": false,
-    "defaultSessionDir": "$PI_CODING_AGENT_DIR/sessions/subagent",
     "parallel": {
       "maxTasks": 8,
       "concurrency": 4
     },
     "agentOverrides": {
       "worker": {
-        "model": "k2p6"
+        "model": "openai-codex/gpt-5.6-luna"
+      },
+      "planner": {
+        "model": "openai-codex/gpt-5.6-sol"
+      },
+      "reviewer": {
+        "model": "openai-codex/gpt-5.6-sol"
+      },
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol"
       }
     }
   },
@@ -48,5 +33,40 @@
       "hide": "ctrl+alt+h",
       "show": false
     }
-  }
+  },
+  "hideThinkingBlock": false,
+  "packages": [
+    "npm:@zenobius/pi-rose-pine",
+    "npm:pi-lens",
+    "npm:pi-web-access",
+    "npm:pi-btw",
+    "npm:pi-ask-user",
+    "npm:@tmustier/pi-ralph-wiggum",
+    "npm:pi-subagents",
+    "npm:@haispeed/pi-obsidian",
+    "npm:pi-prompt-template-model"
+  ],
+  "extensions": [
+    "./extensions",
+    "~/.pi/agent/extensions/supacode"
+  ],
+  "skills": [
+    "./skills",
+    "~/.pi/agent/skills/supacode-cli"
+  ],
+  "prompts": [
+    "./prompts"
+  ],
+  "themes": [
+    "./themes"
+  ],
+  "lastChangelogVersion": "0.80.6",
+  "quietStartup": true,
+  "enabledModels": [
+    "kimi-coding/kimi-for-coding",
+    "openai-codex/gpt-5.6-terra",
+    "openai-codex/gpt-5.6-sol",
+    "openai-codex/gpt-5.6-luna",
+    "minimax/MiniMax-M3"
+  ]
 }
