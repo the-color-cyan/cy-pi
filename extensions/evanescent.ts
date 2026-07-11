@@ -1,5 +1,5 @@
 import { unlinkSync } from "node:fs";
-import type { ExtensionAPI, SessionEntry } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, SessionEntry } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { createMigratedSessionFile } from "./lib/cd-migration.ts";
 import {

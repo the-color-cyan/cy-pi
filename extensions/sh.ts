@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
-import { Box, Text } from "@mariozechner/pi-tui";
-import { createBashToolDefinition, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { Box, Text } from "@earendil-works/pi-tui";
+import { createBashToolDefinition, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const CUSTOM_TYPE = "sh-result";
 const PREVIEW_LINES = 24;

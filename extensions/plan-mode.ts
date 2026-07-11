@@ -1,8 +1,8 @@
 import type {
 	ExtensionAPI,
 	ExtensionContext,
-} from "@mariozechner/pi-coding-agent";
-import { Key } from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-coding-agent";
+import { Key } from "@earendil-works/pi-tui";
 
 const STATE_TYPE = "plan-mode-state";
 const CONTEXT_TYPE = "plan-mode-context";

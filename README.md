@@ -32,22 +32,34 @@ Not included: `auth.json`, local `settings.json`, sessions, run history, caches,
 
 ## Use as your Pi agent home
 
-Clone the repo, initialize ignored runtime files, and launch pi with the checkout as the agent home:
+Clone the repo and initialize the canonical runtime plus ignored runtime files:
 
 ```bash
 git clone git@github.com:the-color-cyan/cy-pi.git ~/pi/cy-pi
 cd ~/pi/cy-pi
 ./scripts/init-agent-home.sh
-./scripts/pi-home.sh
+exec "$SHELL"
+pi
 ```
 
-`pi-home.sh` is a convenience wrapper for:
+The root `package.json` and `package-lock.json` pin the exact Pi runtime used on every machine. Initialization installs that lock with `npm ci`, creates `./bin/pi`, and configures bash, zsh, and fish to put only this checkout's `bin/` first on `PATH`. The wrapper sets `PI_CODING_AGENT_DIR` and executes the checkout-local `node_modules/.bin/pi`; it never selects a global Pi installation. Re-running init repairs older managed PATH blocks that exposed `node_modules/.bin` directly.
+
+`./scripts/pi-home.sh` launches the same wrapper and retains support for `--evanescent`.
+
+### Synchronizing and updating
+
+Normal Git synchronization carries the pinned runtime version to other machines. After pulling, run `./scripts/init-agent-home.sh`; a successful agent-home pull through `pi update` also reconciles both lockfiles with `npm ci`.
+
+Bare `pi update` (and `pi update self`, `pi update pi`, or `pi update --self`) updates the three tracked `@earendil-works` Pi packages to the same latest exact version. `pi update --all` does that and then updates configured Pi packages. Extension-only and source-specific update forms are delegated to the local Pi runtime.
+
+A runtime update intentionally changes tracked files. Commit and push them so every machine receives the same version:
 
 ```bash
-PI_CODING_AGENT_DIR="$PWD" pi
+pi update
+git add package.json package-lock.json
+git commit -m "chore(pi): update pinned runtime"
+git push
 ```
-
-`init-agent-home.sh` also creates `./bin/pi`. This wrapper integrates with `pi update` so your agent-home git repo is checked and fast-forward pulled (when safe) before normal package update behavior runs. `pi-home.sh` uses this wrapper automatically; to get the same behavior from plain `pi update`, put this checkout's `bin/` before the system `pi` on `PATH`.
 
 At startup, the loaded extension checks whether this repo has remote commits not yet pulled and notifies you in the session UI. It respects `PI_OFFLINE=1`.
 
@@ -122,4 +134,4 @@ Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
 ## Settings
 
-`settings.example.json` is the portable reference setup for fresh clones. `scripts/init-agent-home.sh` copies it to ignored local `settings.json` when missing, materializes checkout-local paths such as the subagent session directory, creates ignored runtime directories, and runs `npm ci` in `npm/` when npm is available so packaged Pi extensions/skills match this reference system.
+`settings.example.json` is the portable reference setup for fresh clones. `scripts/init-agent-home.sh` copies it to ignored local `settings.json` when missing, materializes checkout-local paths, creates ignored runtime directories, and installs both root and `npm/` lockfiles with `npm ci`. The root lock owns the Pi runtime version; `npm/` owns configured third-party package dependencies. Auth, local settings, sessions, caches, and secrets remain machine-local.

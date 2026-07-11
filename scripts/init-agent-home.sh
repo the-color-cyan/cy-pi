@@ -76,8 +76,8 @@ PY
 
 setup_shell_path() {
 	local shell_bin_path
-	local node_bin_path="$repo_root/node_modules/.bin"
 	shell_bin_path="$(managed_shell_path)"
+	local node_bin_path="$repo_root/node_modules/.bin"
 	local posix_start="# >>> cy-pi agent-home PATH >>>"
 	local posix_end="# <<< cy-pi agent-home PATH <<<"
 	local fish_start="# >>> cy-pi agent-home PATH >>>"
@@ -88,27 +88,35 @@ setup_shell_path() {
 	posix_block="$(
 		cat <<EOF
 $posix_start
-for cy_pi_path in "$shell_bin_path" "$node_bin_path"; do
-	if [ -d "\$cy_pi_path" ]; then
-		case ":\$PATH:" in
-			*":\$cy_pi_path:"*) ;;
-			*) export PATH="\$cy_pi_path:\$PATH" ;;
-		esac
+cy_pi_bin="$shell_bin_path"
+cy_pi_old_node_bin="$node_bin_path"
+cy_pi_clean_path=""
+cy_pi_old_ifs="\$IFS"
+IFS=:
+for cy_pi_path in \$PATH; do
+	if [ -n "\$cy_pi_path" ] && [ "\$cy_pi_path" != "\$cy_pi_bin" ] && [ "\$cy_pi_path" != "\$cy_pi_old_node_bin" ]; then
+		cy_pi_clean_path="\${cy_pi_clean_path:+\$cy_pi_clean_path:}\$cy_pi_path"
 	fi
 done
-unset cy_pi_path
+IFS="\$cy_pi_old_ifs"
+export PATH="\$cy_pi_bin\${cy_pi_clean_path:+:\$cy_pi_clean_path}"
+unset cy_pi_bin cy_pi_old_node_bin cy_pi_clean_path cy_pi_old_ifs cy_pi_path
 $posix_end
 EOF
 	)"
 	fish_block="$(
 		cat <<EOF
 $fish_start
-for cy_pi_path in "$shell_bin_path" "$node_bin_path"
-	if test -d "\$cy_pi_path"
-		fish_add_path --prepend "\$cy_pi_path"
+set -l cy_pi_bin "$shell_bin_path"
+set -l cy_pi_old_node_bin "$node_bin_path"
+set -l cy_pi_clean_path
+for cy_pi_path in \$PATH
+	if test -n "\$cy_pi_path"; and test "\$cy_pi_path" != "\$cy_pi_bin"; and test "\$cy_pi_path" != "\$cy_pi_old_node_bin"
+		set -a cy_pi_clean_path "\$cy_pi_path"
 	end
 end
-set -e cy_pi_path
+set -gx PATH "\$cy_pi_bin" \$cy_pi_clean_path
+set -e cy_pi_bin cy_pi_old_node_bin cy_pi_clean_path cy_pi_path
 $fish_end
 EOF
 	)"
@@ -120,6 +128,76 @@ EOF
 	log "Configured shell PATH for bash, zsh, and fish"
 }
 
+install_package_dependencies() {
+	local dir="$1"
+
+	if [ ! -f "$dir/package.json" ]; then
+		return
+	fi
+	if [ ! -f "$dir/package-lock.json" ]; then
+		log "Missing required package lock: $dir/package-lock.json"
+		return 1
+	fi
+
+	(
+		cd "$dir"
+		npm ci
+	)
+}
+
+setup_agent_home_pi_wrapper() {
+	local wrapper_path="$repo_root/bin/pi"
+	local local_pi="$repo_root/node_modules/.bin/pi"
+
+	if [ ! -x "$local_pi" ]; then
+		log "Canonical Pi runtime is missing after npm ci: $local_pi"
+		return 1
+	fi
+
+	cat >"$wrapper_path" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+local_pi="${repo_root}/node_modules/.bin/pi"
+agent_home_update_script="${repo_root}/scripts/update-agent-home.sh"
+runtime_update_script="${repo_root}/scripts/update-pi-runtime.sh"
+export PI_CODING_AGENT_DIR="$repo_root"
+
+if [[ ! -x "$local_pi" ]]; then
+	printf 'Canonical Pi runtime is missing: %s\nRun %s/scripts/init-agent-home.sh to restore it.\n' "$local_pi" "$repo_root" >&2
+	exit 1
+fi
+
+if [[ "${1:-}" == "update" ]]; then
+	bash "$agent_home_update_script" --pull
+	shift
+	case "${1:-}" in
+	"" | self | pi | --self)
+		exec bash "$runtime_update_script"
+		;;
+	--all)
+		bash "$runtime_update_script"
+		exec "$local_pi" update --extensions
+		;;
+	*)
+		exec "$local_pi" update "$@"
+		;;
+	esac
+fi
+
+exec "$local_pi" "$@"
+EOF
+
+	chmod +x "$wrapper_path"
+	log "Created repo-pinned Pi wrapper at $wrapper_path"
+}
+
+if ! command -v npm >/dev/null 2>&1; then
+	log "npm is required to install the repo-pinned Pi runtime."
+	exit 1
+fi
+
 mkdir -p \
 	"$repo_root/sessions" \
 	"$repo_root/sessions/subagent" \
@@ -128,68 +206,6 @@ mkdir -p \
 	"$repo_root/github-tracker-runs" \
 	"$repo_root/logs"
 
-setup_agent_home_pi_wrapper() {
-	local wrapper_path="$repo_root/bin/pi"
-	local wrapper_content_dir="$(dirname "$wrapper_path")"
-	local real_pi
-
-	real_pi="${CY_PI_REAL_PI_COMMAND:-$(command -v pi || true)}"
-	if [ -z "$real_pi" ]; then
-		log "Warning: could not locate system pi executable. Skipping pi update wrapper generation."
-		return
-	fi
-
-	if [ "$real_pi" = "$wrapper_path" ]; then
-		local wrapper_free_path=""
-		local clean_path=""
-		local path_entry
-		local -a path_entries
-		IFS=':' read -r -a path_entries <<<"$PATH"
-		for path_entry in "${path_entries[@]}"; do
-			if [ -z "$path_entry" ] || [ "$path_entry" = "$wrapper_content_dir" ]; then
-				continue
-			fi
-			clean_path="${clean_path:+$clean_path:}$path_entry"
-		done
-		wrapper_free_path="$(PATH="$clean_path" command -v pi 2>/dev/null || true)"
-		if [ -n "$wrapper_free_path" ]; then
-			real_pi="$wrapper_free_path"
-		else
-			log "Warning: existing pi command resolves to this repository wrapper. Skipping wrapper generation."
-			return
-		fi
-	fi
-
-	cat >"$wrapper_path" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-update_script="${repo_root}/scripts/update-agent-home.sh"
-export PATH="${repo_root}/node_modules/.bin:${PATH}"
-
-if [[ "${1:-}" == "update" ]]; then
-	bash "${update_script}" --pull
-fi
-
-exec __CY_PI_REAL_PI__ "$@"
-EOF
-	python3 - "$wrapper_path" "$real_pi" <<'PY'
-from pathlib import Path
-import shlex
-import sys
-
-path = Path(sys.argv[1])
-real_pi = shlex.quote(sys.argv[2])
-path.write_text(path.read_text().replace("__CY_PI_REAL_PI__", real_pi))
-PY
-
-	chmod +x "$wrapper_path"
-	log "Created pi update wrapper at $wrapper_path"
-}
-
-setup_agent_home_pi_wrapper
-setup_shell_path
 if [ ! -f "$settings_dst" ]; then
 	if [ -f "$settings_src" ]; then
 		cp "$settings_src" "$settings_dst"
@@ -203,53 +219,33 @@ else
 	log "Keeping existing $settings_dst"
 fi
 
-install_package_dependencies() {
-	local dir="$1"
-
-	if ! command -v npm >/dev/null 2>&1; then
-		log "npm was not found; skipping package install for $dir"
-		return
-	fi
-
-	if [ ! -f "$dir/package.json" ]; then
-		return
-	fi
-
-	(
-		cd "$dir"
-		if [ -f package-lock.json ]; then
-			if npm ci; then
-				return
-			fi
-			log "npm ci failed for $dir; refreshing package-lock.json with npm install"
-		fi
-		npm install
-	)
-}
-
 install_package_dependencies "$repo_root"
 install_package_dependencies "$package_dir"
+setup_agent_home_pi_wrapper
+setup_shell_path
 
 cat <<EOF
 
-This checkout is ready to use as a Pi agent home:
+This checkout is ready to use as the canonical Pi agent home and runtime:
 
-  PI_CODING_AGENT_DIR="$repo_root" pi
+  pi
 
 or:
 
   "$repo_root/scripts/pi-home.sh"
 
-Runtime state created here is ignored by git. auth.json is not copied; sign in or copy it manually only if you intend to keep this checkout as your live agent home.
+The exact Pi runtime is pinned by package.json and package-lock.json. Runtime state created here is ignored by git; auth.json is not copied or synchronized.
 
 Reference setup applied:
 
   - runtime directories exist under this checkout
   - settings.json was created from settings.example.json when missing
   - settings paths were materialized for this checkout
-  - root and npm/package.json dependencies were installed when npm is available
-  - update wrapper is configured at bin/pi to run a safe agent-home pull on \`pi update\`
-  - bash, zsh, and fish startup files were configured to put "$repo_root/bin" first on PATH
+  - locked root and npm/package.json dependencies were installed with npm ci
+  - bin/pi runs the repo-pinned node_modules/.bin/pi and sets PI_CODING_AGENT_DIR
+  - bash, zsh, and fish startup files put only "$repo_root/bin" first on PATH
+  - stale "$repo_root/node_modules/.bin" PATH entries are removed by the managed shell block
+  - \`pi update\` pulls agent-home changes and updates the tracked runtime pin
+  - commit and push package.json/package-lock.json changes after a runtime update to synchronize other machines
   - restart your shell or run \`exec \$SHELL\`; for fish, \`exec fish\` is also fine
-  - startup update checker is available via the \`agent-home-update.ts\` extension
 EOF

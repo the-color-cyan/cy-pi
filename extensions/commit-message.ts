@@ -8,12 +8,12 @@ import {
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
-import { complete } from "@mariozechner/pi-ai";
+import { complete } from "@earendil-works/pi-ai/compat";
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
-} from "@mariozechner/pi-coding-agent";
-import { copyToClipboard } from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
+import { copyToClipboard } from "@earendil-works/pi-coding-agent";
 
 const PROMPT_FILE_NAME = "commit-message-prompt.md";
 const DEFAULT_PROMPT = `You are writing a git commit message for the changes below.

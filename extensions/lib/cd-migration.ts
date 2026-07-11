@@ -6,7 +6,7 @@ import { join } from "node:path";
 import type {
 	SessionEntry,
 	SessionHeader,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 export const CURRENT_SESSION_VERSION = 3;
 

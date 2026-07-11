@@ -153,14 +153,23 @@ if [[ "$status" == "behind" ]]; then
 		behind="$(git -C "$repo_root" rev-list --count "$upstream" --not HEAD 2>/dev/null || echo 0)"
 		ahead="$(git -C "$repo_root" rev-list --count HEAD --not "$upstream" 2>/dev/null || echo 0)"
 		if [[ "$behind" -eq 0 && "$ahead" -eq 0 ]]; then
-			emit_status "updated" "$behind" "$ahead" "$branch" "$upstream"
 			log "Pulled latest agent-home updates into $repo_root"
-			if [ -f "$repo_root/npm/package-lock.json" ] && command -v npm >/dev/null 2>&1; then
-				(
-					cd "$repo_root/npm"
-					npm ci >/dev/null 2>&1
-				)
+			if ! command -v npm >/dev/null 2>&1; then
+				emit_status "update_failed" "$behind" "$ahead" "$branch" "$upstream" "npm is required to reconcile locked dependencies"
+				exit 0
 			fi
+			for package_root in "$repo_root" "$repo_root/npm"; do
+				if [ -f "$package_root/package-lock.json" ]; then
+					if ! (
+						cd "$package_root"
+						npm ci >/dev/null
+					); then
+						emit_status "update_failed" "$behind" "$ahead" "$branch" "$upstream" "npm ci failed for $package_root"
+						exit 0
+					fi
+				fi
+			done
+			emit_status "updated" "$behind" "$ahead" "$branch" "$upstream"
 			exit 0
 		fi
 		emit_status "update_failed" "$behind" "$ahead" "$branch" "$upstream" "pull did not apply a clean fast-forward"
