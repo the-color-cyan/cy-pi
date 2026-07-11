@@ -1,0 +1,106 @@
+.pi/skills/openspec-update-change/SKILL.md
+  s_035886f5f2f11e::t_477246be17611a 1-86
+README.md
+  s_035886f5f2f11e::t_29c19b7b3d9086 22-23,58-68
+  s_035886f5f2f11e::t_b2e81728034d0a 69
+.pi/prompts/opsx-archive.md
+  s_035886f5f2f11e::t_477246be17611a 1-158
+.pi-subagents/artifacts/f89aa832_reviewer_0_transcript.jsonl
+  s_19ef2222dcd35f::t_23ce60ba4bca6e 28-33
+  s_19ef2222dcd35f::t_7ca7dc45a9bbe0 18-20
+  s_19ef2222dcd35f::t_147e0d059898ed 6-7
+  s_19ef2222dcd35f::t_4b3b9002866976 58-62
+  s_19ef2222dcd35f::t_5ab0cbe7cce175 15-17
+  s_19ef2222dcd35f::t_5d3a971c94acaa 3-5
+  s_19ef2222dcd35f::t_4d6030dc4917e6 8-10,12-14
+  s_19ef2222dcd35f::t_f0596c56d27a56 21-23,25-27
+  s_19ef2222dcd35f::t_7c8ae220b3046b 34-36,55-57
+  s_19ef2222dcd35f::t_c3a177754accce 63-65
+  s_035886f5f2f11e::t_cea1e73af48e17 1-2,11,24,37-54,66-68
+.pi/skills/openspec-propose/SKILL.md
+  s_035886f5f2f11e::t_477246be17611a 1-114
+.pi-subagents/artifacts/b73bd4fe_scout_0_transcript.jsonl
+  s_3fae58a4a4ef21::t_5840c64896f193 67-71
+  s_3fae58a4a4ef21::t_4bb6040c1e90fa 40-51
+  s_3fae58a4a4ef21::t_460cbd3ed781de 37-39
+  s_3fae58a4a4ef21::t_c362c0b1d824b2 52-54,64-66
+  s_3fae58a4a4ef21::t_ca007e4d19007d 72-74
+  s_035886f5f2f11e::t_e7d90a5a227c15 1-36,55-63,75-95
+.pi/prompts/opsx-sync.md
+  s_035886f5f2f11e::t_477246be17611a 1-141
+package.json
+  s_035886f5f2f11e::t_67048b85e00e32 53
+  s_035886f5f2f11e::t_66b90822cd0536 15,21,33-34,37-38
+.pi/prompts/opsx-propose.md
+  s_035886f5f2f11e::t_477246be17611a 1-107
+.pi/skills/openspec-archive-change/SKILL.md
+  s_035886f5f2f11e::t_477246be17611a 1-118
+.pi-subagents/artifacts/outputs/b73bd4fe/context.md
+  s_3fae58a4a4ef21::t_7f287554dff369 1-165
+.pi/prompts/opsx-explore.md
+  s_035886f5f2f11e::t_477246be17611a 1-172
+openspec/config.yaml
+  s_035886f5f2f11e::t_477246be17611a 1-20
+.pi/prompts/opsx-apply.md
+  s_035886f5f2f11e::t_477246be17611a 1-153
+scripts/init-agent-home.sh
+  s_035886f5f2f11e::t_ec2cab4c4c6938 79,91-99,106-109,111,169
+  s_035886f5f2f11e::t_0966f28e308000 230-231,250
+  s_035886f5f2f11e::t_7529fb2581c26a 207-208,210,214,219,224
+.pi/skills/openspec-apply-change/SKILL.md
+  s_035886f5f2f11e::t_477246be17611a 1-160
+.pi/skills/openspec-sync-specs/SKILL.md
+  s_035886f5f2f11e::t_477246be17611a 1-148
+.pi/prompts/opsx-update.md
+  s_035886f5f2f11e::t_477246be17611a 1-79
+.pi/skills/openspec-explore/SKILL.md
+  s_035886f5f2f11e::t_477246be17611a 1-290
+.pi-subagents/artifacts/f89aa832_reviewer_0_input.md
+  s_035886f5f2f11e::t_feaf3c434e8a3a 1-51
+package-lock.json
+  s_035886f5f2f11e::t_f6d7d3c0bc2f77 14,412-437,463-863,1192-1229,1240-1256,1614-1626,1657-1679,1719-1741,1797-1821,1996-2022,2076-2088,2214-2226,2323-2339,2378-2434,2437-2440,2444-2447,2450-2456,2516-2545,2576-2599,2627-2639,2673-2682,2765-2780,2803-2851,2931-2940,2965-2998,3093-3113,3124-3153,3164-3198,3220-3249,3316-3328,3436-3448,3556-3571,3721-3733
+.pi-subagents/artifacts/b73bd4fe_scout_0_input.md
+  s_035886f5f2f11e::t_084a0fecad1152 1-57
+.pi-subagents/artifacts/b73bd4fe_scout_0_meta.json
+  s_035886f5f2f11e::t_438f9338da4c79 1-37
+.pi-subagents/artifacts/b73bd4fe_scout_0_output.md
+  s_035886f5f2f11e::t_35a733b39e1bdc 1-116
+.pi-subagents/artifacts/f89aa832_reviewer_0_meta.json
+  s_035886f5f2f11e::t_2093a060308c9b 1-37
+.pi-subagents/artifacts/f89aa832_reviewer_0_output.md
+  s_035886f5f2f11e::t_2ba173abf30b81 1-5
+scripts/pi-home.sh
+  s_035886f5f2f11e::t_4ad09a187c22ea 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "0f04fc1483fb943853c3831bddd569c2287e73d8",
+  "prompts": {},
+  "sessions": {
+    "s_035886f5f2f11e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f4ea8-8122-7794-8adb-7420180b0282",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_19ef2222dcd35f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f4eb1-4a18-7bae-8c48-0c3a753a2087",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_3fae58a4a4ef21": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f4eaa-2596-7d5f-b603-e3da62e45aa4",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
