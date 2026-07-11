@@ -1,0 +1,21 @@
+settings.example.json
+  s_b5f836cf53904b::t_fa847ba6a8f408 45
+tests/init-agent-home.test.ts
+  s_b5f836cf53904b::t_c45d32a7bf3a5a 24-28,38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "2cf6a30e83c9a1212642ea06272a1d88799dfee5",
+  "prompts": {},
+  "sessions": {
+    "s_b5f836cf53904b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "aad1ec02-6c75-43eb-944f-14f0b7247b89",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
