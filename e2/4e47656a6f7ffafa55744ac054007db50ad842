@@ -1,0 +1,80 @@
+extensions/commit-message.ts
+  s_2b51fb777e399f::t_b1da54e1a95166 11
+  s_2b51fb777e399f::t_c743af17c947c6 15-16
+README.md
+  s_1b42f5a63f4db7::t_7b45c9bf31ca43 35,41-42,45-55,58-61,137
+scripts/pi-home.sh
+  s_2b51fb777e399f::t_5105e3373d7c1b 49-50
+  s_1b42f5a63f4db7::t_34042e7d3b54b6 6
+tests/init-agent-home.test.ts
+  s_2b51fb777e399f::t_5cc53dd46e118d 17,19-20,22-24
+  s_2b51fb777e399f::t_14672a3f62d6e0 2,41-47,100-119
+  s_1b42f5a63f4db7::t_6e0ee2dda95a5a 1,3-16,25-40,48-90,92,94-99,120-138
+  s_2b51fb777e399f::t_fa259f5f12854e 18,21
+  s_1b42f5a63f4db7::t_ad95cfe161f962 91,93
+  s_1b42f5a63f4db7::t_e4b1700ff982f3 139-141
+scripts/update-agent-home.sh
+  s_1b42f5a63f4db7::t_b711ca3c91c626 172
+  s_2b51fb777e399f::t_b66b71e192f4f1 163,166-169
+  s_1b42f5a63f4db7::t_458eca0cee8032 157-159,161-162,164-165,170-171
+npm/.gitignore
+  s_2b51fb777e399f::t_348843b140933a 3
+scripts/init-agent-home.sh
+  s_1b42f5a63f4db7::t_f37fbc93f4bf79 80,91-98,101-103,110-115,118-119,131-132,134,137-146,148-154,162-170,173-186,189,193,196-208,224-225,229,231,237,244-249
+scripts/update-pi-runtime.sh
+  s_1b42f5a63f4db7::t_7fbb2a9c6d21da 1-33
+extensions/agent-home-update.ts
+  s_1b42f5a63f4db7::t_90e7bcfd7d0b7b 4
+extensions/ascii-header.ts
+  s_1b42f5a63f4db7::t_cc380562a6a5ce 4-7
+extensions/branch.ts
+  s_1b42f5a63f4db7::t_f07d5b8d5e9579 1-2
+extensions/cd.ts
+  s_1b42f5a63f4db7::t_36992f770623d4 4
+extensions/evanescent.ts
+  s_1b42f5a63f4db7::t_587077e282e8b0 2
+extensions/git-ai.ts
+  s_1b42f5a63f4db7::t_9fb4edb7349a4a 1
+extensions/github-tracker.ts
+  s_1b42f5a63f4db7::t_ada9673b69f70b 13,18,24-25
+extensions/lib/cd-migration.ts
+  s_1b42f5a63f4db7::t_9646f9b96a4103 9
+extensions/pair.ts
+  s_1b42f5a63f4db7::t_6f3fe9d701b50d 1
+extensions/plan-mode.ts
+  s_1b42f5a63f4db7::t_da1afa6633dfcf 4-5
+extensions/sh.ts
+  s_1b42f5a63f4db7::t_45ddb872f8cf63 2-3
+extensions/think.ts
+  s_1b42f5a63f4db7::t_65863c0200b63a 1
+npm/package-lock.json
+  s_2b51fb777e399f::t_81b28a5e43b6f5 1-5950
+package-lock.json
+  s_1b42f5a63f4db7::t_7e0e6c679bdaa2 14-16,22-24,27-30,32,34-40,43-46,50-51,55-77,375-387,422-425,429-439,442,445,448-451,453,455,457-458,461,464,469-472,474-490,492,495-498,500,502-507,510-523,526,529,534-537,539,541-543,546-581,583-584,586-590,593-596,600,602-603,606,609,614-617,619-624,626,629-632,634-642,645-648,650,652-654,657,660-663,665,667-702,705,708-711,713,715-722,725,728-731,733,735-739,742,745-748,750,752-758,761,764-767,769-784,786,789-792,794,796-801,804,807-810,812,814-824,827,830-833,835,837-841,844,847-850,852,854-860,863,866-869,871,873-878,881,884-887,889,891-894,897,900-903,905,907-910,913,916-919,921-929,931-932,935-938,940-951,953-954,957-1162,1173,1187,1204,1221,1238,1255,1272,1289,1306,1323-1326,1328,1330-1333,1335-1341,1344-1347,1349-1455,1457-1459,1462,1465-1468,1470,1472-1474,1477,1480-1483,1485,1487-1489,1491-2936,2939,2941-2947,2950-2953,2957-2961,2964,2966-2972,2975-2978,2980-2982,2985,2988,3031-3040,3178-3190,3234-3237,3239,3241-3242,3245,3248-3251,3253-3260,3526-3530,4081-4082,4086-4090
+package.json
+  s_1b42f5a63f4db7::t_2b883144773bb8 45-47,55-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "e24e47656a6f7ffafa55744ac054007db50ad842",
+  "prompts": {},
+  "sessions": {
+    "s_1b42f5a63f4db7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f52fd-7cab-7056-bb85-35b9559d861b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_2b51fb777e399f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f52ef-ea26-7603-978f-bc362f98e466",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
