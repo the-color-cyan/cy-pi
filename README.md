@@ -48,7 +48,13 @@ The root `package.json` and `package-lock.json` pin the exact Pi runtime used on
 
 ### Synchronizing and updating
 
-Normal Git synchronization carries the pinned runtime version to other machines. After pulling, run `./scripts/init-agent-home.sh`; a successful agent-home pull through `pi update` also reconciles both lockfiles with `npm ci`.
+Normal Git synchronization carries the pinned runtime version and complete
+extension manifest to other machines. After pulling, run
+`./scripts/init-agent-home.sh`; a successful agent-home pull through
+`pi update` also reconciles both lockfile pairs with `npm ci`:
+
+- Root `package.json` + `package-lock.json` own the Pi runtime.
+- `npm/package.json` + `npm/package-lock.json` own checkout-managed extension dependencies.
 
 Bare `pi update` (and `pi update self`, `pi update pi`, or `pi update --self`) updates the three tracked `@earendil-works` Pi packages to the same latest exact version. `pi update --all` does that and then updates configured Pi packages. Extension-only and source-specific update forms are delegated to the local Pi runtime.
 
@@ -62,6 +68,30 @@ git push
 ```
 
 At startup, the loaded extension checks whether this repo has remote commits not yet pulled and notifies you in the session UI. It respects `PI_OFFLINE=1`.
+
+#### Installation troubleshooting
+
+Do **not** use `npm update` to repair this checkout: it intentionally changes
+versions outside the committed locks. If initialization reports that a manifest
+and lockfile are out of sync, first update the checkout and retry:
+
+```bash
+git pull --ff-only
+./scripts/init-agent-home.sh
+```
+
+If the checkout includes both current manifest/lockfile pairs but its local
+`npm/` installation is stale, refresh only that generated installation and
+rerun initialization:
+
+```bash
+npm install --prefix npm
+./scripts/init-agent-home.sh
+```
+
+Treat resulting changes to `npm/package-lock.json` as a signal to pull the
+canonical repository update or deliberately reconcile and commit the dependency
+change. Do not leave a machine-specific lockfile revision behind.
 
 This keeps resources editable in place: `extensions/`, `skills/`, `prompts/`, `themes/`, `agents/`, `APPEND_SYSTEM.md`, and the top-level prompt/playbook files are all loaded from the checkout. Runtime state such as `auth.json`, `settings.json`, sessions, run history, tracker state, and generated worktrees is ignored by git.
 
@@ -134,4 +164,10 @@ Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
 ## Settings
 
-`settings.example.json` is the portable reference setup for fresh clones. `scripts/init-agent-home.sh` copies it to ignored local `settings.json` when missing, materializes checkout-local paths, creates ignored runtime directories, and installs both root and `npm/` lockfiles with `npm ci`. The root lock owns the Pi runtime version; `npm/` owns configured third-party package dependencies. Auth, local settings, sessions, caches, and secrets remain machine-local.
+`settings.example.json` is the portable reference setup for fresh clones.
+`scripts/init-agent-home.sh` copies it to ignored local `settings.json` when
+missing, materializes checkout-local paths, creates ignored runtime directories,
+and installs both committed manifest/lockfile pairs with `npm ci`. The root pair
+owns the Pi runtime; the tracked `npm/` pair owns checkout-managed third-party
+package dependencies. Auth, local settings, sessions, caches, and secrets
+remain machine-local.
