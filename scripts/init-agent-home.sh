@@ -76,6 +76,7 @@ PY
 
 setup_shell_path() {
 	local shell_bin_path
+	local node_bin_path="$repo_root/node_modules/.bin"
 	shell_bin_path="$(managed_shell_path)"
 	local posix_start="# >>> cy-pi agent-home PATH >>>"
 	local posix_end="# <<< cy-pi agent-home PATH <<<"
@@ -87,21 +88,27 @@ setup_shell_path() {
 	posix_block="$(
 		cat <<EOF
 $posix_start
-if [ -d "$shell_bin_path" ]; then
-	case ":\$PATH:" in
-		*":$shell_bin_path:"*) ;;
-		*) export PATH="$shell_bin_path:\$PATH" ;;
-	esac
-fi
+for cy_pi_path in "$shell_bin_path" "$node_bin_path"; do
+	if [ -d "\$cy_pi_path" ]; then
+		case ":\$PATH:" in
+			*":\$cy_pi_path:"*) ;;
+			*) export PATH="\$cy_pi_path:\$PATH" ;;
+		esac
+	fi
+done
+unset cy_pi_path
 $posix_end
 EOF
 	)"
 	fish_block="$(
 		cat <<EOF
 $fish_start
-if test -d "$shell_bin_path"
-	fish_add_path --prepend "$shell_bin_path"
+for cy_pi_path in "$shell_bin_path" "$node_bin_path"
+	if test -d "\$cy_pi_path"
+		fish_add_path --prepend "\$cy_pi_path"
+	end
 end
+set -e cy_pi_path
 $fish_end
 EOF
 	)"
@@ -159,6 +166,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 update_script="${repo_root}/scripts/update-agent-home.sh"
+export PATH="${repo_root}/node_modules/.bin:${PATH}"
 
 if [[ "${1:-}" == "update" ]]; then
 	bash "${update_script}" --pull
@@ -196,28 +204,31 @@ else
 fi
 
 install_package_dependencies() {
+	local dir="$1"
+
 	if ! command -v npm >/dev/null 2>&1; then
-		log "npm was not found; skipping package install for $package_dir"
+		log "npm was not found; skipping package install for $dir"
 		return
 	fi
 
-	if [ ! -f "$package_dir/package.json" ]; then
+	if [ ! -f "$dir/package.json" ]; then
 		return
 	fi
 
 	(
-		cd "$package_dir"
+		cd "$dir"
 		if [ -f package-lock.json ]; then
 			if npm ci; then
 				return
 			fi
-			log "npm ci failed for $package_dir; refreshing package-lock.json with npm install"
+			log "npm ci failed for $dir; refreshing package-lock.json with npm install"
 		fi
 		npm install
 	)
 }
 
-install_package_dependencies
+install_package_dependencies "$repo_root"
+install_package_dependencies "$package_dir"
 
 cat <<EOF
 
@@ -236,7 +247,7 @@ Reference setup applied:
   - runtime directories exist under this checkout
   - settings.json was created from settings.example.json when missing
   - settings paths were materialized for this checkout
-  - package dependencies in npm/package.json were installed when npm is available
+  - root and npm/package.json dependencies were installed when npm is available
   - update wrapper is configured at bin/pi to run a safe agent-home pull on \`pi update\`
   - bash, zsh, and fish startup files were configured to put "$repo_root/bin" first on PATH
   - restart your shell or run \`exec \$SHELL\`; for fish, \`exec fish\` is also fine

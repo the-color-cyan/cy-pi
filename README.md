@@ -19,6 +19,8 @@ This repo is intended to be used directly as a Pi agent home: clone it and run p
   - `productivity/` — general workflow skills (`handoff`)
 - `prompts/` — prompt templates (currently empty)
 - `themes/` — custom themes (currently empty)
+- `openspec/` — OpenSpec configuration and project specifications
+- `.pi/` — OpenSpec-generated Pi prompts and skills
 - `agents/` — active pi-subagents custom agents and chain definitions, when present
 - `archive/` — inert resources kept for reference only; these are not loaded by the direct agent-home workflow
 - `APPEND_SYSTEM.md` — global system-prompt append content
@@ -52,6 +54,18 @@ At startup, the loaded extension checks whether this repo has remote commits not
 This keeps resources editable in place: `extensions/`, `skills/`, `prompts/`, `themes/`, `agents/`, `APPEND_SYSTEM.md`, and the top-level prompt/playbook files are all loaded from the checkout. Runtime state such as `auth.json`, `settings.json`, sessions, run history, tracker state, and generated worktrees is ignored by git.
 
 Do not install this checkout as a package inside its own `settings.json`; that can duplicate commands/skills.
+
+## OpenSpec
+
+[OpenSpec](https://openspec.dev/) is installed as a root development dependency. Its generated Pi skills and prompt templates under `.pi/` are loaded through the package manifest, so they are available when this checkout is used as the Pi agent home.
+
+Use the pinned CLI with:
+
+```bash
+npm exec openspec -- <command>
+```
+
+In Pi, restart after updating generated resources, then use `/opsx-propose`, `/opsx-apply`, `/opsx-archive`, `/opsx-explore`, `/opsx-sync`, or `/opsx-update`.
 
 ## commit-message extension
 
