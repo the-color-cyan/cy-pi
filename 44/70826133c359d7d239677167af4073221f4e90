@@ -1,0 +1,21 @@
+README.md
+  s_b5f836cf53904b::t_5e7b06721ebc6c 51-54,74-76,83-85,92-95,167-173
+  s_b5f836cf53904b::t_4a56764c489f65 56-57,72-73,77-82,86-91
+  s_b5f836cf53904b::t_7a6583f1ee3f8f 55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "4470826133c359d7d239677167af4073221f4e90",
+  "prompts": {},
+  "sessions": {
+    "s_b5f836cf53904b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "aad1ec02-6c75-43eb-944f-14f0b7247b89",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
