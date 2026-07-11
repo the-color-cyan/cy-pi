@@ -1,0 +1,26 @@
+npm/.gitignore
+  s_b5f836cf53904b::t_a09fb65f78caa0 3
+npm/package.json
+  s_b5f836cf53904b::t_00f69e659551ea 10-13
+  s_b5f836cf53904b::t_6e395957ee56c2 7-9
+  s_b5f836cf53904b::t_feb68df1763439 14-16
+  s_b5f836cf53904b::t_c584c0ccd915ff 1-6,17
+npm/package-lock.json
+  s_b5f836cf53904b::t_e5eb755ef0e1ba 14,17,793-825,2910-3325,4680-4720,4889-4902,5622-5635,5679-5694,6196-6213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "8f94d1198024ae0f3c31748fccd2ac0cd63b1e16",
+  "prompts": {},
+  "sessions": {
+    "s_b5f836cf53904b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "aad1ec02-6c75-43eb-944f-14f0b7247b89",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
