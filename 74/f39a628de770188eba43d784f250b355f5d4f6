@@ -1,0 +1,19 @@
+AGENTS.md
+  s_b5f836cf53904b::t_80ed8821d62991 6-9,16-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "74f39a628de770188eba43d784f250b355f5d4f6",
+  "prompts": {},
+  "sessions": {
+    "s_b5f836cf53904b": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "aad1ec02-6c75-43eb-944f-14f0b7247b89",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
