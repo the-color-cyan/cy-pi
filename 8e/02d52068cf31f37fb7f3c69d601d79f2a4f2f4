@@ -1,0 +1,89 @@
+tests/settings-reconciliation.test.ts
+  s_877d561081b714::t_5325c7477f29b6 31,68,75,84,87
+  s_a1b317390f526d::t_c21eef902a8d2a 80
+  s_a1b317390f526d::t_da7cc65472ef30 1-15,17-30,32-33,35-67,69-74,76-79,81-83,85-86,88-97,99-109
+  s_877d561081b714::t_18e8c68b39af2a 16,34,98
+scripts/init-agent-home.sh
+  s_877d561081b714::t_5325c7477f29b6 207
+  s_a1b317390f526d::t_fce6511f03791f 185,208
+scripts/update-agent-home.sh
+  s_a1b317390f526d::t_ca286b8ff18504 157-160
+AGENTS.md
+  s_877d561081b714::t_8d36e2a57dda2f 15
+  s_877d561081b714::t_6a3d6ade18af31 12-13
+  s_877d561081b714::t_a8b00642d088d0 14
+package.json
+  s_877d561081b714::t_5325c7477f29b6 24
+scripts/reconcile-settings.sh
+  s_877d561081b714::t_5325c7477f29b6 10,35
+  s_a1b317390f526d::t_4e6524d5502f26 1-9,11-34,36-109
+extensions/settings-capture.ts
+  s_d766c9694a83cf::t_6b70763820a255 1-11,13,15-43,45-50,52-71,74-81,103-111,116-141,148-153,155-157,167-169,171-181,183-195,197-206
+  s_877d561081b714::t_b4207252e66ae1 182
+  s_d766c9694a83cf::t_4ab35ff5afc4a1 82-94,99-102,144-147
+  s_877d561081b714::t_17a6ac5df618a4 12,95-98,142-143,158-166
+  s_d766c9694a83cf::t_eba1c680d5706d 14,72-73,112-115,170
+  s_d766c9694a83cf::t_d6c8c012d00281 44
+  s_d766c9694a83cf::t_eb5fc1dedcdb5d 51
+  s_d766c9694a83cf::t_d8a5bc75ac042b 154
+  s_d766c9694a83cf::t_0c94ad2d0db972 196
+tests/settings-capture.test.ts
+  s_d766c9694a83cf::t_1986f069f1d97d 2-10,15-18,115-118,120-126,131-133,135-137
+  s_877d561081b714::t_03383fabf33c48 30,55,57,60,82-99
+  s_d766c9694a83cf::t_e58c582d4413f2 1,11-14,19-25,32-54,56,58-59,61-64,66-81,100-114,128,138-160,162-165
+  s_d766c9694a83cf::t_b6b4232dd4f776 26-29,31
+  s_d766c9694a83cf::t_5309770d3accb0 65
+  s_d766c9694a83cf::t_398c5830d7454b 119
+  s_d766c9694a83cf::t_8549fb01e775b6 127
+  s_d766c9694a83cf::t_91ce3a654c2201 129-130
+  s_d766c9694a83cf::t_0b0f9c80f25dd2 134
+  s_d766c9694a83cf::t_31b513ca4e9eba 161
+tests/init-agent-home.test.ts
+  s_877d561081b714::t_5325c7477f29b6 62,107
+  s_a1b317390f526d::t_7699527dd61a02 126
+  s_a1b317390f526d::t_1b812f31f44f78 63-67,104-106,108-125,132-141
+  s_a1b317390f526d::t_aca45697340a46 127-131
+  s_877d561081b714::t_612ddbbbb99665 142
+README.md
+  s_d766c9694a83cf::t_81a5c0f4797469 184-185,190,192-193
+  s_877d561081b714::t_644614230e186e 197-198
+  s_a1b317390f526d::t_9c8c7ac91ce226 53-57,176-177,180-182,204-206,208-209
+  s_877d561081b714::t_c7229b9d330cec 11,191
+  s_877d561081b714::t_8c96e77989faa4 32-33,99-104
+  s_877d561081b714::t_e17473b5db5c18 183,186-189,199-203
+  s_d766c9694a83cf::t_e55dd249d72e34 194-196
+  s_877d561081b714::t_5325c7477f29b6 29,175
+  s_877d561081b714::t_2485dd84b4a309 178-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "8e02d52068cf31f37fb7f3c69d601d79f2a4f2f4",
+  "prompts": {},
+  "sessions": {
+    "s_877d561081b714": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f538a-e0b5-7c1f-a405-c00cc1b978ef",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_a1b317390f526d": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f5395-1308-783c-8e49-e57b6c0ee385",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_d766c9694a83cf": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f53a2-870d-7e9f-ac12-2d91ec1a1e5f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
