@@ -1,0 +1,58 @@
+extensions/commit-message.ts
+  s_e61d3464ad3999::t_9fec5271bde710 97-142,144,315
+  s_0e822c3126d372::t_556e28ecc91156 507,525,672-675,698,729
+  s_0e822c3126d372::t_5404d2abc11af0 321-322
+  s_e61d3464ad3999::t_575c2bd33c99a1 671
+  s_b84a4481e81e57::t_23bcb7716b2fe2 318-320
+  s_e61d3464ad3999::t_185e779433d00d 94-96
+  s_e61d3464ad3999::t_9c61b859515a01 143
+  s_e61d3464ad3999::t_2e211a4ec50e20 145-147
+  s_e61d3464ad3999::t_b7511ed3b87a7c 312-314
+  s_0e822c3126d372::t_b39176ecbe4011 323-325
+  s_e61d3464ad3999::t_8248e42605c3b9 12-17,25-36,79-88,93,148,308-311,316-317,326,357,359-360
+tests/settings-reconciliation.test.ts
+  s_e61d3464ad3999::t_a9577116049520 35-40,53-58
+settings.managed.json
+  s_e61d3464ad3999::t_bd522a83afafd8 38-43
+tests/commit-message.test.ts
+  s_e61d3464ad3999::t_d2425b7da7cca7 2
+  s_e61d3464ad3999::t_363d2c4d861ba3 24-25,27,29,33-34,36-44,47-49,54-56,62-65,67
+  s_0e822c3126d372::t_300eab90f0f4bf 3-4,7-10,26,28,30-32,35,45-46,50-53,57-61,66,69-72
+  s_b84a4481e81e57::t_9db5fe8b3aeaac 68
+  s_0e822c3126d372::t_2b37dbdc1a2a21 73
+README.md
+  s_0e822c3126d372::t_d68d5bf653e02e 137-139,146-149,154
+  s_e61d3464ad3999::t_ec1ffefed3a2ce 134-136,140-145,150-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "9102bf7ac6a330a7a15314e1107f8411d5ffa730",
+  "prompts": {},
+  "sessions": {
+    "s_0e822c3126d372": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f5424-0789-776a-8372-0fb0e591b563",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_b84a4481e81e57": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f53b2-fa5f-7cce-b758-fda4318d5189",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_e61d3464ad3999": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f542e-699a-70ec-801e-7ee9acf7dc15",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
