@@ -9,6 +9,10 @@ This repo is a Pi agent home checkout, like a Neovim config checkout.
   `PI_CODING_AGENT_DIR=$PWD pi`; that may select an unrelated global runtime.
 - Do not add symlink/config setup scripts that mutate another `~/.pi/agent`; this repo should be used in place.
 - Keep `package.json -> pi` limited to resources pi packages understand: `extensions`, `skills`, `prompts`, and `themes`.
+- Treat `settings.managed.json` as the canonical portable Pi configuration. Do
+  not commit mutable `settings.json`; apply managed changes through
+  `scripts/reconcile-settings.sh` or `scripts/init-agent-home.sh`, and capture
+  intentional local changes with `/capture`.
 - Keep active pi-subagents chains in `agents/`.
 - Keep parked/unused resources under `archive/`; do not add `archive/` to `package.json -> pi` or package `files`.
 - Add any new pi extensions to `extensions/` in this repo so they stay portable and direct-home friendly.

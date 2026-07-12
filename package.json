@@ -21,7 +21,7 @@
     "openspec",
     "prompts",
     "scripts",
-    "settings.example.json",
+    "settings.managed.json",
     "skills",
     "themes"
   ],

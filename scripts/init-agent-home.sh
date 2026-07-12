@@ -2,34 +2,10 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-settings_src="$repo_root/settings.example.json"
-settings_dst="$repo_root/settings.json"
 package_dir="$repo_root/npm"
 
 log() {
 	printf '%s\n' "$*"
-}
-
-json_escape() {
-	python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"
-}
-
-materialize_settings() {
-	local dst="$1"
-	local escaped_root
-	escaped_root="$(json_escape "$repo_root")"
-	python3 - "$dst" "$escaped_root" <<'PY'
-from pathlib import Path
-import json
-import sys
-
-path = Path(sys.argv[1])
-repo_root_json = sys.argv[2]
-repo_root = json.loads(repo_root_json)
-text = path.read_text()
-text = text.replace('$PI_CODING_AGENT_DIR', repo_root)
-path.write_text(text)
-PY
 }
 
 managed_shell_path() {
@@ -206,18 +182,7 @@ mkdir -p \
 	"$repo_root/github-tracker-runs" \
 	"$repo_root/logs"
 
-if [ ! -f "$settings_dst" ]; then
-	if [ -f "$settings_src" ]; then
-		cp "$settings_src" "$settings_dst"
-		materialize_settings "$settings_dst"
-		log "Created $settings_dst from settings.example.json"
-	else
-		printf '{}\n' >"$settings_dst"
-		log "Created empty $settings_dst"
-	fi
-else
-	log "Keeping existing $settings_dst"
-fi
+bash "$repo_root/scripts/reconcile-settings.sh" --repo "$repo_root"
 
 install_package_dependencies "$repo_root"
 install_package_dependencies "$package_dir"
@@ -239,8 +204,8 @@ The exact Pi runtime is pinned by package.json and package-lock.json. Runtime st
 Reference setup applied:
 
   - runtime directories exist under this checkout
-  - settings.json was created from settings.example.json when missing
-  - settings paths were materialized for this checkout
+  - settings.json was reconciled from settings.managed.json while preserving undeclared local keys
+  - declarative settings paths were materialized for this checkout
   - locked root and npm/package.json dependencies were installed with npm ci
   - bin/pi runs the repo-pinned node_modules/.bin/pi and sets PI_CODING_AGENT_DIR
   - bash, zsh, and fish startup files put only "$repo_root/bin" first on PATH

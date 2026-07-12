@@ -154,6 +154,10 @@ if [[ "$status" == "behind" ]]; then
 		ahead="$(git -C "$repo_root" rev-list --count HEAD --not "$upstream" 2>/dev/null || echo 0)"
 		if [[ "$behind" -eq 0 && "$ahead" -eq 0 ]]; then
 			log "Pulled latest agent-home updates into $repo_root"
+			if ! bash "$repo_root/scripts/reconcile-settings.sh" --repo "$repo_root" >/dev/null; then
+				emit_status "update_failed" "$behind" "$ahead" "$branch" "$upstream" "settings reconciliation failed"
+				exit 0
+			fi
 			if ! command -v npm >/dev/null 2>&1; then
 				emit_status "update_failed" "$behind" "$ahead" "$branch" "$upstream" "npm is required to reconcile locked dependencies"
 				exit 0

@@ -59,8 +59,12 @@ async function createFixture() {
 	await writeFile(join(repo, "package-lock.json"), "{}\n");
 	await writeFile(join(repo, "npm", "package.json"), "{}\n");
 	await writeFile(join(repo, "npm", "package-lock.json"), "{}\n");
-	await writeFile(join(repo, "settings.example.json"), "{}\n");
-	for (const script of ["init-agent-home.sh", "pi-home.sh"]) {
+	await writeFile(join(repo, "settings.managed.json"), "{}\n");
+	for (const script of [
+		"init-agent-home.sh",
+		"pi-home.sh",
+		"reconcile-settings.sh",
+	]) {
 		await writeFile(
 			join(repo, "scripts", script),
 			await readFile(join(sourceRoot, "scripts", script), "utf8"),
@@ -96,6 +100,45 @@ async function createFixture() {
 	});
 	return { repo, home, systemBin, env };
 }
+
+test("init reconciles declared settings while preserving local-only keys", async () => {
+	const { repo, env } = await createFixture();
+	await writeFile(
+		join(repo, "settings.managed.json"),
+		JSON.stringify({
+			nested: { declared: "new", added: true },
+			packages: ["declarative"],
+			path: "$PI_CODING_AGENT_DIR/extensions",
+		}),
+	);
+	await writeFile(
+		join(repo, "settings.json"),
+		JSON.stringify({
+			nested: { declared: "old", local: "preserved" },
+			packages: ["local"],
+			lastChangelogVersion: "local-runtime-value",
+		}),
+	);
+
+	await execFile("bash", [join(repo, "scripts", "init-agent-home.sh")], {
+		env,
+	});
+	let settings: Record<string, unknown>;
+	try {
+		settings = JSON.parse(await readFile(join(repo, "settings.json"), "utf8"));
+	} catch (error) {
+		assert.fail(`reconciled settings must be valid JSON: ${String(error)}`);
+	}
+
+	assert.deepEqual(settings.nested, {
+		declared: "new",
+		local: "preserved",
+		added: true,
+	});
+	assert.deepEqual(settings.packages, ["declarative"]);
+	assert.equal(settings.lastChangelogVersion, "local-runtime-value");
+	assert.equal(settings.path, join(repo, "extensions"));
+});
 
 test("init repairs PATH and wrapper runs the canonical checkout runtime", async () => {
 	const { repo, home, systemBin } = await createFixture();

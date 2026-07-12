@@ -8,6 +8,7 @@ This repo is intended to be used directly as a Pi agent home: clone it and run p
 
 - `extensions/` — pi TypeScript extensions
   - `agent-home-update.ts` — notifies on startup when tracked agent-home commits are available
+  - `settings-capture.ts` — adds `/capture` to promote local Pi settings into the managed declaration
   - `cd.ts` — adds `/cd <path>` to migrate the active session to a new working directory
   - `sh.ts` — adds `/sh <command>` to run a shell command in pi's current working directory
   - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
@@ -25,10 +26,11 @@ This repo is intended to be used directly as a Pi agent home: clone it and run p
 - `archive/` — inert resources kept for reference only; these are not loaded by the direct agent-home workflow
 - `APPEND_SYSTEM.md` — global system-prompt append content
 - `SUBAGENTS_ASYNC_PLAYBOOK.md` — async subagent reference used by the global instructions
-- `settings.example.json` — portable example settings with secrets/runtime state removed
+- `settings.managed.json` — declarative Pi settings with secrets/runtime state removed
 - `commit-message-prompt.md` — default global prompt for `/commit-message`
 
-Not included: `auth.json`, local `settings.json`, sessions, run history, caches, generated worktrees, or API keys.
+Not included: `auth.json`, the generated local `settings.json`, sessions, run
+history, caches, generated worktrees, or API keys.
 
 ## Use as your Pi agent home
 
@@ -48,10 +50,11 @@ The root `package.json` and `package-lock.json` pin the exact Pi runtime used on
 
 ### Synchronizing and updating
 
-Normal Git synchronization carries the pinned runtime version and complete
-extension manifest to other machines. After pulling, run
-`./scripts/init-agent-home.sh`; a successful agent-home pull through
-`pi update` also reconciles both lockfile pairs with `npm ci`:
+Normal Git synchronization carries the pinned runtime version, complete
+extension manifest, and declarative Pi settings to other machines. After
+pulling, run `./scripts/init-agent-home.sh`; a successful agent-home pull
+through `pi update` reconciles the ignored `settings.json` and both lockfile
+pairs without rewriting shell configuration:
 
 - Root `package.json` + `package-lock.json` own the Pi runtime.
 - `npm/package.json` + `npm/package-lock.json` own checkout-managed extension dependencies.
@@ -93,7 +96,12 @@ Treat resulting changes to `npm/package-lock.json` as a signal to pull the
 canonical repository update or deliberately reconcile and commit the dependency
 change. Do not leave a machine-specific lockfile revision behind.
 
-This keeps resources editable in place: `extensions/`, `skills/`, `prompts/`, `themes/`, `agents/`, `APPEND_SYSTEM.md`, and the top-level prompt/playbook files are all loaded from the checkout. Runtime state such as `auth.json`, `settings.json`, sessions, run history, tracker state, and generated worktrees is ignored by git.
+This keeps resources editable in place: `extensions/`, `skills/`, `prompts/`,
+`themes/`, `agents/`, `APPEND_SYSTEM.md`, and the top-level prompt/playbook
+files are all loaded from the checkout. The canonical settings declaration is
+tracked as `settings.managed.json`; generated runtime state such as `auth.json`,
+`settings.json`, sessions, run history, tracker state, and generated worktrees
+is ignored by git.
 
 Do not install this checkout as a package inside its own `settings.json`; that can duplicate commands/skills.
 
@@ -164,10 +172,38 @@ Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
 ## Settings
 
-`settings.example.json` is the portable reference setup for fresh clones.
-`scripts/init-agent-home.sh` copies it to ignored local `settings.json` when
-missing, materializes checkout-local paths, creates ignored runtime directories,
-and installs both committed manifest/lockfile pairs with `npm ci`. The root pair
+`settings.managed.json` is the portable, declarative Pi configuration.
+`scripts/reconcile-settings.sh` recursively overlays it onto ignored local
+`settings.json`: declared values win, declared arrays replace local arrays, and
+undeclared keys remain machine-local. Any runtime field included in the
+declarative file is intentionally synchronized; omitted fields remain local.
+`$PI_CODING_AGENT_DIR` placeholders in declared strings are materialized for
+the current checkout. Initialization and successful agent-home pulls both run
+this focused reconciliation.
+
+To change synchronized settings directly, edit `settings.managed.json`, run the
+focused reconciler locally, and commit the declaration:
+
+```bash
+./scripts/reconcile-settings.sh
+```
+
+Alternatively, use `/capture` inside interactive Pi to replace
+`settings.managed.json` with the complete current `settings.json` snapshot. The
+command summarizes top-level additions, changes, and removals and requires
+confirmation before writing atomically. Checkout-root paths are converted back
+to portable `$PI_CODING_AGENT_DIR` placeholders. The command fails closed
+outside UI modes. Review the resulting Git diff before committing because every
+local settings key is promoted to the tracked declaration; `auth.json` is never
+read or written.
+
+Removing a key from `settings.managed.json` stops managing it but does not
+delete that key from existing local files; remove obsolete local keys manually
+when needed. Never put credentials or machine-specific secrets in the managed
+file.
+
+`scripts/init-agent-home.sh` also creates ignored runtime directories and
+installs both committed manifest/lockfile pairs with `npm ci`. The root pair
 owns the Pi runtime; the tracked `npm/` pair owns checkout-managed third-party
-package dependencies. Auth, local settings, sessions, caches, and secrets
-remain machine-local.
+package dependencies. Auth, undeclared local settings, sessions, caches, and
+secrets remain machine-local.
