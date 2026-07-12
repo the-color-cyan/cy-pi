@@ -31,3 +31,4 @@ logs/
 /.pi-lens
 /trust.json
 /subagent-log-bundles
+/.pi-subagents/
