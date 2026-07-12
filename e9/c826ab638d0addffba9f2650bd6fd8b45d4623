@@ -1,0 +1,19 @@
+.gitignore
+  s_b84a4481e81e57::t_3478f0ff69d5a0 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "e9c826ab638d0addffba9f2650bd6fd8b45d4623",
+  "prompts": {},
+  "sessions": {
+    "s_b84a4481e81e57": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f53b2-fa5f-7cce-b758-fda4318d5189",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
