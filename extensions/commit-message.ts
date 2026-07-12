@@ -8,7 +8,8 @@ import {
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
-import { complete } from "@earendil-works/pi-ai/compat";
+import { completeSimple } from "@earendil-works/pi-ai/compat";
+import type { AssistantMessage } from "@earendil-works/pi-ai/compat";
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
@@ -234,12 +235,29 @@ async function getModelAuth(ctx: ExtensionCommandContext) {
 	return { model, auth };
 }
 
+export function completionText(
+	response: Pick<AssistantMessage, "content" | "errorMessage" | "stopReason">,
+): string {
+	if (response.stopReason === "error") {
+		throw new Error(response.errorMessage || "Model completion failed.");
+	}
+
+	return response.content
+		.filter(
+			(part): part is { type: "text"; text: string } => part.type === "text",
+		)
+		.map((part) => part.text)
+		.join("\n");
+}
+
 async function completeText(
+	pi: ExtensionAPI,
 	ctx: ExtensionCommandContext,
 	prompt: string,
 ): Promise<string> {
 	const { model, auth } = await getModelAuth(ctx);
-	const response = await complete(
+	const thinkingLevel = pi.getThinkingLevel();
+	const response = await completeSimple(
 		model,
 		{
 			messages: [
@@ -250,15 +268,16 @@ async function completeText(
 				},
 			],
 		},
-		{ apiKey: auth.apiKey, headers: auth.headers },
+		{
+			apiKey: auth.apiKey,
+			headers: auth.headers,
+			env: auth.env,
+			reasoning: thinkingLevel === "off" ? undefined : thinkingLevel,
+			sessionId: ctx.sessionManager.getSessionId(),
+		},
 	);
 
-	return response.content
-		.filter(
-			(part): part is { type: "text"; text: string } => part.type === "text",
-		)
-		.map((part) => part.text)
-		.join("\n");
+	return completionText(response);
 }
 
 function parseStatusLine(
@@ -388,6 +407,7 @@ async function generateWorktreeCommitMessage(
 	const diff = await pathDiff(pi, root, files);
 	const message = cleanCommitMessage(
 		await completeText(
+			pi,
 			ctx,
 			buildPrompt(
 				prompt,
@@ -564,7 +584,11 @@ export default function (pi: ExtensionAPI) {
 
 				ctx.ui.notify("Grouping working tree changes...", "info");
 				const groups = parseGroups(
-					await completeText(ctx, groupPrompt(root, files, options.guidance)),
+					await completeText(
+						pi,
+						ctx,
+						groupPrompt(root, files, options.guidance),
+					),
 					files,
 				);
 				const status = files
@@ -688,56 +712,25 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			const model = ctx.model;
-			if (!model) {
-				ctx.ui.notify("No active model selected.", "error");
-				return;
-			}
+			const { prompt, source } = readPromptFile(gitContext);
+			ctx.ui.notify("Generating commit message...", "info");
 
-			const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-			if (!auth.ok) {
-				ctx.ui.notify(auth.error, "error");
-				return;
-			}
-			if (!auth.apiKey) {
+			let message: string;
+			try {
+				message = cleanCommitMessage(
+					await completeText(
+						pi,
+						ctx,
+						buildPrompt(prompt, gitContext, options.guidance),
+					),
+				);
+			} catch (error) {
 				ctx.ui.notify(
-					`No API key available for ${model.provider}/${model.id}.`,
+					error instanceof Error ? error.message : String(error),
 					"error",
 				);
 				return;
 			}
-
-			const { prompt, source } = readPromptFile(gitContext);
-			ctx.ui.notify("Generating commit message...", "info");
-
-			const response = await complete(
-				model,
-				{
-					messages: [
-						{
-							role: "user" as const,
-							content: [
-								{
-									type: "text" as const,
-									text: buildPrompt(prompt, gitContext, options.guidance),
-								},
-							],
-							timestamp: Date.now(),
-						},
-					],
-				},
-				{ apiKey: auth.apiKey, headers: auth.headers },
-			);
-
-			const message = cleanCommitMessage(
-				response.content
-					.filter(
-						(part): part is { type: "text"; text: string } =>
-							part.type === "text",
-					)
-					.map((part) => part.text)
-					.join("\n"),
-			);
 
 			if (!message) {
 				ctx.ui.notify("Model returned an empty commit message.", "error");
