@@ -9,7 +9,12 @@ import {
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { completeSimple } from "@earendil-works/pi-ai/compat";
-import type { AssistantMessage } from "@earendil-works/pi-ai/compat";
+import type {
+	Api,
+	AssistantMessage,
+	Model,
+	ThinkingLevel,
+} from "@earendil-works/pi-ai/compat";
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
@@ -17,6 +22,18 @@ import type {
 import { copyToClipboard } from "@earendil-works/pi-coding-agent";
 
 const PROMPT_FILE_NAME = "commit-message-prompt.md";
+const DEFAULT_YEET_SETTINGS: YeetSettings = {
+	model: "inherit",
+	reasoning: "medium",
+};
+const THINKING_LEVELS = new Set<ThinkingLevel>([
+	"minimal",
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+	"max",
+]);
 const DEFAULT_PROMPT = `You are writing a git commit message for the changes below.
 
 Requirements:
@@ -59,8 +76,74 @@ type CommitGroup = {
 	reason: string;
 };
 
+export type YeetSettings = {
+	model: "inherit" | `${string}/${string}`;
+	reasoning: ThinkingLevel;
+};
+
+type CompletionOptions = {
+	model?: Model<Api>;
+	reasoning?: ThinkingLevel;
+};
+
 function agentDir(): string {
 	return process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
+}
+
+function isYeetModel(value: string): value is YeetSettings["model"] {
+	return value === "inherit" || /^[^/\s]+\/[^/\s]+$/.test(value);
+}
+
+export function readYeetSettings(globalDir = agentDir()): YeetSettings {
+	const path = join(globalDir, "settings.json");
+	if (!existsSync(path)) return DEFAULT_YEET_SETTINGS;
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(readFileSync(path, "utf8"));
+	} catch (error) {
+		throw new Error(
+			`Invalid /yeet settings in ${path}: ${error instanceof Error ? error.message : String(error)}`,
+		);
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		throw new Error(`Invalid /yeet settings in ${path}: expected an object.`);
+	}
+
+	const commitMessage = (parsed as { commitMessage?: unknown }).commitMessage;
+	if (commitMessage === undefined) return DEFAULT_YEET_SETTINGS;
+	if (
+		!commitMessage ||
+		typeof commitMessage !== "object" ||
+		Array.isArray(commitMessage)
+	) {
+		throw new Error(`Invalid /yeet settings in ${path}: commitMessage must be an object.`);
+	}
+	const settings = (commitMessage as { yeet?: unknown }).yeet;
+	if (settings === undefined) return DEFAULT_YEET_SETTINGS;
+	if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+		throw new Error(`Invalid /yeet settings in ${path}: commitMessage.yeet must be an object.`);
+	}
+
+	const { model = DEFAULT_YEET_SETTINGS.model, reasoning = DEFAULT_YEET_SETTINGS.reasoning } = settings as {
+		model?: unknown;
+		reasoning?: unknown;
+	};
+	if (typeof model !== "string" || !isYeetModel(model)) {
+		throw new Error(
+			`Invalid /yeet settings in ${path}: model must be "inherit" or provider/model.`,
+		);
+	}
+	if (
+		typeof reasoning !== "string" ||
+		!THINKING_LEVELS.has(reasoning as ThinkingLevel)
+	) {
+		throw new Error(
+			`Invalid /yeet settings in ${path}: reasoning must be a supported thinking level.`,
+		);
+	}
+
+	return { model, reasoning: reasoning as ThinkingLevel };
 }
 
 function readPromptFile(ctx: GitContext): { prompt: string; source: string } {
@@ -222,8 +305,25 @@ async function getGitContext(
 	};
 }
 
-async function getModelAuth(ctx: ExtensionCommandContext) {
-	const model = ctx.model;
+function resolveYeetModel(
+	ctx: ExtensionCommandContext,
+	settings: YeetSettings,
+): Model<Api> {
+	if (settings.model === "inherit") {
+		if (!ctx.model) throw new Error("No active model selected.");
+		return ctx.model;
+	}
+
+	const [provider, modelId] = settings.model.split("/");
+	if (!provider || !modelId)
+		throw new Error(`Configured /yeet model not found: ${settings.model}.`);
+	const model = ctx.modelRegistry.find(provider, modelId);
+	if (!model)
+		throw new Error(`Configured /yeet model not found: ${settings.model}.`);
+	return model;
+}
+
+async function getModelAuth(ctx: ExtensionCommandContext, model = ctx.model) {
 	if (!model) throw new Error("No active model selected.");
 
 	const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
@@ -254,9 +354,10 @@ async function completeText(
 	pi: ExtensionAPI,
 	ctx: ExtensionCommandContext,
 	prompt: string,
+	options: CompletionOptions = {},
 ): Promise<string> {
-	const { model, auth } = await getModelAuth(ctx);
-	const thinkingLevel = pi.getThinkingLevel();
+	const { model, auth } = await getModelAuth(ctx, options.model);
+	const thinkingLevel = options.reasoning ?? pi.getThinkingLevel();
 	const response = await completeSimple(
 		model,
 		{
@@ -403,6 +504,7 @@ async function generateWorktreeCommitMessage(
 	status: string,
 	files: string[],
 	guidance: string,
+	completionOptions: CompletionOptions,
 ): Promise<string> {
 	const diff = await pathDiff(pi, root, files);
 	const message = cleanCommitMessage(
@@ -420,6 +522,7 @@ async function generateWorktreeCommitMessage(
 				},
 				guidance,
 			),
+			completionOptions,
 		),
 	);
 	if (!message)
@@ -565,7 +668,11 @@ export default function (pi: ExtensionAPI) {
 			await ctx.waitForIdle();
 
 			try {
-				await getModelAuth(ctx);
+				const yeetSettings = readYeetSettings();
+				const completionOptions: CompletionOptions = {
+					model: resolveYeetModel(ctx, yeetSettings),
+					reasoning: yeetSettings.reasoning,
+				};
 				const rootResult = await git(pi, ctx.cwd, [
 					"rev-parse",
 					"--show-toplevel",
@@ -588,6 +695,7 @@ export default function (pi: ExtensionAPI) {
 						pi,
 						ctx,
 						groupPrompt(root, files, options.guidance),
+						completionOptions,
 					),
 					files,
 				);
@@ -618,6 +726,7 @@ export default function (pi: ExtensionAPI) {
 							status,
 							group.files,
 							[group.reason, options.guidance].filter(Boolean).join("; "),
+							completionOptions,
 						),
 					});
 				}

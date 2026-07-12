@@ -32,6 +32,12 @@ test("settings reconciliation creates a fresh runtime file", async () => {
 		JSON.stringify({
 			enabledModels: ["declared"],
 			root: "$PI_CODING_AGENT_DIR",
+			commitMessage: {
+				yeet: {
+					model: "openai-codex/gpt-5.6-luna",
+					reasoning: "medium",
+				},
+			},
 		}),
 	);
 
@@ -44,6 +50,12 @@ test("settings reconciliation creates a fresh runtime file", async () => {
 	const settings = await readJsonObject(join(repo, "settings.json"));
 	assert.deepEqual(settings.enabledModels, ["declared"]);
 	assert.equal(settings.root, repo);
+	assert.deepEqual(settings.commitMessage, {
+		yeet: {
+			model: "openai-codex/gpt-5.6-luna",
+			reasoning: "medium",
+		},
+	});
 });
 
 test("successful agent-home pull reconciles settings without running init", async () => {

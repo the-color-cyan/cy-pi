@@ -35,6 +35,12 @@
     }
   },
   "hideThinkingBlock": false,
+  "commitMessage": {
+    "yeet": {
+      "model": "openai-codex/gpt-5.6-luna",
+      "reasoning": "medium"
+    }
+  },
   "packages": [
     "npm:@zenobius/pi-rose-pine",
     "npm:pi-lens",

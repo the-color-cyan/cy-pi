@@ -131,6 +131,27 @@ Prompt lookup order:
 2. Global prompt: `~/.pi/agent/commit-message-prompt.md`
 3. Built-in fallback prompt inside the extension
 
+`/yeet` reads its model and reasoning configuration from the reconciled
+`$PI_CODING_AGENT_DIR/settings.json`, which is declared portably in
+`settings.managed.json`:
+
+```json
+{
+  "commitMessage": {
+    "yeet": {
+      "model": "openai-codex/gpt-5.6-luna",
+      "reasoning": "medium"
+    }
+  }
+}
+```
+
+`model` may be `"inherit"` to use the active Pi model or a
+`provider/model` identifier. If this setting is absent, `/yeet` defaults to
+`inherit` and `medium`. Update `settings.managed.json` and run
+`scripts/reconcile-settings.sh` to apply a portable change. `/commit-message`
+always continues to use the active Pi model and thinking level.
+
 ## pair extension
 
 `/pair` manages an in-memory pair-programming session backed by custom session entries. State is restored when a session loads and persisted on every change.

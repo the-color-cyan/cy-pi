@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import type { AssistantMessage } from "@earendil-works/pi-ai/compat";
-import { completionText } from "../extensions/commit-message.ts";
+import {
+	completionText,
+	readYeetSettings,
+} from "../extensions/commit-message.ts";
 
 function response(
 	overrides: Partial<
@@ -14,6 +20,56 @@ function response(
 		...overrides,
 	};
 }
+
+function withAgentHome(callback: (agentHome: string) => void): void {
+	const agentHome = mkdtempSync(join(tmpdir(), "commit-message-settings-"));
+	try {
+		callback(agentHome);
+	} finally {
+		rmSync(agentHome, { recursive: true, force: true });
+	}
+}
+
+test("readYeetSettings reads managed runtime settings", () => {
+	withAgentHome((agentHome) => {
+		writeFileSync(
+			join(agentHome, "settings.json"),
+			JSON.stringify({
+				commitMessage: {
+					yeet: {
+						model: "openai-codex/gpt-5.6-luna",
+						reasoning: "medium",
+					},
+				},
+			}),
+		);
+
+		assert.deepEqual(readYeetSettings(agentHome), {
+			model: "openai-codex/gpt-5.6-luna",
+			reasoning: "medium",
+		});
+	});
+});
+
+test("readYeetSettings defaults to inherited model and medium reasoning without managed configuration", () => {
+	withAgentHome((agentHome) => {
+		assert.deepEqual(readYeetSettings(agentHome), {
+			model: "inherit",
+			reasoning: "medium",
+		});
+	});
+});
+
+test("readYeetSettings defaults omitted managed values", () => {
+	withAgentHome((agentHome) => {
+		writeFileSync(join(agentHome, "settings.json"), "{}");
+
+		assert.deepEqual(readYeetSettings(agentHome), {
+			model: "inherit",
+			reasoning: "medium",
+		});
+	});
+});
 
 test("completionText surfaces provider errors instead of treating them as empty", () => {
 	assert.throws(
