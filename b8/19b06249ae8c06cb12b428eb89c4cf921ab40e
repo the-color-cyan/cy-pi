@@ -1,0 +1,22 @@
+tests/commit-message.test.ts
+  s_584df2108e4834::t_626e13a6017ade 1-44
+extensions/commit-message.ts
+  s_584df2108e4834::t_3939b8e4861eb9 11-12,238-252,254,260,271-274,276-277,280,410,587-591,715-716,718-727,729
+  s_584df2108e4834::t_fcd8dd743fa77e 259,275
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "b819b06249ae8c06cb12b428eb89c4cf921ab40e",
+  "prompts": {},
+  "sessions": {
+    "s_584df2108e4834": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f53d4-dbfb-7d56-b47c-7c0db348e163",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
