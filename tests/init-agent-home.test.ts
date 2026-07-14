@@ -166,6 +166,65 @@ test("init repairs PATH and wrapper runs the canonical checkout runtime", async 
 	assert.match(bashrc, /cy_pi_old_node_bin=/);
 });
 
+test("init removes stale Fish universal paths and resolves the checkout wrapper first", async (t) => {
+	let fish: string;
+	try {
+		const result = await execFile("sh", ["-c", "command -v fish"]);
+		fish = result.stdout.trim();
+	} catch {
+		t.skip("fish is unavailable");
+		return;
+	}
+
+	const { repo, home, systemBin } = await createFixture();
+	const oldNodeBin = join(repo, "node_modules", ".bin");
+	const preservedOne = join(home, "custom-bin");
+	const preservedTwo = join(home, "other-bin");
+	const env = {
+		...process.env,
+		HOME: home,
+		XDG_DATA_HOME: join(home, "fish-data"),
+		PATH: `${oldNodeBin}:${systemBin}:/usr/bin:/bin`,
+	};
+
+	await execFile(
+		fish,
+		[
+			"-c",
+			"set -U fish_user_paths $argv",
+			oldNodeBin,
+			preservedOne,
+			join(repo, "bin"),
+			preservedTwo,
+		],
+		{ env },
+	);
+	const { stdout } = await execFile(
+		fish,
+		[
+			"-c",
+			[
+				'printf "user_paths=%s\\n" (string join : -- $fish_user_paths)',
+				'printf "resolved=%s\\n" (command -v pi)',
+				"pi status",
+			].join("; "),
+		],
+		{ env },
+	);
+
+	const fishUserPaths = stdout
+		.split("\n")
+		.find((line) => line.startsWith("user_paths="));
+	assert.equal(
+		fishUserPaths,
+		`user_paths=${join(repo, "bin")}:${preservedOne}:${preservedTwo}`,
+	);
+	assert.ok(!fishUserPaths.includes(oldNodeBin));
+	assert.ok(stdout.includes(`resolved=${join(repo, "bin", "pi")}`));
+	assert.match(stdout, /runtime=canonical/);
+	assert.doesNotMatch(stdout, /old-global/);
+});
+
 test("pi-home fails closed when the canonical wrapper is missing", async () => {
 	const { repo, env } = await createFixture();
 	await rm(join(repo, "bin", "pi"));

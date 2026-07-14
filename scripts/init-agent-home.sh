@@ -85,6 +85,16 @@ EOF
 $fish_start
 set -l cy_pi_bin "$shell_bin_path"
 set -l cy_pi_old_node_bin "$node_bin_path"
+set -l cy_pi_clean_user_paths
+if set -q fish_user_paths
+	for cy_pi_path in \$fish_user_paths
+		if test -n "\$cy_pi_path"; and test "\$cy_pi_path" != "\$cy_pi_bin"; and test "\$cy_pi_path" != "\$cy_pi_old_node_bin"
+			set -a cy_pi_clean_user_paths "\$cy_pi_path"
+		end
+	end
+end
+set -U fish_user_paths "\$cy_pi_bin" \$cy_pi_clean_user_paths
+
 set -l cy_pi_clean_path
 for cy_pi_path in \$PATH
 	if test -n "\$cy_pi_path"; and test "\$cy_pi_path" != "\$cy_pi_bin"; and test "\$cy_pi_path" != "\$cy_pi_old_node_bin"
@@ -92,7 +102,7 @@ for cy_pi_path in \$PATH
 	end
 end
 set -gx PATH "\$cy_pi_bin" \$cy_pi_clean_path
-set -e cy_pi_bin cy_pi_old_node_bin cy_pi_clean_path cy_pi_path
+set -e cy_pi_bin cy_pi_old_node_bin cy_pi_clean_user_paths cy_pi_clean_path cy_pi_path
 $fish_end
 EOF
 	)"
