@@ -1,0 +1,33 @@
+tests/init-agent-home.test.ts
+  s_97e6a6df864bc7::t_6ba3fd8bd64924 169-171,174-193,195-214,221,223-227
+  s_75ed5590292590::t_3c7819b00948e0 172-173
+  s_97e6a6df864bc7::t_deb1ce7f6bee7f 215-220,222
+  s_75ed5590292590::t_b6441551ea479e 194
+scripts/init-agent-home.sh
+  s_75ed5590292590::t_52bc46b79f6d33 96
+  s_97e6a6df864bc7::t_e01b8e37b4dc59 88-95,97,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "8d9596dd6046464a27c4269fd27f100cbb01c87d",
+  "prompts": {},
+  "sessions": {
+    "s_75ed5590292590": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f628e-5b1d-7437-b9a8-d3b98e2b9815",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_97e6a6df864bc7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f629a-5d79-7b9a-9c14-96a450746846",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
