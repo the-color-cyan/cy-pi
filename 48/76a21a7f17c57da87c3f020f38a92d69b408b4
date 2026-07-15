@@ -1,0 +1,21 @@
+npm/.gitignore
+  s_aec1d41ce1e24e::t_4ff06c1165a481 5
+npm/.npmrc
+  s_aec1d41ce1e24e::t_76b9af357522e1 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "4876a21a7f17c57da87c3f020f38a92d69b408b4",
+  "prompts": {},
+  "sessions": {
+    "s_aec1d41ce1e24e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f6368-0426-7a89-87fd-81dc7cbf4f1e",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
