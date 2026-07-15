@@ -21,7 +21,7 @@ async function executable(path: string, content: string) {
 	await chmod(path, 0o755);
 }
 
-test("the extension package manifest and lock are committed initializer inputs", async () => {
+test("the extension package manifest, lock, and npm config are committed initializer inputs", async () => {
 	const manifest = await readFile(
 		join(sourceRoot, "npm", "package.json"),
 		"utf8",
@@ -30,6 +30,7 @@ test("the extension package manifest and lock are committed initializer inputs",
 		join(sourceRoot, "npm", "package-lock.json"),
 		"utf8",
 	);
+	const npmConfig = await readFile(join(sourceRoot, "npm", ".npmrc"), "utf8");
 	const ignoreRules = await readFile(
 		join(sourceRoot, "npm", ".gitignore"),
 		"utf8",
@@ -40,8 +41,46 @@ test("the extension package manifest and lock are committed initializer inputs",
 	assert.match(lock, /"lockfileVersion": 3/);
 	assert.match(lock, /"pi-intercom": "\^0\.6\.0"/);
 	assert.match(lock, /"pi-prompt-template-model": "\^0\.10\.0"/);
+	assert.equal(npmConfig, "legacy-peer-deps=true\n");
 	assert.match(ignoreRules, /^!package\.json$/m);
 	assert.match(ignoreRules, /^!package-lock\.json$/m);
+	assert.match(ignoreRules, /^!\.npmrc$/m);
+});
+
+test("the nested npm config enables legacy peers without changing the root config", async (t) => {
+	const configRoot = await mkdtemp(join(tmpdir(), "cy-pi-npm-config-test-"));
+	t.after(() => rm(configRoot, { recursive: true, force: true }));
+	const userConfig = join(configRoot, "user.npmrc");
+	const globalConfig = join(configRoot, "global.npmrc");
+	await Promise.all([
+		writeFile(userConfig, "", "utf8"),
+		writeFile(globalConfig, "", "utf8"),
+	]);
+	const env = { ...process.env };
+	for (const key of Object.keys(env)) {
+		if (key.toLowerCase() === "npm_config_legacy_peer_deps") {
+			delete env[key];
+		}
+	}
+	env.NPM_CONFIG_USERCONFIG = userConfig;
+	env.NPM_CONFIG_GLOBALCONFIG = globalConfig;
+
+	const rootConfig = await execFile(
+		"npm",
+		["config", "get", "legacy-peer-deps"],
+		{
+			cwd: sourceRoot,
+			env,
+		},
+	);
+	const nestedConfig = await execFile(
+		"npm",
+		["config", "get", "legacy-peer-deps"],
+		{ cwd: join(sourceRoot, "npm"), env },
+	);
+
+	assert.equal(rootConfig.stdout.trim(), "false");
+	assert.equal(nestedConfig.stdout.trim(), "true");
 });
 
 async function createFixture() {
