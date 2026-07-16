@@ -50,9 +50,9 @@
     "typebox": "^1.1.34"
   },
   "devDependencies": {
-    "@earendil-works/pi-ai": "0.80.7",
-    "@earendil-works/pi-coding-agent": "0.80.7",
-    "@earendil-works/pi-tui": "0.80.7",
+    "@earendil-works/pi-ai": "0.80.9",
+    "@earendil-works/pi-coding-agent": "0.80.9",
+    "@earendil-works/pi-tui": "0.80.9",
     "@fission-ai/openspec": "^1.6.0",
     "@types/node": "^25.6.0",
     "typescript": "^6.0.3"
