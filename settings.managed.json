@@ -44,7 +44,10 @@
     "npm:@tmustier/pi-ralph-wiggum",
     "npm:pi-subagents",
     "npm:@haispeed/pi-obsidian",
-    "npm:pi-prompt-template-model"
+    "npm:pi-prompt-template-model",
+    "npm:@gotgenes/pi-permission-system",
+    "npm:@vigolium/piolium",
+    "npm:@dietrichgebert/ponytail"
   ],
   "extensions": [
     "./extensions",

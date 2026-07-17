@@ -2,8 +2,11 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
+    "@dietrichgebert/ponytail": "^4.8.4",
+    "@gotgenes/pi-permission-system": "^20.7.3",
     "@haispeed/pi-obsidian": "^0.1.1",
     "@tmustier/pi-ralph-wiggum": "^0.2.2",
+    "@vigolium/piolium": "^0.0.12",
     "@zenobius/pi-rose-pine": "^0.0.2",
     "pi-ask-user": "^0.13.0",
     "pi-btw": "^0.4.1",
