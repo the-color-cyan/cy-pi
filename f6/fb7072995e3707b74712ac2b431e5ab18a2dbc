@@ -1,0 +1,25 @@
+npm/package.json
+  s_c335fd42b2feea::t_5a167444e34cd3 6,9
+  s_c335fd42b2feea::t_5e7363415df3c5 5
+settings.managed.json
+  s_c335fd42b2feea::t_3a607cb0c063cd 49-50
+  s_c335fd42b2feea::t_7d574919d64d48 47-48
+npm/package-lock.json
+  s_c335fd42b2feea::t_10462b8f4a1136 9-10,13,328-333,763-786,936-979,1808-1827,2364-2382,2584-2592
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f6fb7072995e3707b74712ac2b431e5ab18a2dbc",
+  "prompts": {},
+  "sessions": {
+    "s_c335fd42b2feea": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f70ad-5c8f-7a69-bace-62b8b33744c1",
+        "model": "MiniMax-M3"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
