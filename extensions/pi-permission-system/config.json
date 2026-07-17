@@ -1,16 +1,52 @@
 {
+  "piInfrastructureReadPaths": ["/tmp/*"],
+  "shellTools": {
+    "hypa_shell": { "commandArgument": "command" }
+  },
   "permission": {
     "*": "allow",
     "path": {
       "*": "allow",
-      "*.env": "deny",
-      "*.env.*": "deny",
+      "*.env": "ask",
+      "*.env.*": "ask",
       "*.env.example": "allow"
     },
     "bash": {
-      "*": "ask",
-      "rm -rf *": "deny",
-      "sudo *": "ask"
+      "*": "allow",
+      "rm -rf *": "ask",
+      "sudo *": "ask",
+      "doas *": "ask",
+      "git push *--force*": "ask",
+      "git push -f *": "ask",
+      "git push * -f *": "ask",
+      "git push *--delete*": "ask",
+      "git push +*": "ask",
+      "git push * +*": "ask",
+      "git reset --hard *": "ask",
+      "git checkout -- *": "ask",
+      "git clean -f*": "ask",
+      "git clean * -f*": "ask",
+      "git clean --force*": "ask",
+      "git clean * --force*": "ask",
+      "git branch -D *": "ask",
+      "git branch --delete --force *": "ask",
+      "git stash drop *": "ask",
+      "git stash clear": "ask",
+      "npm publish *": "ask",
+      "pnpm publish *": "ask",
+      "yarn publish *": "ask",
+      "mkfs *": "ask",
+      "dd *": "ask",
+      "diskutil eraseDisk *": "ask",
+      "diskutil partitionDisk *": "ask",
+      "shutdown *": "ask",
+      "reboot *": "ask",
+      "halt *": "ask",
+      "poweroff *": "ask",
+      "bash -c *": "ask",
+      "sh -c *": "ask",
+      "zsh -c *": "ask",
+      "fish -c *": "ask"
     },
     "external_directory": "ask"
   }
