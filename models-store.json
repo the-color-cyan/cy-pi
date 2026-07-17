@@ -60,7 +60,7 @@
         "maxTokens": 128000
       }
     ],
-    "checkedAt": 1784228916699
+    "checkedAt": 1784301143053
   },
   "openai-codex": {
     "models": [
@@ -298,7 +298,7 @@
         }
       }
     ],
-    "checkedAt": 1784228916721
+    "checkedAt": 1784301143299
   },
   "openai": {
     "models": [
@@ -1598,9 +1598,9 @@
           "image"
         ],
         "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
+          "input": 0.95,
+          "output": 4,
+          "cacheRead": 0.19,
           "cacheWrite": 0
         },
         "contextWindow": 262144,
@@ -1634,40 +1634,13 @@
           "image"
         ],
         "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
+          "input": 3,
+          "output": 15,
+          "cacheRead": 0.3,
           "cacheWrite": 0
         },
         "contextWindow": 1048576,
         "maxTokens": 131072
-      },
-      {
-        "id": "kimi-for-coding",
-        "name": "Kimi For Coding",
-        "api": "anthropic-messages",
-        "provider": "kimi-coding",
-        "baseUrl": "https://api.kimi.com/coding",
-        "headers": {
-          "User-Agent": "KimiCLI/1.5"
-        },
-        "compat": {
-          "allowEmptySignature": true,
-          "forceAdaptiveThinking": true
-        },
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
-          "cacheWrite": 0
-        },
-        "contextWindow": 262144,
-        "maxTokens": 32768
       },
       {
         "id": "kimi-for-coding-highspeed",
@@ -1687,40 +1660,15 @@
           "image"
         ],
         "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
-          "cacheWrite": 0
-        },
-        "contextWindow": 262144,
-        "maxTokens": 32768
-      },
-      {
-        "id": "kimi-k2-thinking",
-        "name": "Kimi K2 Thinking",
-        "api": "anthropic-messages",
-        "provider": "kimi-coding",
-        "baseUrl": "https://api.kimi.com/coding",
-        "headers": {
-          "User-Agent": "KimiCLI/1.5"
-        },
-        "compat": {
-          "forceAdaptiveThinking": true
-        },
-        "reasoning": true,
-        "input": [
-          "text"
-        ],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
+          "input": 1.9,
+          "output": 8,
+          "cacheRead": 0.38,
           "cacheWrite": 0
         },
         "contextWindow": 262144,
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1784228916822
+    "checkedAt": 1784301143229
   }
 }
