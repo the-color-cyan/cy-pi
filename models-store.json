@@ -1410,7 +1410,7 @@
         "maxTokens": 100000
       }
     ],
-    "checkedAt": 1784228916748
+    "checkedAt": 1784314246870
   },
   "zai": {
     "models": [
@@ -1578,7 +1578,7 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1784228916752
+    "checkedAt": 1784314246865
   },
   "kimi-coding": {
     "models": [
