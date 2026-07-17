@@ -1,0 +1,31 @@
+extensions/pi-permission-system/config.json
+  s_ad9ae523ba39d8::t_562e8f8183fcd2 3-5,19,21-24,27-30
+  s_e87f08dde9a921::t_1b9e9173fe20a6 17-18,20,25-26,31-48
+  s_ad9ae523ba39d8::t_4860ba3fb15996 2
+  s_e87f08dde9a921::t_2cbd60e8198a05 15-16
+  s_e87f08dde9a921::t_e20e6442727300 49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f2b582730575e8df5b3bb53a9f898c9ac0f9c939",
+  "prompts": {},
+  "sessions": {
+    "s_ad9ae523ba39d8": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f70fd-3ffb-7bec-876a-6349652a5092",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_e87f08dde9a921": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f70e6-0049-74cd-9526-ff3a616e1373",
+        "model": "MiniMax-M3"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
