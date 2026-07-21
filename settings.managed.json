@@ -87,9 +87,7 @@
     "npm:@haispeed/pi-obsidian",
     "npm:pi-prompt-template-model",
     "npm:@gotgenes/pi-permission-system",
-    "npm:@vigolium/piolium",
-    "npm:@dietrichgebert/ponytail",
-    "npm:pi-caveman"
+    "npm:@vigolium/piolium"
   ],
   "extensions": [
     "./extensions",
@@ -119,5 +117,9 @@
       "model": "openai-codex/gpt-5.6-luna",
       "reasoning": "medium"
     }
+  },
+  "cavepony": {
+    "caveman": { "default": "full", "status": true },
+    "ponytail": { "default": "full", "status": true }
   }
 }

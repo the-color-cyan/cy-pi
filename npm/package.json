@@ -2,7 +2,6 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
-    "@dietrichgebert/ponytail": "^4.8.4",
     "@gotgenes/pi-permission-system": "^20.10.0",
     "@haispeed/pi-obsidian": "^0.1.1",
     "@tmustier/pi-ralph-wiggum": "^0.2.3",
@@ -10,7 +9,6 @@
     "@zenobius/pi-rose-pine": "^0.0.2",
     "pi-ask-user": "^0.13.0",
     "pi-btw": "^0.4.1",
-    "pi-caveman": "^1.0.7",
     "pi-chrome": "^0.15.46",
     "pi-intercom": "^0.6.0",
     "pi-lens": "^3.8.71",
