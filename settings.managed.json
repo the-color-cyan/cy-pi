@@ -103,7 +103,7 @@
   "themes": [
     "./themes"
   ],
-  "lastChangelogVersion": "0.81.0",
+  "lastChangelogVersion": "0.81.1",
   "quietStartup": true,
   "enabledModels": [
     "openai-codex/gpt-5.6-terra",
@@ -119,7 +119,13 @@
     }
   },
   "cavepony": {
-    "caveman": { "default": "full", "status": true },
-    "ponytail": { "default": "full", "status": true }
+    "caveman": {
+      "default": "lite",
+      "status": true
+    },
+    "ponytail": {
+      "default": "full",
+      "status": true
+    }
   }
 }
