@@ -1,0 +1,28 @@
+extensions/cavepony.ts
+  s_a8bbacbc58c9de::t_e9827a16fe169b 1-266,268-299
+  s_a8bbacbc58c9de::t_2b12a4d13a5f55 267
+  s_a8bbacbc58c9de::t_978eb4406d68ce 300-302
+settings.managed.json
+  s_a8bbacbc58c9de::t_e224183514fb7a 90,120-123
+tests/cavepony.test.ts
+  s_a8bbacbc58c9de::t_374dcce311089e 1-81
+  s_a8bbacbc58c9de::t_ad1cb87d9ee82c 82-84
+skills/productivity/ponytail/SKILL.md
+  s_a8bbacbc58c9de::t_adfc3c19f53fd0 1-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "c51ad9f2ea9b0bc390cc2603a5670e270e35b1bc",
+  "prompts": {},
+  "sessions": {
+    "s_a8bbacbc58c9de": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f855c-5839-7b56-b19e-7a1934340d6d",
+        "model": "k3"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
