@@ -11,17 +11,58 @@
       "concurrency": 4
     },
     "agentOverrides": {
-      "worker": {
-        "model": "openai-codex/gpt-5.6-luna"
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "high",
+        "fallbackModels": [
+          "openai-codex/gpt-5.6-terra",
+          "openai-codex/gpt-5.6-luna"
+        ]
       },
       "planner": {
-        "model": "openai-codex/gpt-5.6-sol"
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "high",
+        "fallbackModels": [
+          "openai-codex/gpt-5.6-terra",
+          "openai-codex/gpt-5.6-luna"
+        ]
       },
       "reviewer": {
-        "model": "openai-codex/gpt-5.6-sol"
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "high",
+        "fallbackModels": [
+          "openai-codex/gpt-5.6-terra",
+          "openai-codex/gpt-5.6-luna"
+        ]
       },
-      "oracle": {
-        "model": "openai-codex/gpt-5.6-sol"
+      "worker": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "high",
+        "fallbackModels": [
+          "openai-codex/gpt-5.6-luna"
+        ]
+      },
+      "context-builder": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "medium",
+        "fallbackModels": [
+          "openai-codex/gpt-5.6-luna"
+        ]
+      },
+      "researcher": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "medium",
+        "fallbackModels": [
+          "openai-codex/gpt-5.6-luna"
+        ]
+      },
+      "scout": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "low"
+      },
+      "delegate": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "medium"
       }
     }
   },
@@ -47,7 +88,8 @@
     "npm:pi-prompt-template-model",
     "npm:@gotgenes/pi-permission-system",
     "npm:@vigolium/piolium",
-    "npm:@dietrichgebert/ponytail"
+    "npm:@dietrichgebert/ponytail",
+    "npm:pi-caveman"
   ],
   "extensions": [
     "./extensions",
@@ -63,7 +105,7 @@
   "themes": [
     "./themes"
   ],
-  "lastChangelogVersion": "0.80.9",
+  "lastChangelogVersion": "0.81.0",
   "quietStartup": true,
   "enabledModels": [
     "openai-codex/gpt-5.6-terra",
