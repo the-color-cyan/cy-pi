@@ -1,7 +1,7 @@
 {
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-terra",
-  "defaultThinkingLevel": "medium",
+  "defaultProvider": "kimi-coding",
+  "defaultModel": "k3",
+  "defaultThinkingLevel": "high",
   "theme": "rose-pine",
   "subagents": {
     "asyncByDefault": true,
@@ -110,7 +110,14 @@
     "openai-codex/gpt-5.6-sol",
     "openai-codex/gpt-5.6-luna",
     "minimax/MiniMax-M3",
-    "kimi-coding/k3"
+    "kimi-coding/k3",
+    "opencode-go/deepseek-v4-flash",
+    "opencode-go/deepseek-v4-pro",
+    "opencode-go/glm-5.2",
+    "opencode-go/mimo-v2.5",
+    "opencode-go/mimo-v2.5-pro",
+    "opencode-go/qwen3.7-max",
+    "opencode-go/qwen3.7-plus"
   ],
   "commitMessage": {
     "yeet": {
