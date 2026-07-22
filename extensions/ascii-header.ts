@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ThemeColor } from "@earendil-works/pi-coding-agent";
 import type { Component, TUI } from "@earendil-works/pi-tui";
 import { truncateToWidth } from "@earendil-works/pi-tui";
@@ -14,13 +15,34 @@ const MAX_ANIMATED_FRAMES = BOOT_FRAMES + SHIMMER_FRAMES;
 const BOOT_LINES = ["$ init context", "$ mount tools", "$ open tui"];
 const FIXED_HEADER_HEIGHT = 2 + BOOT_LINES.length;
 const SPINNER = ["-", "∙", "•", "∙"];
+const DEFAULT_HEADER_LINES = ["   π", "───────", "  p i"];
 const CONFIG_PATH = join(
 	process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent"),
 	"config",
 	"ascii-header.json",
 );
+const HEADER_PATH = join(
+	dirname(fileURLToPath(import.meta.url)),
+	"ascii-header.txt",
+);
 
 type Config = { animationsEnabled?: boolean };
+
+export function loadHeaderLines(path = HEADER_PATH): string[] {
+	try {
+		const lines = readFileSync(path, "utf8")
+			.replace(/\r\n?/g, "\n")
+			.replace(/\n$/, "")
+			.split("\n");
+		return lines.length === DEFAULT_HEADER_LINES.length
+			? lines
+			: DEFAULT_HEADER_LINES;
+	} catch {
+		return DEFAULT_HEADER_LINES;
+	}
+}
+
+const HEADER_LINES = loadHeaderLines();
 
 function loadAnimationsEnabled(): boolean {
 	try {
@@ -94,9 +116,10 @@ class StartupHeader implements Component {
 	}
 
 	private renderSigil(shimmerFrame = SHIMMER_FRAMES): string[] {
-		const sigil = this.shimmer("   π", shimmerFrame, "accent");
-		const rule = this.shimmer("───────", shimmerFrame - 2, "borderAccent");
-		const title = this.shimmer("  p i", shimmerFrame - 4, "dim");
+		const [sigilText, ruleText, titleText] = HEADER_LINES;
+		const sigil = this.shimmer(sigilText!, shimmerFrame, "accent");
+		const rule = this.shimmer(ruleText!, shimmerFrame - 2, "borderAccent");
+		const title = this.shimmer(titleText!, shimmerFrame - 4, "dim");
 
 		return ["", `  ${sigil}`, `  ${rule}`, `  ${title}`, ""];
 	}
