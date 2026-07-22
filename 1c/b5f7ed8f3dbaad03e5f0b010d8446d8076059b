@@ -1,0 +1,31 @@
+extensions/ascii-header.ts
+  s_b35dcb92951ed7::t_13b5c903eb93ee 35
+  s_b35dcb92951ed7::t_8ce4d45e1b4dc1 4,25,33-34,36-39
+  s_c3fcc08bfdb8ef::t_6ea55f5aa73a86 18,24,26-27,31-32,40-46,119-122
+extensions/ascii-header.txt
+  s_b35dcb92951ed7::t_950c2eb1491640 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "1cb5f7ed8f3dbaad03e5f0b010d8446d8076059b",
+  "prompts": {},
+  "sessions": {
+    "s_b35dcb92951ed7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8bbf-ae82-7849-b530-c465f54bd631",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    },
+    "s_c3fcc08bfdb8ef": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8bc0-ba85-7846-b4ab-13ef92b8c2e7",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
