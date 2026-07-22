@@ -19,3 +19,6 @@ pi-home *args:
 # Benchmark pi extension startup overhead.
 benchmark *args:
     node scripts/pi-extension-startup-benchmark.mjs {{args}}
+
+reconcile-settings:
+    ./scripts/reconcile-settings.sh
