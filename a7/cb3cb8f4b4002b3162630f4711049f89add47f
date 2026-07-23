@@ -1,0 +1,27 @@
+tests/ascii-header.test.ts
+  s_1f2f8191eb8d96::t_729ba88921cbb6 1-14
+extensions/ascii-header.ts
+  s_1f2f8191eb8d96::t_2ee21e942d639f 44
+  s_1f2f8191eb8d96::t_e118fe8b326305 37
+  s_1f2f8191eb8d96::t_ee368ddf6562ce 89-96,129
+  s_1f2f8191eb8d96::t_7cd3c88c83523c 18
+  s_1f2f8191eb8d96::t_625079106f5cb1 68-75
+  s_1f2f8191eb8d96::t_1a8ae8298a35da 100,123-128,130-132
+  s_1f2f8191eb8d96::t_00783fedc7561b 133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "a7cb3cb8f4b4002b3162630f4711049f89add47f",
+  "prompts": {},
+  "sessions": {
+    "s_1f2f8191eb8d96": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019f8f07-1f88-7398-8fc4-441dd33eb93f",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
