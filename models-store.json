@@ -60,8 +60,8 @@
         "maxTokens": 128000
       }
     ],
-    "checkedAt": 1784747999340,
-    "lastModified": 1784724564000
+    "checkedAt": 1784810951886,
+    "lastModified": 1784802338000
   },
   "openai-codex": {
     "models": [
@@ -299,8 +299,8 @@
         }
       }
     ],
-    "checkedAt": 1784747999145,
-    "lastModified": 1784724573000
+    "checkedAt": 1784810951820,
+    "lastModified": 1784802346000
   },
   "openai": {
     "models": [
@@ -1884,8 +1884,8 @@
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1784747999146,
-    "lastModified": 1784724562000
+    "checkedAt": 1784810951818,
+    "lastModified": 1784802337000
   },
   "opencode-go": {
     "models": [
@@ -2039,6 +2039,39 @@
           "minimal": null,
           "low": "low",
           "medium": "medium",
+          "high": "high",
+          "xhigh": null,
+          "max": null
+        }
+      },
+      {
+        "id": "hy3",
+        "name": "Hy3",
+        "api": "openai-completions",
+        "provider": "opencode-go",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "cost": {
+          "input": 0.14,
+          "output": 0.58,
+          "cacheRead": 0.035,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "maxTokensField": "max_tokens"
+        },
+        "contextWindow": 256000,
+        "maxTokens": 64000,
+        "thinkingLevelMap": {
+          "off": "none",
+          "minimal": null,
+          "low": "low",
+          "medium": null,
           "high": "high",
           "xhigh": null,
           "max": null
@@ -2295,7 +2328,7 @@
         "maxTokens": 65536
       }
     ],
-    "checkedAt": 1784748016645,
-    "lastModified": 1784724576000
+    "checkedAt": 1784810951881,
+    "lastModified": 1784802348000
   }
 }
