@@ -12,10 +12,10 @@ const BOOT_FRAMES = 8;
 const SHIMMER_FRAMES = 12;
 const MAX_ANIMATED_FRAMES = BOOT_FRAMES + SHIMMER_FRAMES;
 
-const BOOT_LINES = ["$ init context", "$ mount tools", "$ open tui"];
-const FIXED_HEADER_HEIGHT = 2 + BOOT_LINES.length;
+const BOOT_LINES = ["$ init context", "$ mount tools", "$ open tui", "$ "];
 const SPINNER = ["-", "∙", "•", "∙"];
 const DEFAULT_HEADER_LINES = ["   π", "───────", "  p i"];
+const HEADER_COLORS: ThemeColor[] = ["accent", "borderAccent"];
 const CONFIG_PATH = join(
 	process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent"),
 	"config",
@@ -34,15 +34,14 @@ export function loadHeaderLines(path = HEADER_PATH): string[] {
 			.replace(/\r\n?/g, "\n")
 			.replace(/\n$/, "")
 			.split("\n");
-		return lines.length === DEFAULT_HEADER_LINES.length
-			? lines
-			: DEFAULT_HEADER_LINES;
+		return lines.some((line) => line.length > 0) ? lines : DEFAULT_HEADER_LINES;
 	} catch {
 		return DEFAULT_HEADER_LINES;
 	}
 }
 
 const HEADER_LINES = loadHeaderLines();
+const HEADER_HEIGHT = Math.max(2 + BOOT_LINES.length, HEADER_LINES.length + 2);
 
 function loadAnimationsEnabled(): boolean {
 	try {
@@ -66,12 +65,14 @@ function saveAnimationsEnabled(enabled: boolean): void {
 class StartupHeader implements Component {
 	private frame = 0;
 	private readonly timer?: NodeJS.Timeout;
+	private readonly tui: TUI;
+	private readonly theme: Theme;
+	private readonly animate: boolean;
 
-	constructor(
-		private readonly tui: TUI,
-		private readonly theme: Theme,
-		private readonly animate: boolean,
-	) {
+	constructor(tui: TUI, theme: Theme, animate: boolean) {
+		this.tui = tui;
+		this.theme = theme;
+		this.animate = animate;
 		if (!this.animate) return;
 
 		this.timer = setInterval(() => {
@@ -85,15 +86,18 @@ class StartupHeader implements Component {
 	}
 
 	render(width: number): string[] {
-		const lines = !this.animate
-			? this.renderSigil()
-			: this.frame >= BOOT_FRAMES
-				? this.renderSigil(this.frame - BOOT_FRAMES)
-				: this.renderBootSequence();
+		let lines: string[];
+		if (!this.animate) {
+			lines = this.renderSigil();
+		} else if (this.frame >= BOOT_FRAMES) {
+			lines = this.renderSigil(this.frame - BOOT_FRAMES);
+		} else {
+			lines = this.renderBootSequence();
+		}
 
 		return this.fixedHeight(
 			lines.map((line) => truncateToWidth(line, width, "")),
-			FIXED_HEADER_HEIGHT,
+			HEADER_HEIGHT,
 		);
 	}
 
@@ -116,12 +120,17 @@ class StartupHeader implements Component {
 	}
 
 	private renderSigil(shimmerFrame = SHIMMER_FRAMES): string[] {
-		const [sigilText, ruleText, titleText] = HEADER_LINES;
-		const sigil = this.shimmer(sigilText!, shimmerFrame, "accent");
-		const rule = this.shimmer(ruleText!, shimmerFrame - 2, "borderAccent");
-		const title = this.shimmer(titleText!, shimmerFrame - 4, "dim");
-
-		return ["", `  ${sigil}`, `  ${rule}`, `  ${title}`, ""];
+		return [
+			"",
+			...HEADER_LINES.map(
+				(line, index) =>
+					`  ${this.shimmer(
+						line,
+						shimmerFrame - index * 2,
+						HEADER_COLORS[Math.min(index, HEADER_COLORS.length - 1)] ?? "borderAccent",
+					)}`,
+			),
+		];
 	}
 
 	private shimmer(text: string, frame: number, baseColor: ThemeColor): string {
@@ -130,11 +139,11 @@ class StartupHeader implements Component {
 		return Array.from(text)
 			.map((char, index) => {
 				if (index === shimmerIndex) {
-					return this.theme.fg("accent", char);
+					return this.theme.fg("text", char);
 				}
 
 				if (index === shimmerIndex - 1 || index === shimmerIndex + 1) {
-					return this.theme.fg("borderAccent", char);
+					return this.theme.fg("accent", char);
 				}
 
 				return this.theme.fg(baseColor, char);
@@ -157,7 +166,7 @@ class StartupHeader implements Component {
 	}
 }
 
-export default function (pi: ExtensionAPI) {
+export default function(pi: ExtensionAPI) {
 	let animationsEnabled = loadAnimationsEnabled();
 
 	pi.registerFlag("ascii-header-static", {
