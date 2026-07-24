@@ -60,8 +60,8 @@
         "maxTokens": 128000
       }
     ],
-    "checkedAt": 1784810951886,
-    "lastModified": 1784802338000
+    "checkedAt": 1784906501517,
+    "lastModified": 1784897342000
   },
   "openai-codex": {
     "models": [
@@ -86,6 +86,9 @@
         "thinkingLevelMap": {
           "xhigh": "xhigh",
           "minimal": "low"
+        },
+        "compat": {
+          "supportsOpenAIGrammarTools": true
         }
       },
       {
@@ -121,6 +124,7 @@
           "minimal": "low"
         },
         "compat": {
+          "supportsOpenAIGrammarTools": true,
           "supportsToolSearch": true
         }
       },
@@ -148,6 +152,7 @@
           "minimal": "low"
         },
         "compat": {
+          "supportsOpenAIGrammarTools": true,
           "supportsToolSearch": true
         }
       },
@@ -184,6 +189,7 @@
           "minimal": "low"
         },
         "compat": {
+          "supportsOpenAIGrammarTools": true,
           "supportsToolSearch": true
         }
       },
@@ -221,6 +227,7 @@
           "minimal": "low"
         },
         "compat": {
+          "supportsOpenAIGrammarTools": true,
           "supportsToolSearch": true
         }
       },
@@ -258,6 +265,7 @@
           "minimal": "low"
         },
         "compat": {
+          "supportsOpenAIGrammarTools": true,
           "supportsToolSearch": true
         }
       },
@@ -295,12 +303,13 @@
           "minimal": "low"
         },
         "compat": {
+          "supportsOpenAIGrammarTools": true,
           "supportsToolSearch": true
         }
       }
     ],
-    "checkedAt": 1784810951820,
-    "lastModified": 1784802346000
+    "checkedAt": 1784906501518,
+    "lastModified": 1784897351000
   },
   "openai": {
     "models": [
@@ -1831,6 +1840,41 @@
         }
       },
       {
+        "id": "k3-256k",
+        "name": "Kimi K3-256K",
+        "api": "anthropic-messages",
+        "provider": "kimi-coding",
+        "baseUrl": "https://api.kimi.com/coding",
+        "headers": {
+          "User-Agent": "KimiCLI/1.5"
+        },
+        "compat": {
+          "forceAdaptiveThinking": true
+        },
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "contextWindow": 262144,
+        "maxTokens": 131072,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "xhigh": null,
+          "max": "max"
+        }
+      },
+      {
         "id": "kimi-for-coding",
         "name": "Kimi K2.7 Code",
         "api": "anthropic-messages",
@@ -1884,8 +1928,8 @@
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1784810951818,
-    "lastModified": 1784802337000
+    "checkedAt": 1784906501410,
+    "lastModified": 1784897341000
   },
   "opencode-go": {
     "models": [
@@ -2328,7 +2372,7 @@
         "maxTokens": 65536
       }
     ],
-    "checkedAt": 1784810951881,
-    "lastModified": 1784802348000
+    "checkedAt": 1784906501401,
+    "lastModified": 1784897354000
   }
 }
