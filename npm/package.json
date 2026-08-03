@@ -7,14 +7,14 @@
     "@tmustier/pi-ralph-wiggum": "^0.2.3",
     "@vigolium/piolium": "^0.0.13",
     "@zenobius/pi-rose-pine": "^0.0.2",
-    "pi-ask-user": "^0.13.0",
+    "pi-ask-user": "^0.14.0",
     "pi-btw": "^0.4.1",
     "pi-chrome": "^0.15.46",
     "pi-intercom": "^0.6.0",
-    "pi-lens": "^3.8.72",
+    "pi-lens": "^3.8.74",
     "pi-markdown-preview": "^0.9.9",
     "pi-prompt-template-model": "^0.10.0",
-    "pi-subagents": "^0.37.0",
-    "pi-web-access": "^0.14.0"
+    "pi-subagents": "^0.40.0",
+    "pi-web-access": "^0.18.0"
   }
 }
