@@ -1784,7 +1784,7 @@
     "models": [
       {
         "id": "deepseek-v4-flash",
-        "name": "DeepSeek V4 Flash (New)",
+        "name": "DeepSeek V4 Flash (2x usage)",
         "api": "openai-completions",
         "provider": "opencode-go",
         "baseUrl": "https://opencode.ai/zen/go/v1",
@@ -1793,9 +1793,9 @@
           "text"
         ],
         "cost": {
-          "input": 0.14,
-          "output": 0.28,
-          "cacheRead": 0.0028,
+          "input": 0.07,
+          "output": 0.14,
+          "cacheRead": 0.0014,
           "cacheWrite": 0
         },
         "compat": {
@@ -1817,7 +1817,7 @@
       },
       {
         "id": "deepseek-v4-pro",
-        "name": "DeepSeek V4 Pro",
+        "name": "DeepSeek V4 Pro (New)",
         "api": "openai-completions",
         "provider": "opencode-go",
         "baseUrl": "https://opencode.ai/zen/go/v1",
@@ -2273,8 +2273,8 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1786025425584,
-    "lastModified": 1785760817000,
-    "etag": "W/\"9acd354f1fe084eec04a65a7ad727beb\""
+    "checkedAt": 1786652140208,
+    "lastModified": 1786624517000,
+    "etag": "W/\"24e7dd33940fdb33aac4c8cd65910160\""
   }
 }
