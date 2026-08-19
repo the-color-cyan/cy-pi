@@ -6,6 +6,7 @@ dist/
 # pi runtime/local state - keep these out of git when this checkout is used
 # directly as PI_CODING_AGENT_DIR / ~/.pi/agent
 auth.json
+/cache/
 settings.json
 settings.json.backup.*
 sessions/

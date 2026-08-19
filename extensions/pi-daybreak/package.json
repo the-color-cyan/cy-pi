@@ -1,0 +1,29 @@
+{
+  "name": "pi-daybreak",
+  "version": "0.1.0",
+  "description": "Live account-scoped Codex model discovery for pi — exposes catalog models (e.g. daybreak-* aliases) missing from the built-in openai-codex list",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi-coding-agent",
+    "openai-codex"
+  ],
+  "files": [
+    "index.ts",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
