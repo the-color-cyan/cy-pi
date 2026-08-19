@@ -1,0 +1,14 @@
+models-store.json
+  h_441bd1542c405a 63,315,1770,2347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9c3be0c38fc54d982d740157b701a2797358b923",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
