@@ -60,7 +60,7 @@
         "maxTokens": 128000
       }
     ],
-    "checkedAt": 1787170915552,
+    "checkedAt": 1787323593233,
     "lastModified": 1784920524000,
     "etag": "W/\"59585c4d7fe23cba444549b6c50f2504\""
   },
@@ -312,7 +312,7 @@
         }
       }
     ],
-    "checkedAt": 1787170915542,
+    "checkedAt": 1787323593278,
     "lastModified": 1787141945000,
     "etag": "W/\"7572a78e60b78526600ed2a9b74b579d\""
   },
@@ -1767,7 +1767,7 @@
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1787170915550,
+    "checkedAt": 1787323593294,
     "lastModified": 1787141936000,
     "etag": "W/\"26180ce4b0215799b9e112ba4783cc2b\""
   },
@@ -1995,7 +1995,7 @@
       },
       {
         "id": "hy3",
-        "name": "Hy3",
+        "name": "Hy3 (8x usage)",
         "api": "openai-completions",
         "provider": "opencode-go",
         "baseUrl": "https://opencode.ai/zen/go/v1",
@@ -2004,9 +2004,9 @@
           "text"
         ],
         "cost": {
-          "input": 0.14,
-          "output": 0.58,
-          "cacheRead": 0.035,
+          "input": 0.0175,
+          "output": 0.0725,
+          "cacheRead": 0.004375,
           "cacheWrite": 0
         },
         "compat": {
@@ -2244,6 +2244,40 @@
         }
       },
       {
+        "id": "ox-alpha-free",
+        "name": "Ox Alpha Free (Unlimited)",
+        "api": "openai-completions",
+        "provider": "opencode-go",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "maxTokensField": "max_tokens"
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 131072,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "xhigh": null,
+          "max": "max"
+        }
+      },
+      {
         "id": "qwen3.6-plus",
         "name": "Qwen3.6 Plus",
         "api": "openai-completions",
@@ -2344,8 +2378,8 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1787170915550,
-    "lastModified": 1787141947000,
-    "etag": "W/\"950e75e56bfc7ba09d176a9c86e363f7\""
+    "checkedAt": 1787323593241,
+    "lastModified": 1787315397000,
+    "etag": "W/\"3652c8924cfbb8c23736322bdb51b880\""
   }
 }
