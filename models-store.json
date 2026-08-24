@@ -60,7 +60,7 @@
         "maxTokens": 128000
       }
     ],
-    "checkedAt": 1787323593233,
+    "checkedAt": 1787606562867,
     "lastModified": 1784920524000,
     "etag": "W/\"59585c4d7fe23cba444549b6c50f2504\""
   },
@@ -312,7 +312,7 @@
         }
       }
     ],
-    "checkedAt": 1787323593278,
+    "checkedAt": 1787606562880,
     "lastModified": 1787141945000,
     "etag": "W/\"7572a78e60b78526600ed2a9b74b579d\""
   },
@@ -972,6 +972,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true
         }
       },
@@ -1006,6 +1007,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true
         }
       },
@@ -1082,6 +1084,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true
         }
       },
@@ -1125,6 +1128,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true
         }
       },
@@ -1210,6 +1214,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true,
           "supportsExplicitPromptCacheMode": true
         }
@@ -1254,6 +1259,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true,
           "supportsExplicitPromptCacheMode": true
         }
@@ -1298,6 +1304,7 @@
         "compat": {
           "supportsStrictMode": true,
           "supportsOpenAIGrammarTools": true,
+          "supportsAdditionalTools": true,
           "supportsToolSearch": true,
           "supportsExplicitPromptCacheMode": true
         }
@@ -1526,9 +1533,9 @@
         }
       }
     ],
-    "checkedAt": 1785769515725,
-    "lastModified": 1785502726000,
-    "etag": "W/\"f1f6f2e8493b001e6b8e24ca0e98ac6d\""
+    "checkedAt": 1787606562871,
+    "lastModified": 1787315393000,
+    "etag": "W/\"7ac97151d0d133dd97e299dd4cb1662c\""
   },
   "zai": {
     "models": [
@@ -1543,9 +1550,9 @@
           "text"
         ],
         "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
+          "input": 0.6,
+          "output": 2.2,
+          "cacheRead": 0.11,
           "cacheWrite": 0
         },
         "compat": {
@@ -1570,9 +1577,9 @@
           "text"
         ],
         "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
+          "input": 1.2,
+          "output": 4,
+          "cacheRead": 0.24,
           "cacheWrite": 0
         },
         "compat": {
@@ -1594,10 +1601,48 @@
         "baseUrl": "https://api.z.ai/api/coding/paas/v4",
         "reasoning": true,
         "thinkingLevelMap": {
+          "off": "none",
           "minimal": null,
-          "low": "high",
-          "medium": "high",
+          "low": null,
+          "medium": null,
           "high": "high",
+          "xhigh": null,
+          "max": "max"
+        },
+        "input": [
+          "text"
+        ],
+        "cost": {
+          "input": 1.4,
+          "output": 4.4,
+          "cacheRead": 0.26,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "supportsReasoningEffort": true,
+          "maxTokensField": "max_tokens",
+          "thinkingFormat": "zai",
+          "zaiToolStream": true
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 131072
+      },
+      {
+        "id": "glm-5.2-highspeed",
+        "name": "GLM-5.2 Highspeed",
+        "api": "openai-completions",
+        "provider": "zai",
+        "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+        "reasoning": true,
+        "thinkingLevelMap": {
+          "off": "none",
+          "minimal": null,
+          "low": null,
+          "medium": null,
+          "high": "high",
+          "xhigh": null,
           "max": "max"
         },
         "input": [
@@ -1621,12 +1666,21 @@
         "maxTokens": 131072
       },
       {
-        "id": "glm-5.2-highspeed",
-        "name": "GLM-5.2 Highspeed",
+        "id": "glm-5.3",
+        "name": "GLM-5.3",
         "api": "openai-completions",
         "provider": "zai",
         "baseUrl": "https://api.z.ai/api/coding/paas/v4",
         "reasoning": true,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "xhigh": null,
+          "max": "max"
+        },
         "input": [
           "text"
         ],
@@ -1639,7 +1693,7 @@
         "compat": {
           "supportsStore": false,
           "supportsDeveloperRole": false,
-          "supportsReasoningEffort": false,
+          "supportsReasoningEffort": true,
           "maxTokensField": "max_tokens",
           "thinkingFormat": "zai",
           "zaiToolStream": true
@@ -1648,9 +1702,9 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1785769515983,
-    "lastModified": 1785760830000,
-    "etag": "W/\"98c169c629803193583fc42e7311af91\""
+    "checkedAt": 1787606562880,
+    "lastModified": 1787315411000,
+    "etag": "W/\"4caeb048c05fb4882a87e1e9c156f9e7\""
   },
   "kimi-coding": {
     "models": [
@@ -1767,7 +1821,7 @@
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1787323593294,
+    "checkedAt": 1787606562881,
     "lastModified": 1787141936000,
     "etag": "W/\"26180ce4b0215799b9e112ba4783cc2b\""
   },
@@ -1782,6 +1836,40 @@
         "reasoning": true,
         "input": [
           "text"
+        ],
+        "cost": {
+          "input": 0.22,
+          "output": 0.66,
+          "cacheRead": 0.007,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "maxTokensField": "max_tokens",
+          "requiresReasoningContentOnAssistantMessages": true,
+          "thinkingFormat": "deepseek"
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 384000,
+        "thinkingLevelMap": {
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "max": "max"
+        }
+      },
+      {
+        "id": "deepseek-v4-flash-vision-exp",
+        "name": "DeepSeek V4 Flash Vision Exp",
+        "api": "openai-completions",
+        "provider": "opencode-go",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
         ],
         "cost": {
           "input": 0.22,
@@ -2119,6 +2207,30 @@
         }
       },
       {
+        "id": "longcat-2.0",
+        "name": "LongCat-2.0",
+        "api": "openai-completions",
+        "provider": "opencode-go",
+        "baseUrl": "https://opencode.ai/zen/go/v1",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "cost": {
+          "input": 0.3,
+          "output": 1.2,
+          "cacheRead": 0.006,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "maxTokensField": "max_tokens"
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 131072
+      },
+      {
         "id": "mimo-v2.5",
         "name": "MiMo V2.5",
         "api": "openai-completions",
@@ -2378,8 +2490,8 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1787323593241,
-    "lastModified": 1787315397000,
-    "etag": "W/\"3652c8924cfbb8c23736322bdb51b880\""
+    "checkedAt": 1787606562879,
+    "lastModified": 1787571275000,
+    "etag": "W/\"5b05133dff9e8c4b6b73a2000e9cbc6a\""
   }
 }
