@@ -60,7 +60,7 @@
         "maxTokens": 128000
       }
     ],
-    "checkedAt": 1787606562867,
+    "checkedAt": 1787754617786,
     "lastModified": 1784920524000,
     "etag": "W/\"59585c4d7fe23cba444549b6c50f2504\""
   },
@@ -312,7 +312,7 @@
         }
       }
     ],
-    "checkedAt": 1787606562880,
+    "checkedAt": 1787754617896,
     "lastModified": 1787141945000,
     "etag": "W/\"7572a78e60b78526600ed2a9b74b579d\""
   },
@@ -1821,7 +1821,7 @@
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1787606562881,
+    "checkedAt": 1787754617788,
     "lastModified": 1787141936000,
     "etag": "W/\"26180ce4b0215799b9e112ba4783cc2b\""
   },
@@ -2050,8 +2050,8 @@
         }
       },
       {
-        "id": "grok-4.5",
-        "name": "Grok 4.5",
+        "id": "grok-4.6",
+        "name": "Grok 4.6",
         "api": "openai-responses",
         "provider": "opencode-go",
         "baseUrl": "https://opencode.ai/zen/go/v1",
@@ -2077,7 +2077,7 @@
           "low": "low",
           "medium": "medium",
           "high": "high",
-          "xhigh": null,
+          "xhigh": "xhigh",
           "max": null
         }
       },
@@ -2490,8 +2490,8 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1787606562879,
-    "lastModified": 1787571275000,
-    "etag": "W/\"5b05133dff9e8c4b6b73a2000e9cbc6a\""
+    "checkedAt": 1787754617771,
+    "lastModified": 1787740211000,
+    "etag": "W/\"30a10572fb95efd8d75992ce8c1019e2\""
   }
 }
