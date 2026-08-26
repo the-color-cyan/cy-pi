@@ -1,0 +1,19 @@
+settings.managed.json
+  s_81b47f416ae175::t_761befe7f94db1 18-19,26-27,31,34-35,39,42-43,47,50-51,55-56,58-59,64-68,71-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "3969555176c67cf18cd9cf6122846dd2159dd219",
+  "prompts": {},
+  "sessions": {
+    "s_81b47f416ae175": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a03f4b-5319-70d1-83d1-fba689365dbb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
