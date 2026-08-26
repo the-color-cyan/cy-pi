@@ -34,3 +34,4 @@ logs/
 /subagent-log-bundles
 /.pi-subagents/
 /missions
+/web-search-cache
