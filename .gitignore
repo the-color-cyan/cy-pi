@@ -33,3 +33,4 @@ logs/
 /trust.json
 /subagent-log-bundles
 /.pi-subagents/
+/missions
