@@ -1,8 +1,10 @@
 {
-  "piInfrastructureReadPaths": ["/tmp/*"],
-  "shellTools": {
-    "hypa_shell": { "commandArgument": "command" }
-  },
+  "debugLog": false,
+  "permissionReviewLog": true,
+  "yoloMode": false,
+  "piInfrastructureReadPaths": [
+    "/tmp/*"
+  ],
   "permission": {
     "*": "allow",
     "path": {
@@ -49,5 +51,10 @@
       "fish -c *": "ask"
     },
     "external_directory": "ask"
+  },
+  "shellTools": {
+    "hypa_shell": {
+      "commandArgument": "command"
+    }
   }
 }
