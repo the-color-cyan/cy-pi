@@ -1,0 +1,18 @@
+models-store.json
+  h_441bd1542c405a 59-60,63-65,315,1824,2020-2053,2467-2486,2513-2515
+npm/package-lock.json
+  h_441bd1542c405a 9,18,20-22,744-746,3167-3169,3219-3221,3235-3237,3276-3278
+npm/package.json
+  h_441bd1542c405a 5,14,16-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "eb2cc38ef82387623b8f1a3a7c80bf0f514ed93f",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
