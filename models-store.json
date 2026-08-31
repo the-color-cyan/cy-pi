@@ -60,7 +60,7 @@
         "maxTokens": 512000
       }
     ],
-    "checkedAt": 1787948824947,
+    "checkedAt": 1788149949916,
     "lastModified": 1787917522000,
     "etag": "W/\"76fd732bcd92a0ec53fd9ed002a636f9\""
   },
@@ -312,7 +312,7 @@
         }
       }
     ],
-    "checkedAt": 1787948824942,
+    "checkedAt": 1788149949770,
     "lastModified": 1787141945000,
     "etag": "W/\"7572a78e60b78526600ed2a9b74b579d\""
   },
@@ -1231,17 +1231,17 @@
           "image"
         ],
         "cost": {
-          "input": 5,
-          "output": 30,
-          "cacheRead": 0.5,
-          "cacheWrite": 6.25,
+          "input": 4,
+          "output": 20,
+          "cacheRead": 0.4,
+          "cacheWrite": 5,
           "tiers": [
             {
               "inputTokensAbove": 272000,
-              "input": 10,
-              "output": 45,
-              "cacheRead": 1,
-              "cacheWrite": 12.5
+              "input": 8,
+              "output": 30,
+              "cacheRead": 0.8,
+              "cacheWrite": 10
             }
           ]
         },
@@ -1533,9 +1533,9 @@
         }
       }
     ],
-    "checkedAt": 1787606562871,
-    "lastModified": 1787315393000,
-    "etag": "W/\"7ac97151d0d133dd97e299dd4cb1662c\""
+    "checkedAt": 1788149949735,
+    "lastModified": 1787917530000,
+    "etag": "W/\"de4430a471bcb862d1abf6d6e78f60c2\""
   },
   "zai": {
     "models": [
@@ -1685,6 +1685,79 @@
           "text"
         ],
         "cost": {
+          "input": 1.4,
+          "output": 4.4,
+          "cacheRead": 0.26,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "supportsReasoningEffort": true,
+          "maxTokensField": "max_tokens",
+          "thinkingFormat": "zai",
+          "zaiToolStream": true
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 131072
+      },
+      {
+        "id": "glm-5.3-flash",
+        "name": "GLM-5.3-Flash",
+        "api": "openai-completions",
+        "provider": "zai",
+        "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+        "reasoning": true,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "xhigh": null,
+          "max": "max"
+        },
+        "input": [
+          "text",
+          "image"
+        ],
+        "cost": {
+          "input": 0.075,
+          "output": 0.25,
+          "cacheRead": 0.015,
+          "cacheWrite": 0
+        },
+        "compat": {
+          "supportsStore": false,
+          "supportsDeveloperRole": false,
+          "supportsReasoningEffort": true,
+          "maxTokensField": "max_tokens",
+          "thinkingFormat": "zai",
+          "zaiToolStream": true
+        },
+        "contextWindow": 1000000,
+        "maxTokens": 131072
+      },
+      {
+        "id": "glm-5.3-highspeed",
+        "name": "GLM-5.3 Highspeed",
+        "api": "openai-completions",
+        "provider": "zai",
+        "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+        "reasoning": true,
+        "thinkingLevelMap": {
+          "off": null,
+          "minimal": null,
+          "low": "low",
+          "medium": null,
+          "high": "high",
+          "xhigh": null,
+          "max": "max"
+        },
+        "input": [
+          "text"
+        ],
+        "cost": {
           "input": 0,
           "output": 0,
           "cacheRead": 0,
@@ -1702,9 +1775,9 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1787606562880,
-    "lastModified": 1787315411000,
-    "etag": "W/\"4caeb048c05fb4882a87e1e9c156f9e7\""
+    "checkedAt": 1788149949774,
+    "lastModified": 1787917550000,
+    "etag": "W/\"eb9bbaea144cc5ecb147c53a5ca28a3f\""
   },
   "kimi-coding": {
     "models": [
@@ -1821,7 +1894,7 @@
         "maxTokens": 32768
       }
     ],
-    "checkedAt": 1787948824929,
+    "checkedAt": 1788149949849,
     "lastModified": 1787141936000,
     "etag": "W/\"26180ce4b0215799b9e112ba4783cc2b\""
   },
@@ -2510,7 +2583,7 @@
         "maxTokens": 131072
       }
     ],
-    "checkedAt": 1787948824959,
+    "checkedAt": 1788149949735,
     "lastModified": 1787917534000,
     "etag": "W/\"72c3d5266c220fd5d81b089fb89b8d50\""
   }
