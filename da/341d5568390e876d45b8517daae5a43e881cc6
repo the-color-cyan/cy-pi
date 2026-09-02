@@ -1,0 +1,14 @@
+.gitignore
+  h_441bd1542c405a 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "da341d5568390e876d45b8517daae5a43e881cc6",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
