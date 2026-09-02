@@ -35,3 +35,4 @@ logs/
 /.pi-subagents/
 /missions
 /web-search-cache
+/models-store.json
