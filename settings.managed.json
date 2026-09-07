@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "kimi-coding",
-  "defaultModel": "k3",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-6-astra",
   "defaultThinkingLevel": "high",
   "theme": "rose-pine",
   "subagents": {
@@ -12,17 +12,19 @@
     },
     "agentOverrides": {
       "oracle": {
-        "model": "openai-codex/gpt-5.6-sol",
+        "model": "openai-codex/gpt-6-astra",
         "thinking": "high",
         "fallbackModels": [
+          "openai-codex/gpt-5.6-sol",
           "kimi-coding/k3",
           "openai-codex/gpt-5.6-terra"
         ]
       },
       "planner": {
-        "model": "openai-codex/gpt-5.6-sol",
+        "model": "openai-codex/gpt-6-astra",
         "thinking": "high",
         "fallbackModels": [
+          "openai-codex/gpt-5.6-sol",
           "kimi-coding/k3",
           "openai-codex/gpt-5.6-terra"
         ]
@@ -31,6 +33,7 @@
         "model": "openai-codex/gpt-5.6-terra",
         "thinking": "high",
         "fallbackModels": [
+          "openai-codex/gpt-6-astra",
           "openai-codex/gpt-5.6-sol",
           "kimi-coding/k3"
         ]
@@ -114,7 +117,7 @@
   "themes": [
     "./themes"
   ],
-  "lastChangelogVersion": "0.81.1",
+  "lastChangelogVersion": "0.85.1",
   "quietStartup": true,
   "enabledModels": [
     "openai-codex/gpt-5.6-terra",
@@ -128,7 +131,8 @@
     "opencode-go/mimo-v2.5",
     "opencode-go/mimo-v2.5-pro",
     "opencode-go/qwen3.7-max",
-    "opencode-go/qwen3.7-plus"
+    "opencode-go/qwen3.7-plus",
+    "openai-codex/gpt-6-astra"
   ],
   "commitMessage": {
     "yeet": {
