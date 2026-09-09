@@ -1,0 +1,16 @@
+extensions/pi-daybreak/index.ts
+  h_441bd1542c405a 56,62,64,66-68,74-91,148-149,151-153,158-161,207-210,215
+tests/pi-daybreak.test.ts
+  h_441bd1542c405a 3,10,17-18,23,32-44,53,58,68-72,78,93-108
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "58390da4d1c87ab15361dbc98d7bb27484e51b3e",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
