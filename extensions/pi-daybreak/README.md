@@ -25,10 +25,12 @@ upstream pi-ai updates instead of duplicating a static copy.
 ## Caveats
 
 - The composed list is cached at `<agent dir>/cache/pi-daybreak/models.json`
-  and re-registered synchronously at extension load, which runs before
-  `--model` resolution. Selecting a discovered model via `--model` only
-  warns on the first-ever run (no cache yet); the request still works (the
-  backend accepts the slug), and the cache also covers offline sessions.
+  and re-registered synchronously at extension load only when the cached
+  built-in and persisted `openai-codex` catalogs match the current runtime.
+  This prevents a stale composed list from hiding models refreshed by
+  `pi update --models`. Selecting a discovered model via `--model` only warns
+  on the first-ever run (no cache yet); the request still works (the backend
+  accepts the slug), and a source-matched cache also covers offline sessions.
 - Catalog presence signals entitlement, not guaranteed inference — the
   backend can still reject requests server-side.
 - Discovered models inherit sol's thinking-level map and compat flags. If a

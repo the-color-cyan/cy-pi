@@ -12,9 +12,11 @@
 // extension load, which runs before `--model` resolution — so CLI-selected
 // discovered models only warn on the first-ever run. The cache also covers
 // offline sessions.
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { getBuiltinModels } from "@earendil-works/pi-ai/providers/all";
 import type {
 	ExtensionAPI,
 	ProviderModelConfig,
@@ -27,12 +29,10 @@ const TEMPLATE_MODEL = "gpt-5.6-sol";
 const CLIENT_VERSION = "0.148.0";
 const FETCH_TIMEOUT_MS = 5000;
 
-const CACHE_FILE = join(
-	process.env.PI_CODING_AGENT_DIR ?? join(homedir(), ".pi", "agent"),
-	"cache",
-	"pi-daybreak",
-	"models.json",
-);
+const AGENT_DIR =
+	process.env.PI_CODING_AGENT_DIR ?? join(homedir(), ".pi", "agent");
+const CACHE_FILE = join(AGENT_DIR, "cache", "pi-daybreak", "models.json");
+const MODELS_STORE_FILE = join(AGENT_DIR, "models-store.json");
 
 interface CodexModelInfo {
 	slug: string;
@@ -49,12 +49,34 @@ interface Cache {
 	discovered: string[];
 	/** Full composed provider model list, as last registered. */
 	models: ModelDef[];
+	/** Fingerprint of the built-in and persisted catalogs used to compose models. */
+	source: string;
+}
+
+function currentCacheSource(): string {
+	let storedModels: ModelDef[] | undefined;
+	try {
+		const store = JSON.parse(readFileSync(MODELS_STORE_FILE, "utf8")) as Record<
+			string,
+			{ models?: ModelDef[] }
+		>;
+		storedModels = store[PROVIDER]?.models;
+	} catch {
+		storedModels = undefined;
+	}
+	return createHash("sha256")
+		.update(JSON.stringify([getBuiltinModels(PROVIDER), storedModels]))
+		.digest("hex");
 }
 
 function readCache(): Cache | undefined {
 	try {
 		const raw = JSON.parse(readFileSync(CACHE_FILE, "utf8")) as Partial<Cache>;
-		if (!Array.isArray(raw.models) || !Array.isArray(raw.discovered))
+		if (
+			!Array.isArray(raw.models) ||
+			!Array.isArray(raw.discovered) ||
+			typeof raw.source !== "string"
+		)
 			return undefined;
 		return raw as Cache;
 	} catch {
@@ -100,8 +122,13 @@ async function fetchCatalog(accessToken: string): Promise<CodexModelInfo[]> {
 }
 
 export default function (pi: ExtensionAPI) {
-	// Factory runs before --model resolution; restore the last composed list.
-	const cached = readCache();
+	// Factory runs before --model resolution; restore the last composed list only
+	// when it was built from this runtime's built-in and persisted catalogs.
+	const sourceCache = readCache();
+	const cached =
+		sourceCache && sourceCache.source === currentCacheSource()
+			? sourceCache
+			: undefined;
 	if (cached && cached.models.length > 0) {
 		pi.registerProvider(PROVIDER, { models: cached.models });
 	}
@@ -150,7 +177,11 @@ export default function (pi: ExtensionAPI) {
 
 			const models = [...current, ...discovered];
 			pi.registerProvider(PROVIDER, { models });
-			writeCache({ discovered: discovered.map((m) => m.id), models });
+			writeCache({
+				discovered: discovered.map((m) => m.id),
+				models,
+				source: currentCacheSource(),
+			});
 		} catch {
 			// Offline, expired token, backend change — keep the current list.
 		}
