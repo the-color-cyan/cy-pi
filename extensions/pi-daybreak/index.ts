@@ -53,20 +53,40 @@ interface Cache {
 	source: string;
 }
 
-function currentCacheSource(): string {
-	let storedModels: ModelDef[] | undefined;
+function currentStoredModels(): ModelDef[] | undefined {
 	try {
 		const store = JSON.parse(readFileSync(MODELS_STORE_FILE, "utf8")) as Record<
 			string,
 			{ models?: ModelDef[] }
 		>;
-		storedModels = store[PROVIDER]?.models;
+		return store[PROVIDER]?.models;
 	} catch {
-		storedModels = undefined;
+		return undefined;
 	}
+}
+
+function currentCacheSource(storedModels: ModelDef[] | undefined): string {
 	return createHash("sha256")
 		.update(JSON.stringify([getBuiltinModels(PROVIDER), storedModels]))
 		.digest("hex");
+}
+
+function currentUpstreamModels(storedModels: ModelDef[] | undefined): ModelDef[] {
+	const models = new Map<string, ModelDef>(
+		getBuiltinModels(PROVIDER).map(
+			(model): [string, ModelDef] => [model.id, model],
+		),
+	);
+	for (const model of storedModels ?? []) models.set(model.id, model);
+	return [...models.values()];
+}
+
+function coversUpstreamModels(
+	models: readonly Pick<ModelDef, "id">[],
+	upstreamModels: readonly Pick<ModelDef, "id">[],
+): boolean {
+	const modelIds = new Set(models.map((model) => model.id));
+	return upstreamModels.every((model) => modelIds.has(model.id));
 }
 
 function readCache(): Cache | undefined {
@@ -125,12 +145,20 @@ export default function (pi: ExtensionAPI) {
 	// Factory runs before --model resolution; restore the last composed list only
 	// when it was built from this runtime's built-in and persisted catalogs.
 	const sourceCache = readCache();
+	const storedModels = currentStoredModels();
+	const upstreamModels = currentUpstreamModels(storedModels);
 	const cached =
-		sourceCache && sourceCache.source === currentCacheSource()
+		sourceCache &&
+		sourceCache.source === currentCacheSource(storedModels) &&
+		coversUpstreamModels(sourceCache.models, upstreamModels)
 			? sourceCache
 			: undefined;
 	if (cached && cached.models.length > 0) {
 		pi.registerProvider(PROVIDER, { models: cached.models });
+	} else if (sourceCache) {
+		// A reload can retain a prior extension override. Restore the upstream
+		// composition before discovery so an incomplete cache cannot be re-stamped.
+		pi.registerProvider(PROVIDER, { models: upstreamModels });
 	}
 
 	pi.on("session_start", async (_event, ctx) => {
@@ -176,11 +204,15 @@ export default function (pi: ExtensionAPI) {
 				return;
 
 			const models = [...current, ...discovered];
+			const storedModels = currentStoredModels();
+			const upstreamModels = currentUpstreamModels(storedModels);
+			if (!coversUpstreamModels(models, upstreamModels)) return;
+
 			pi.registerProvider(PROVIDER, { models });
 			writeCache({
 				discovered: discovered.map((m) => m.id),
 				models,
-				source: currentCacheSource(),
+				source: currentCacheSource(storedModels),
 			});
 		} catch {
 			// Offline, expired token, backend change — keep the current list.
