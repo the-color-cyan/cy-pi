@@ -1,0 +1,34 @@
+extensions/pi-daybreak/index.ts
+  s_80d251e11ab6bf::t_299adeb20abfc3 52-69,75-79,125-131,180-183
+  s_80d251e11ab6bf::t_820798c7efd412 184
+  s_80d251e11ab6bf::t_9aca8f5be64ab6 15,19,32-35
+tests/pi-daybreak.test.ts
+  s_80d251e11ab6bf::t_72562af3fcc8b2 7-11,34,38,48,62,70-73,75-77
+  s_80d251e11ab6bf::t_f62b1261b412db 53
+  s_80d251e11ab6bf::t_05ab38f1c6ef0a 74
+  s_80d251e11ab6bf::t_b0041d301d48d3 4-6
+  s_80d251e11ab6bf::t_a9dfb8a709f084 12-14,31-33
+  s_80d251e11ab6bf::t_e4ce455c459565 35-37
+  s_80d251e11ab6bf::t_dc11f8d0bbf417 39-41,45-47
+  s_80d251e11ab6bf::t_34c3e082ce2411 49-52
+  s_80d251e11ab6bf::t_333ce5cbdfd900 54-56,59-61
+  s_80d251e11ab6bf::t_f21395e679721c 63-65,67-69
+  s_80d251e11ab6bf::t_5309dbb203a4e5 78-80
+  s_80d251e11ab6bf::t_a8e783ce405f56 1-3,15-30,42-44,57-58,66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "6e0fed26b6af3f8b23559a6da4a779daa365371d",
+  "prompts": {},
+  "sessions": {
+    "s_80d251e11ab6bf": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "01a08664-61d4-73f5-8a6e-279e1069f09e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
