@@ -22,3 +22,6 @@ benchmark *args:
 
 reconcile-settings:
     ./scripts/reconcile-settings.sh
+
+yeet:
+    pi -p "/yeet"
