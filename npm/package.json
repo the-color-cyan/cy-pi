@@ -15,6 +15,6 @@
     "pi-markdown-preview": "^0.9.9",
     "pi-prompt-template-model": "^0.12.2",
     "pi-subagents": "^0.67.0",
-    "pi-web-access": "^0.28.0"
+    "pi-web-access": "^0.29.0"
   }
 }
