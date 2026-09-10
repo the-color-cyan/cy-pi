@@ -1,0 +1,14 @@
+packages.cyan.json
+  h_441bd1542c405a 2-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "6c0aa938463d30b8c991c4e39b9e9fe3ec702501",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
