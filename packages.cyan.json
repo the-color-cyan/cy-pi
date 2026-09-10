@@ -1,11 +1,11 @@
 [
-  "npm:@zenobius/pi-rose-pine",
-  "npm:pi-lens",
-  "npm:pi-web-access",
-  "npm:pi-btw",
-  "npm:pi-ask-user",
-  "npm:@tmustier/pi-ralph-wiggum",
-  "npm:pi-subagents",
-  "npm:pi-prompt-template-model",
-  "npm:@haispeed/pi-obsidian"
+    "npm:pi-lens",
+    "npm:pi-web-access",
+    "npm:pi-btw",
+    "npm:pi-ask-user",
+    "npm:@tmustier/pi-ralph-wiggum",
+    "npm:pi-subagents",
+    "npm:pi-prompt-template-model",
+    "npm:@haispeed/pi-obsidian",
+    "npm:@xynogen/pix-themes"
 ]
