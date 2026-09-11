@@ -2,7 +2,7 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
-    "@gotgenes/pi-permission-system": "^31.1.3",
+    "@gotgenes/pi-permission-system": "^32.0.2",
     "@haispeed/pi-obsidian": "^0.1.1",
     "@tmustier/pi-ralph-wiggum": "^0.2.3",
     "@vigolium/piolium": "^0.0.13",
