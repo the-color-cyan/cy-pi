@@ -1,7 +1,7 @@
 {
   "debugLog": false,
   "permissionReviewLog": true,
-  "yoloMode": false,
+  "yoloMode": true,
   "piInfrastructureReadPaths": [
     "/tmp/*"
   ],
@@ -13,6 +13,7 @@
       "*.env.*": "ask",
       "*.env.example": "allow"
     },
+    "external_directory": "ask",
     "bash": {
       "*": "allow",
       "rm -rf *": "ask",
@@ -49,8 +50,7 @@
       "sh -c *": "ask",
       "zsh -c *": "ask",
       "fish -c *": "ask"
-    },
-    "external_directory": "ask"
+    }
   },
   "shellTools": {
     "hypa_shell": {
