@@ -1,0 +1,14 @@
+settings.managed.json
+  h_441bd1542c405a 16,20,24,28,32,36,40,44,114,117-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f6c75e040ce2ecab52780a4462765d4bb5569bd9",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
