@@ -13,70 +13,35 @@
     "agentOverrides": {
       "oracle": {
         "model": "openai-codex/gpt-6-astra",
-        "thinking": "high",
-        "fallbackModels": [
-          "openai-codex/gpt-5.6-sol",
-          "kimi-coding/k3",
-          "openai-codex/gpt-5.6-terra"
-        ]
+        "thinking": "high"
       },
       "planner": {
         "model": "openai-codex/gpt-6-astra",
-        "thinking": "high",
-        "fallbackModels": [
-          "openai-codex/gpt-5.6-sol",
-          "kimi-coding/k3",
-          "openai-codex/gpt-5.6-terra"
-        ]
+        "thinking": "high"
       },
       "reviewer": {
         "model": "openai-codex/gpt-5.6-terra",
-        "thinking": "high",
-        "fallbackModels": [
-          "openai-codex/gpt-6-astra",
-          "openai-codex/gpt-5.6-sol",
-          "kimi-coding/k3"
-        ]
+        "thinking": "high"
       },
       "worker": {
         "model": "kimi-coding/k3",
-        "thinking": "high",
-        "fallbackModels": [
-          "openai-codex/gpt-5.6-terra",
-          "minimax/MiniMax-M3"
-        ]
+        "thinking": "high"
       },
       "context-builder": {
         "model": "minimax/MiniMax-M3",
-        "thinking": "medium",
-        "fallbackModels": [
-          "openai-codex/gpt-5.6-luna",
-          "openai-codex/gpt-5.6-terra"
-        ]
+        "thinking": "medium"
       },
       "researcher": {
         "model": "kimi-coding/k3",
-        "thinking": "high",
-        "fallbackModels": [
-          "openai-codex/gpt-5.6-terra",
-          "minimax/MiniMax-M3"
-        ]
+        "thinking": "high"
       },
       "scout": {
         "model": "openai-codex/gpt-5.6-luna",
-        "thinking": "low",
-        "fallbackModels": [
-          "minimax/MiniMax-M3",
-          "openai-codex/gpt-5.6-terra"
-        ]
+        "thinking": "low"
       },
       "delegate": {
         "model": "minimax/MiniMax-M3",
-        "thinking": "medium",
-        "fallbackModels": [
-          "openai-codex/gpt-5.6-luna",
-          "openai-codex/gpt-5.6-terra"
-        ]
+        "thinking": "medium"
       }
     }
   },
@@ -146,8 +111,9 @@
       "status": true
     },
     "ponytail": {
-      "default": "full",
+      "default": "lite",
       "status": true
     }
-  }
+  },
+  "tuiMode": "fullscreen"
 }
