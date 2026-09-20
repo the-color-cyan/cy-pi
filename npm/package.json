@@ -2,7 +2,7 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
-    "@gotgenes/pi-permission-system": "^32.1.0",
+    "@gotgenes/pi-permission-system": "^33.0.3",
     "@haispeed/pi-obsidian": "^0.1.1",
     "@tmustier/pi-ralph-wiggum": "^0.2.3",
     "@vigolium/piolium": "^0.0.13",
@@ -15,7 +15,7 @@
     "pi-lens": "^4.2.0",
     "pi-markdown-preview": "^0.9.9",
     "pi-prompt-template-model": "^0.12.2",
-    "pi-subagents": "^0.68.0",
-    "pi-web-access": "^0.29.0"
+    "pi-subagents": "^0.70.0",
+    "pi-web-access": "^0.30.0"
   }
 }
