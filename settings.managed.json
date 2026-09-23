@@ -1,6 +1,6 @@
 {
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.6-sol",
+  "defaultModel": "gpt-6-sol",
   "defaultThinkingLevel": "high",
   "theme": "rose-pine",
   "subagents": {
@@ -20,7 +20,7 @@
         "thinking": "high"
       },
       "reviewer": {
-        "model": "openai-codex/gpt-5.6-terra",
+        "model": "openai-codex/gpt-6-sol",
         "thinking": "high"
       },
       "worker": {
@@ -36,7 +36,7 @@
         "thinking": "high"
       },
       "scout": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "low"
       },
       "delegate": {
@@ -82,12 +82,9 @@
   "themes": [
     "./themes"
   ],
-  "lastChangelogVersion": "0.85.1",
+  "lastChangelogVersion": "0.87.1",
   "quietStartup": true,
   "enabledModels": [
-    "openai-codex/gpt-5.6-terra",
-    "openai-codex/gpt-5.6-sol",
-    "openai-codex/gpt-5.6-luna",
     "minimax/MiniMax-M3",
     "kimi-coding/k3",
     "opencode-go/deepseek-v4-flash",
@@ -97,7 +94,9 @@
     "opencode-go/mimo-v2.5-pro",
     "opencode-go/qwen3.7-max",
     "opencode-go/qwen3.7-plus",
-    "openai-codex/gpt-6-astra"
+    "openai-codex/gpt-6-astra",
+    "openai-codex/gpt-6-sol",
+    "openai-codex/gpt-6-luna"
   ],
   "commitMessage": {
     "yeet": {
