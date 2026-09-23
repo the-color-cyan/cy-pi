@@ -2,20 +2,20 @@
   "name": "pi-extensions",
   "private": true,
   "dependencies": {
-    "@gotgenes/pi-permission-system": "^33.0.5",
+    "@gotgenes/pi-permission-system": "^33.1.0",
     "@haispeed/pi-obsidian": "^0.1.1",
-    "@tmustier/pi-ralph-wiggum": "^0.2.3",
+    "@tmustier/pi-ralph-wiggum": "^0.2.4",
     "@vigolium/piolium": "^0.0.15",
     "@xynogen/pix-themes": "^1.0.7",
     "@zenobius/pi-rose-pine": "^0.0.2",
-    "pi-ask-user": "^0.15.0",
-    "pi-btw": "^0.5.0",
+    "pi-ask-user": "^0.15.1",
+    "pi-btw": "^0.6.0",
     "pi-chrome": "^0.15.46",
     "pi-intercom": "^0.6.0",
     "pi-lens": "^4.2.1",
     "pi-markdown-preview": "^0.9.9",
     "pi-prompt-template-model": "^0.12.3",
-    "pi-subagents": "^0.70.1",
-    "pi-web-access": "^0.30.0"
+    "pi-subagents": "^0.71.0",
+    "pi-web-access": "^0.31.0"
   }
 }
