@@ -11,6 +11,7 @@
     "pi-ask-user": "^0.15.1",
     "pi-btw": "^0.6.1",
     "pi-chrome": "^0.15.46",
+    "pi-context-view": "^0.6.0",
     "pi-intercom": "^0.6.0",
     "pi-lens": "^4.2.1",
     "pi-markdown-preview": "^0.9.9",
