@@ -1,0 +1,18 @@
+npm/package-lock.json
+  h_441bd1542c405a 18,3780-3792
+npm/package.json
+  h_441bd1542c405a 14
+packages.cyan.json
+  h_441bd1542c405a 10-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "1b2445e88cf1eefc6b9044ee3d3509e2a9d502ea",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
