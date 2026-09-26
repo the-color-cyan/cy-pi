@@ -1,118 +1,108 @@
 {
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6-sol",
-  "defaultThinkingLevel": "high",
-  "theme": "rose-pine",
-  "subagents": {
-    "asyncByDefault": true,
-    "forceTopLevelAsync": false,
-    "parallel": {
-      "maxTasks": 8,
-      "concurrency": 4
+    "defaultProvider": "openai-codex",
+    "defaultModel": "gpt-6-sol",
+    "defaultThinkingLevel": "high",
+    "theme": "rose-pine",
+    "subagents": {
+        "asyncByDefault": true,
+        "forceTopLevelAsync": false,
+        "parallel": {
+            "maxTasks": 8,
+            "concurrency": 4
+        },
+        "agentOverrides": {
+            "oracle": {
+                "model": "openai-codex/gpt-6-astra",
+                "thinking": "high"
+            },
+            "planner": {
+                "model": "openai-codex/gpt-6-astra",
+                "thinking": "high"
+            },
+            "reviewer": {
+                "model": "openai-codex/gpt-6-sol",
+                "thinking": "high"
+            },
+            "worker": {
+                "model": "kimi-coding/k3",
+                "thinking": "high"
+            },
+            "context-builder": {
+                "model": "minimax/MiniMax-M3",
+                "thinking": "medium"
+            },
+            "researcher": {
+                "model": "kimi-coding/k3",
+                "thinking": "high"
+            },
+            "scout": {
+                "model": "openai-codex/gpt-6-luna",
+                "thinking": "low"
+            },
+            "delegate": {
+                "model": "minimax/MiniMax-M3",
+                "thinking": "medium"
+            }
+        }
     },
-    "agentOverrides": {
-      "oracle": {
-        "model": "openai-codex/gpt-6-astra",
-        "thinking": "high"
-      },
-      "planner": {
-        "model": "openai-codex/gpt-6-astra",
-        "thinking": "high"
-      },
-      "reviewer": {
-        "model": "openai-codex/gpt-6-sol",
-        "thinking": "high"
-      },
-      "worker": {
-        "model": "kimi-coding/k3",
-        "thinking": "high"
-      },
-      "context-builder": {
-        "model": "minimax/MiniMax-M3",
-        "thinking": "medium"
-      },
-      "researcher": {
-        "model": "kimi-coding/k3",
-        "thinking": "high"
-      },
-      "scout": {
-        "model": "openai-codex/gpt-6-luna",
-        "thinking": "low"
-      },
-      "delegate": {
-        "model": "minimax/MiniMax-M3",
-        "thinking": "medium"
-      }
-    }
-  },
-  "subagentPane": {
-    "autoOpen": false,
-    "syncStrategy": "foreground",
-    "hotkeys": {
-      "toggle": "ctrl+alt+p",
-      "hide": "ctrl+alt+h",
-      "show": false
-    }
-  },
-  "hideThinkingBlock": false,
-  "packages": [
-    "npm:@zenobius/pi-rose-pine",
-    "npm:pi-lens",
-    "npm:pi-web-access",
-    "npm:pi-btw",
-    "npm:pi-ask-user",
-    "npm:@tmustier/pi-ralph-wiggum",
-    "npm:pi-subagents",
-    "npm:@haispeed/pi-obsidian",
-    "npm:pi-prompt-template-model",
-    "npm:@gotgenes/pi-permission-system",
-    "npm:@vigolium/piolium"
-  ],
-  "extensions": [
-    "./extensions",
-    "~/.pi/agent/extensions/supacode"
-  ],
-  "skills": [
-    "./skills",
-    "~/.pi/agent/skills/supacode-cli"
-  ],
-  "prompts": [
-    "./prompts"
-  ],
-  "themes": [
-    "./themes"
-  ],
-  "lastChangelogVersion": "0.87.1",
-  "quietStartup": true,
-  "enabledModels": [
-    "minimax/MiniMax-M3",
-    "kimi-coding/k3",
-    "opencode-go/deepseek-v4-flash",
-    "opencode-go/deepseek-v4-pro",
-    "opencode-go/glm-5.2",
-    "opencode-go/mimo-v2.5",
-    "opencode-go/mimo-v2.5-pro",
-    "opencode-go/qwen3.7-max",
-    "opencode-go/qwen3.7-plus",
-    "openai-codex/gpt-6-astra",
-    "openai-codex/gpt-6-sol",
-    "openai-codex/gpt-6-luna"
-  ],
-  "commitMessage": {
-    "yeet": {
-      "model": "openai-codex/gpt-5.6-luna",
-      "reasoning": "medium"
-    }
-  },
-  "cavepony": {
-    "caveman": {
-      "default": "lite",
-      "status": true
+    "subagentPane": {
+        "autoOpen": false,
+        "syncStrategy": "foreground",
+        "hotkeys": {
+            "toggle": "ctrl+alt+p",
+            "hide": "ctrl+alt+h",
+            "show": false
+        }
     },
-    "ponytail": {
-      "default": "lite",
-      "status": true
-    }
-  },
-  "tuiMode": "fullscreen"
+    "hideThinkingBlock": false,
+    "packages": [
+        "npm:@zenobius/pi-rose-pine",
+        "npm:pi-lens",
+        "npm:pi-web-access",
+        "npm:pi-btw",
+        "npm:pi-ask-user",
+        "npm:@tmustier/pi-ralph-wiggum",
+        "npm:pi-subagents",
+        "npm:@haispeed/pi-obsidian",
+        "npm:pi-prompt-template-model",
+        "npm:@gotgenes/pi-permission-system",
+        "npm:@vigolium/piolium"
+    ],
+    "extensions": ["./extensions", "~/.pi/agent/extensions/supacode"],
+    "skills": ["./skills", "~/.pi/agent/skills/supacode-cli"],
+    "prompts": ["./prompts"],
+    "themes": ["./themes"],
+    "lastChangelogVersion": "0.87.1",
+    "quietStartup": true,
+    "enabledModels": [
+        "minimax/MiniMax-M3",
+        "kimi-coding/k3",
+        "opencode-go/deepseek-v4-flash",
+        "opencode-go/deepseek-v4-pro",
+        "opencode-go/glm-5.2",
+        "opencode-go/mimo-v2.5",
+        "opencode-go/mimo-v2.5-pro",
+        "opencode-go/qwen3.7-max",
+        "opencode-go/qwen3.7-plus",
+        "openai-codex/gpt-6-astra",
+        "openai-codex/gpt-6-sol",
+        "openai-codex/gpt-6-luna"
+    ],
+    "commitMessage": {
+        "yeet": {
+            "model": "openai-codex/gpt-6-luna",
+            "reasoning": "medium"
+        }
+    },
+    "cavepony": {
+        "caveman": {
+            "default": "lite",
+            "status": true
+        },
+        "ponytail": {
+            "default": "lite",
+            "status": true
+        }
+    },
+    "tuiMode": "fullscreen"
 }
