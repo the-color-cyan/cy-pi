@@ -191,7 +191,7 @@ export default function (pi: ExtensionAPI) {
 		const migration = { targetCwd, requests: resolution.requests };
 		if (!isMigratingContext(ctx)) {
 			const message =
-				"Startup cwd migration cannot run from this pi startup context. Shutting down to avoid continuing in the wrong workspace. For Evanescent launches in this pi version, use scripts/pi-home.sh --evanescent so the workspace is selected before pi starts.";
+				"Startup cwd migration cannot run from this pi startup context. Shutting down to avoid continuing in the wrong workspace. Select the target workspace before launching pi, or use /cd after startup.";
 			markStartupCwdMigrationFailed(message);
 			ctx.ui.notify(message, "error");
 			ctx.shutdown();

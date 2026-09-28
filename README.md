@@ -12,10 +12,7 @@ This repo is intended to be used directly as a Pi agent home: clone it and run p
   - `cd.ts` — adds `/cd <path>` to migrate the active session to a new working directory
   - `sh.ts` — adds `/sh <command>` to run a shell command in pi's current working directory
   - `commit-message.ts` — adds `/commit-message` to generate/copy a git commit message and open lazygit
-  - `git-ai.ts`
   - `github-tracker.ts` — adds `/gh-track`, `/gh-issue`, `/gh-work`, and `/gh-labels` helpers for issue workflow tracking
-  - `pair.ts` — adds `/pair` for pair-programming session management
-  - `think.ts` — adds `/think <level>` for quick thinking-level changes
 - `skills/` — Agent Skills loaded by pi
   - `productivity/` — general workflow skills (`handoff`)
 - `prompts/` — prompt templates (currently empty)
@@ -23,7 +20,7 @@ This repo is intended to be used directly as a Pi agent home: clone it and run p
 - `openspec/` — OpenSpec configuration and project specifications
 - `.pi/` — OpenSpec-generated Pi prompts and skills
 - `agents/` — active pi-subagents custom agents and chain definitions, when present
-- `archive/` — inert resources kept for reference only; these are not loaded by the direct agent-home workflow
+- `archive/` — inert resources kept for reference only (including the parked `evanescent`, `git-ai`, `pair`, and `think` extensions); these are not loaded by the direct agent-home workflow. See `archive/README.md`.
 - `APPEND_SYSTEM.md` — global system-prompt append content
 - `SUBAGENTS_ASYNC_PLAYBOOK.md` — async subagent reference used by the global instructions
 - `settings.managed.json` — declarative Pi settings with secrets/runtime state removed
@@ -46,7 +43,7 @@ pi
 
 The root `package.json` and `package-lock.json` pin the exact Pi runtime used on every machine. Initialization installs that lock with `npm ci`, creates `./bin/pi`, and configures bash, zsh, and fish to put only this checkout's `bin/` first on `PATH`. The wrapper sets `PI_CODING_AGENT_DIR` and executes the checkout-local `node_modules/.bin/pi`; it never selects a global Pi installation. Re-running init repairs older managed PATH blocks that exposed `node_modules/.bin` directly.
 
-`./scripts/pi-home.sh` launches the same wrapper and retains support for `--evanescent`.
+`./scripts/pi-home.sh` launches the same wrapper with any arguments passed through.
 
 ### Synchronizing and updating
 
@@ -152,44 +149,9 @@ Prompt lookup order:
 `scripts/reconcile-settings.sh` to apply a portable change. `/commit-message`
 always continues to use the active Pi model and thinking level.
 
-## pair extension
-
-`/pair` manages an in-memory pair-programming session backed by custom session entries. State is restored when a session loads and persisted on every change.
-
-Subcommands:
-
-- `/pair start [goal]` — activate a pair session and optionally set a goal.
-- `/pair stop` — deactivate the session.
-- `/pair status` (alias `dashboard`) — show current state.
-- `/pair mode <navigator|mentor|reviewer|debugger|implementer>` — set involvement style.
-- `/pair attention <quiet|ambient|active>` — set how much the partner should interject.
-- `/pair explain <terse|normal|mentor|socratic>` — set explanation depth.
-- `/pair autonomy <observe|suggest|ask|edit|agentic>` — set how independently the partner acts.
-- `/pair goal <text>` — set the current goal.
-- `/pair plan [step1 | step2 | ...]` — without args, asks the LLM to create/revise a plan; with args, sets the plan directly (split on `|`).
-- `/pair step <n|next|prev|done>` — move through the plan; without args, asks the LLM for help on the current step.
-- `/pair checkpoint` — alias for `/pair step` (LLM-facing checkpoint).
-- `/pair review-diff` — asks the LLM to review staged + unstaged diff as a pair partner.
-- `/pair summary` — asks the LLM to summarize session progress.
-- `/pair help` — shows usage.
-
-When active, a small dashboard widget is rendered above the editor. All LLM-facing prompts explicitly frame the assistant as a pair partner, include the current state, and respect the configured mode/attention/autonomy/explanation settings.
-
 ## GitHub tracker extension
 
 `extensions/github-tracker.ts` exposes tab completion for `/gh-track`, `/gh-issue`, `/gh-work`, and `/gh-labels` subcommands. It also completes `/gh-track projects <status|enable|disable|on|off>`, `/gh-issue stage <number> <stage>`, `/gh-work pane <mode>`, and `/gh-work done --close`.
-
-## git-ai extension
-
-`extensions/git-ai.ts` uses:
-
-```bash
-$GIT_AI_BIN
-```
-
-when set. Otherwise it uses `~/.git-ai/bin/git-ai` if present, then falls back to `git-ai` on `PATH`.
-
-Set `GIT_AI_BIN` if a target machine installs `git-ai` somewhere else.
 
 ## Settings
 
