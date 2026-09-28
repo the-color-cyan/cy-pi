@@ -1,0 +1,26 @@
+README.md
+  h_441bd1542c405a 23,46
+extensions/cd.ts
+  h_441bd1542c405a 194
+npm/package-lock.json
+  h_441bd1542c405a 18,25,28-155,1564-1581,3927-3987,4126-4128
+npm/package.json
+  h_441bd1542c405a 14,21
+scripts/pi-home.sh
+  h_441bd1542c405a 14
+tests/cd-adapter.test.ts
+  h_441bd1542c405a 139
+tests/cd-startup.test.ts
+  h_441bd1542c405a 13,19,53,61,78,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8b48bb9ac04bb56741fb4db2d37c8242837f04bd",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
