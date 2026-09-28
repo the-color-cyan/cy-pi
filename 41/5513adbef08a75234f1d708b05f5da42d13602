@@ -1,0 +1,16 @@
+.gitignore
+  h_441bd1542c405a 39
+packages.cyan.json
+  h_441bd1542c405a 11-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "415513adbef08a75234f1d708b05f5da42d13602",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
