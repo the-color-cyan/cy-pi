@@ -1,7 +1,7 @@
 import { unlinkSync } from "node:fs";
 import type { ExtensionAPI, SessionEntry } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { createMigratedSessionFile } from "./lib/cd-migration.ts";
+import { createMigratedSessionFile } from "../../extensions/lib/cd-migration.ts";
 import {
 	cleanupEvanescentRuns,
 	createEvanescentRun,
@@ -15,7 +15,7 @@ import {
 	markStartupCwdMigrationFailed,
 	requestStartupCwd,
 	startupCwdRequestsWereConsumed,
-} from "./lib/cd-startup.ts";
+} from "../../extensions/lib/cd-startup.ts";
 
 function envNumber(name: string, fallback: number): number {
 	const raw = process.env[name];

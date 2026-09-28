@@ -18,7 +18,7 @@ import {
 import {
 	consumeStartupCwdRequests,
 	resetStartupCwdRequestsForTests,
-} from "../extensions/lib/cd-startup.ts";
+} from "../../extensions/lib/cd-startup.ts";
 
 async function tempRoot() {
 	return mkdtemp(join(tmpdir(), "evanescent-adapter-test-"));
