@@ -8,5 +8,6 @@
     "npm:pi-prompt-template-model",
     "npm:@haispeed/pi-obsidian",
     "npm:@xynogen/pix-themes",
-    "npm:pi-context-view"
+    "npm:pi-context-view",
+    "npm:pi-claude-bridge"
 ]
