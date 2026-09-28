@@ -1,0 +1,20 @@
+archive/CONTEXT.md
+  h_441bd1542c405a 1-44
+archive/README.md
+  h_441bd1542c405a 14-32
+archive/extensions/evanescent.ts
+  h_441bd1542c405a 4,18
+archive/tests/evanescent-adapter.test.ts
+  h_441bd1542c405a 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "136da3cc06dd1546ac8cc569cfc678930d6d6c94",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
