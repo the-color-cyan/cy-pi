@@ -1,6 +1,6 @@
 {
     "defaultProvider": "openai-codex",
-    "defaultModel": "gpt-6-sol",
+    "defaultModel": "gpt-6.1-sol",
     "defaultThinkingLevel": "high",
     "theme": "rose-pine",
     "subagents": {
@@ -20,7 +20,7 @@
                 "thinking": "high"
             },
             "reviewer": {
-                "model": "openai-codex/gpt-6-sol",
+                "model": "openai-codex/gpt-6.1-sol",
                 "thinking": "high"
             },
             "worker": {
@@ -85,7 +85,7 @@
         "opencode-go/qwen3.7-max",
         "opencode-go/qwen3.7-plus",
         "openai-codex/gpt-6-astra",
-        "openai-codex/gpt-6-sol",
+        "openai-codex/gpt-6.1-sol",
         "openai-codex/gpt-6-luna"
     ],
     "commitMessage": {
