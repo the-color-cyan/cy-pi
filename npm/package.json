@@ -11,7 +11,7 @@
     "pi-ask-user": "^0.15.1",
     "pi-btw": "^0.7.0",
     "pi-chrome": "^0.15.46",
-    "pi-claude-bridge": "^0.9.0",
+    "pi-claude-bridge": "^0.9.1",
     "pi-context-view": "^0.6.0",
     "pi-intercom": "^0.6.0",
     "pi-lens": "^4.3.0",
