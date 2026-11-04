@@ -1,0 +1,16 @@
+skills/productivity/README.md
+  h_441bd1542c405a 18,20-22
+skills/productivity/ponytail/SKILL.md
+  h_441bd1542c405a 4-9,15,17,19,21,23,25,27-32,34-42,44,46,48-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe23c17e44d657bcf9e1298703c1b7183b8de85e",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
