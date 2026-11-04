@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -73,6 +74,7 @@ Example:
 - lite: "Lite example."
 - full: "Full example."
 - No unrequested abstractions: keep me.
+- Full: prose that starts with a mode word stays verbatim.
 `;
 
 test("filterSkillBodyForMode: keeps only active level rows/examples, plain rules verbatim", () => {
@@ -87,4 +89,22 @@ test("filterSkillBodyForMode: keeps only active level rows/examples, plain rules
 	const lite = filterSkillBodyForMode(SKILL_BODY, "lite");
 	assert.match(lite, /Lite row\./);
 	assert.doesNotMatch(lite, /Full row\./);
+
+	// A prose bullet that starts with a mode word is not a worked example.
+	assert.match(lite, /Full: prose that starts with a mode word stays verbatim\./);
+});
+
+test("filterSkillBodyForMode: shipped ponytail skill keeps rules at every level", () => {
+	const body = readFileSync(
+		new URL("../skills/productivity/ponytail/SKILL.md", import.meta.url),
+		"utf8",
+	);
+	for (const level of ["lite", "full", "ultra"] as const) {
+		const filtered = filterSkillBodyForMode(body, level);
+		assert.match(filtered, /The smallest complete change/);
+		assert.match(filtered, new RegExp(`\\| \\*\\*${level}\\*\\* \\|`));
+		for (const other of ["lite", "full", "ultra"].filter((l) => l !== level)) {
+			assert.doesNotMatch(filtered, new RegExp(`\\| \\*\\*${other}\\*\\* \\|`));
+		}
+	}
 });

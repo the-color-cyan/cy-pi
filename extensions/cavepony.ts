@@ -115,7 +115,10 @@ export function filterSkillBodyForMode(body: string, mode: Level): string {
 				const labelMode = normalizeLevel(tableLabel[1]!.trim());
 				if (labelMode) return labelMode === effective;
 			}
-			const exampleLabel = line.match(/^-\s*([^:]+):\s*/);
+			// Worked examples are `- lite: "..."`. Require the quoted value, so a
+			// prose bullet that starts with a mode word ("- Full: ...") is a
+			// normal rule and survives verbatim in every level.
+			const exampleLabel = line.match(/^-\s*([^:]+):\s*"/);
 			if (exampleLabel) {
 				const labelMode = normalizeLevel(exampleLabel[1]!.trim());
 				if (labelMode) return labelMode === effective;
