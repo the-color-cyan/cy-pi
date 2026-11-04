@@ -1,0 +1,16 @@
+extensions/cavepony.ts
+  h_441bd1542c405a 118-121
+tests/cavepony.test.ts
+  h_441bd1542c405a 2,77,92-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cd0ac0af674aab6789586a909d3ed3139739a00e",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
