@@ -1,0 +1,14 @@
+pi-web-access/last-seen-version.json
+  h_441bd1542c405a 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a36f884aa4fe1ec2d8fb575abf2e4da4e2b4249c",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
