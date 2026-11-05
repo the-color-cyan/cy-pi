@@ -1,0 +1,14 @@
+pi-subagents/last-seen-version.json
+  h_441bd1542c405a 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6defb248e1089c0f4084744b6c6242c59aaf9220",
+  "prompts": {},
+  "humans": {
+    "h_441bd1542c405a": {
+      "author": "cyan <cyan@cyan.fish>"
+    }
+  }
+}
